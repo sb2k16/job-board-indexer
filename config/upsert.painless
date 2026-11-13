@@ -1,0 +1,14 @@
+def d = params.doc;
+def s = ctx._source;
+if (s.first_seen == null) { s.first_seen = d.last_checked; s.last_changed = d.last_checked; }
+else if (s.content_hash != d.content_hash) { s.last_changed = d.last_checked; }
+for (def k : d.keySet()) { if (k != 'source_link' && k != 'first_seen' && k != 'last_changed') { s[k] = d[k]; } }
+s.remove('source_link');
+s.status = 'open';
+s.closed_at = null;
+if (s.source_links == null) { s.source_links = new ArrayList(); }
+boolean found = false;
+for (def l : s.source_links) {
+  if (l.url == d.source_link.url) { l.last_seen = d.source_link.last_seen; l.state = 'live'; l.application_url = d.source_link.application_url; found = true; }
+}
+if (!found) { s.source_links.add(d.source_link); }

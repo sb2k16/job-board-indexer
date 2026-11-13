@@ -1,0 +1,51 @@
+[
+ {
+  "platform": "pageup",
+  "tenant": "udel-a-t1",
+  "url": "https://careers.udel.edu/cw/en-us/job/503508/part-time-technology-transfer-analyst-research-office"
+ },
+ {
+  "platform": "pageup",
+  "tenant": "astonmartin-expired-511982",
+  "url": "https://careers.astonmartin.com/cw/en/job/511982/senior-engineermanufacturing-engineering-trim-and-final"
+ },
+ {
+  "platform": "pageup",
+  "tenant": "mtu-a-t1",
+  "url": "https://www.employment.mtu.edu/cw/en-us/job/494251/director-for-charitable-giving"
+ },
+ {
+  "platform": "pageup",
+  "tenant": "udel-a-t2-after5s",
+  "url": "https://careers.udel.edu/cw/en-us/job/503508/part-time-technology-transfer-analyst-research-office",
+  "sleep": 5
+ },
+ {
+  "platform": "pageup",
+  "tenant": "mtu-a-t2-after5s",
+  "url": "https://www.employment.mtu.edu/cw/en-us/job/494251/director-for-charitable-giving",
+  "sleep": 5
+ },
+ {
+  "platform": "pageup",
+  "tenant": "udel-a-t3-after60s",
+  "url": "https://careers.udel.edu/cw/en-us/job/503508/part-time-technology-transfer-analyst-research-office",
+  "sleep": 60
+ },
+ {
+  "platform": "pageup",
+  "tenant": "mtu-a-t3-after60s",
+  "url": "https://www.employment.mtu.edu/cw/en-us/job/494251/director-for-charitable-giving",
+  "sleep": 60
+ },
+ {
+  "platform": "pageup",
+  "tenant": "udel-b-t1",
+  "url": "https://careers.udel.edu/cw/en-us/job/503787/substitute-ud-early-learning-center"
+ },
+ {
+  "platform": "pageup",
+  "tenant": "mtu-expired-494229",
+  "url": "https://www.employment.mtu.edu/cw/en-us/job/494229/food-service-helper-12-mon-1st-ptnb"
+ }
+]

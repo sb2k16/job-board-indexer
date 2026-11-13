@@ -1,0 +1,74 @@
+[
+{
+"platform": "talentreef",
+"tenant": "es-matchall",
+"url": "https://prod-kong.internal.talentreef.com/apply/proxy-es/search-en-us/posting/_search",
+"method": "POST",
+"body": "{\"size\": 3, \"query\": {\"match_all\": {}}, \"track_total_hits\": true}",
+"headers": {
+"Content-Type": "application/json",
+"Accept": "application/json"
+}
+},
+{
+"platform": "talentreef",
+"tenant": "alias-southern",
+"url": "https://prod-kong.internal.talentreef.com/apply/careerPages/alias/southern-multifoods",
+"headers": {
+"Content-Type": "application/json",
+"Accept": "application/json"
+}
+},
+{
+"platform": "dayforce",
+"tenant": "hajoca-search",
+"url": "https://jobs.dayforcehcm.com/api/geo/hajoca/jobposting/search",
+"method": "POST",
+"body": "{\"clientNamespace\": \"hajoca\", \"jobBoardCode\": \"CANDIDATEPORTAL\", \"cultureCode\": \"en-US\", \"isoCultureCode\": \"en-US\", \"paginationStart\": 0, \"pageSize\": 10, \"pageNumber\": 1}",
+"headers": {
+"Content-Type": "application/json",
+"Accept": "application/json"
+}
+},
+{
+"platform": "dayforce",
+"tenant": "dbi-search",
+"url": "https://jobs.dayforcehcm.com/api/geo/dbi/jobposting/search",
+"method": "POST",
+"body": "{\"clientNamespace\": \"dbi\", \"jobBoardCode\": \"CANDIDATEPORTAL\", \"cultureCode\": \"en-US\", \"isoCultureCode\": \"en-US\", \"paginationStart\": 0, \"pageSize\": 10, \"pageNumber\": 1}",
+"headers": {
+"Content-Type": "application/json",
+"Accept": "application/json"
+}
+},
+{
+"platform": "applicantpro",
+"tenant": "opc-sitemap",
+"url": "https://opc.applicantpro.com/job_site_map.xml"
+},
+{
+"platform": "applicantpro",
+"tenant": "cayugahealthsystem-sitemap",
+"url": "https://cayugahealthsystem.applicantpro.com/job_site_map.xml"
+},
+{
+"platform": "isolved",
+"tenant": "directviz-sitemap",
+"url": "https://directviz.isolvedhire.com/job_site_map.xml"
+},
+{
+"platform": "isolved",
+"tenant": "midwestcityok-sitemap",
+"url": "https://midwestcityok.isolvedhire.com/job_site_map.xml"
+},
+{
+"platform": "dover",
+"tenant": "jobs-sitemap",
+"url": "https://jobs.dover.com/feed/jobs_sitemap"
+},
+{
+"platform": "hireology",
+"tenant": "sitemap-1",
+"url": "https://careers.hireology.com/sitemaps/sitemap-1.xml"
+}
+]

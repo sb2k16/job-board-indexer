@@ -1,0 +1,69 @@
+[
+{
+"platform": "ultipro",
+"tenant": "CHE1023CRRY",
+"url": "https://recruiting.ultipro.com/CHE1023CRRY/JobBoard/f99546c8-1543-437d-b13b-ac58c6e27205/JobBoardView/LoadSearchResults",
+"method": "POST",
+"body": "{\"opportunitySearch\": {\"Top\": 20, \"Skip\": 0, \"QueryString\": \"\", \"OrderBy\": [{\"Value\": \"postedDateDesc\", \"PropertyName\": \"PostedDate\", \"Ascending\": false}], \"Filters\": []}, \"matchCriteria\": {\"PreferredJobs\": [], \"Educations\": [], \"LicenseAndCertifications\": [], \"Skills\": [], \"hasNoLicenses\": false, \"SkippedSkills\": []}}",
+"headers": {
+"Content-Type": "application/json",
+"Accept": "application/json"
+}
+},
+{
+"platform": "ultipro",
+"tenant": "CRE1007CREHR",
+"url": "https://recruiting.ultipro.com/CRE1007CREHR/JobBoard/453ac982-2a83-4723-a69a-3dd3ff799d14/JobBoardView/LoadSearchResults",
+"method": "POST",
+"body": "{\"opportunitySearch\": {\"Top\": 20, \"Skip\": 0, \"QueryString\": \"\", \"OrderBy\": [{\"Value\": \"postedDateDesc\", \"PropertyName\": \"PostedDate\", \"Ascending\": false}], \"Filters\": []}, \"matchCriteria\": {\"PreferredJobs\": [], \"Educations\": [], \"LicenseAndCertifications\": [], \"Skills\": [], \"hasNoLicenses\": false, \"SkippedSkills\": []}}",
+"headers": {
+"Content-Type": "application/json",
+"Accept": "application/json"
+}
+},
+{
+"platform": "ultipro",
+"tenant": "EOS1000EOSI",
+"url": "https://recruiting.ultipro.com/EOS1000EOSI/JobBoard/1170f284-cf46-4ff7-b32f-76e224e7a2d4/JobBoardView/LoadSearchResults",
+"method": "POST",
+"body": "{\"opportunitySearch\": {\"Top\": 20, \"Skip\": 0, \"QueryString\": \"\", \"OrderBy\": [{\"Value\": \"postedDateDesc\", \"PropertyName\": \"PostedDate\", \"Ascending\": false}], \"Filters\": []}, \"matchCriteria\": {\"PreferredJobs\": [], \"Educations\": [], \"LicenseAndCertifications\": [], \"Skills\": [], \"hasNoLicenses\": false, \"SkippedSkills\": []}}",
+"headers": {
+"Content-Type": "application/json",
+"Accept": "application/json"
+}
+},
+{
+"platform": "ultipro",
+"tenant": "CHE1023CRRY-page",
+"url": "https://recruiting.ultipro.com/CHE1023CRRY/JobBoard/f99546c8-1543-437d-b13b-ac58c6e27205/"
+},
+{
+"platform": "eightfold",
+"tenant": "costar",
+"url": "https://costar.eightfold.ai/api/apply/v2/jobs?domain=costar.com&num=10&start=0",
+"headers": {
+"Accept": "application/json"
+}
+},
+{
+"platform": "eightfold",
+"tenant": "bostonscientific",
+"url": "https://bostonscientific.eightfold.ai/api/apply/v2/jobs?domain=bostonscientific.com&num=10&start=0",
+"headers": {
+"Accept": "application/json"
+}
+},
+{
+"platform": "eightfold",
+"tenant": "morganstanley",
+"url": "https://morganstanley.eightfold.ai/api/apply/v2/jobs?domain=morganstanley.com&num=10&start=0",
+"headers": {
+"Accept": "application/json"
+}
+},
+{
+"platform": "eightfold",
+"tenant": "netflix",
+"url": "https://explore.jobs.netflix.net/api/apply/v2/jobs?domain=netflix.com&num=5"
+}
+]

@@ -1,0 +1,498 @@
+[
+{
+"platform": "personio",
+"tenant": "stark",
+"url": "https://stark.jobs.personio.com/"
+},
+{
+"platform": "personio",
+"tenant": "desotec",
+"url": "https://desotec.jobs.personio.com/"
+},
+{
+"platform": "personio",
+"tenant": "bsbi",
+"url": "https://bsbi.jobs.personio.com/"
+},
+{
+"platform": "personio",
+"tenant": "trapp",
+"url": "https://trapp.jobs.personio.com/"
+},
+{
+"platform": "personio",
+"tenant": "flatrock",
+"url": "https://flatrock.jobs.personio.com/"
+},
+{
+"platform": "personio",
+"tenant": "stark-xml",
+"url": "https://stark.jobs.personio.com/xml"
+},
+{
+"platform": "personio",
+"tenant": "desotec-xml",
+"url": "https://desotec.jobs.personio.com/xml"
+},
+{
+"platform": "personio",
+"tenant": "stark-detail",
+"url": "https://stark.jobs.personio.com/job/1875864"
+},
+{
+"platform": "paycom",
+"tenant": "portal1",
+"url": "https://www.paycomonline.net/v4/ats/web.php/portal/0013BFED4F70D85BB26D0961BCF5695E/career-page"
+},
+{
+"platform": "paycom",
+"tenant": "portal1-jobs",
+"url": "https://www.paycomonline.net/v4/ats/web.php/jobs?clientkey=0013BFED4F70D85BB26D0961BCF5695E"
+},
+{
+"platform": "paycom",
+"tenant": "portal2",
+"url": "https://phx.us-west.paycomonline.net/v4/ats/web.php/portal/005B8FC0D5FAA96C58088816CB7C6AFF/career-page"
+},
+{
+"platform": "paycom",
+"tenant": "portal1-detail",
+"url": "https://paycomonline.net/v4/ats/web.php/portal/0013bfed4f70d85bb26d0961bcf5695e/jobs/234194"
+},
+{
+"platform": "deel",
+"tenant": "airbase",
+"url": "https://jobs.deel.com/job-boards/airbase"
+},
+{
+"platform": "deel",
+"tenant": "evident",
+"url": "https://jobs.deel.com/job-boards/evident-insights"
+},
+{
+"platform": "deel",
+"tenant": "airbase-detail",
+"url": "https://jobs.deel.com/airbase/job-details/1d8b6e78-a417-4e05-a0c0-d72b7965166d/overview"
+},
+{
+"platform": "deel",
+"tenant": "evident-detail",
+"url": "https://jobs.deel.com/evident-insights/job-details/48afd3b9-02a3-4b96-b3f9-e5735b800747/overview"
+},
+{
+"platform": "deel",
+"tenant": "uuid-board",
+"url": "https://jobs.deel.com/c618bc10-fe08-4638-b00d-2b823bd7911d"
+},
+{
+"platform": "taleo",
+"tenant": "weyerhaeuser",
+"url": "https://weyerhaeuser.taleo.net/careersection/10000/jobsearch.ftl"
+},
+{
+"platform": "taleo",
+"tenant": "watercorp",
+"url": "https://watercorp.taleo.net/careersection/2/jobsearch.ftl"
+},
+{
+"platform": "taleo",
+"tenant": "vulcanmat",
+"url": "https://vulcanmat.taleo.net/careersection/2/jobsearch.ftl"
+},
+{
+"platform": "taleo",
+"tenant": "who",
+"url": "https://who.taleo.net/careersection/ex/jobsearch.ftl"
+},
+{
+"platform": "taleo",
+"tenant": "who-detail",
+"url": "https://who.taleo.net/careersection/ex/jobdetail.ftl?job=2501943"
+},
+{
+"platform": "taleo",
+"tenant": "watercorp-detail",
+"url": "https://watercorp.taleo.net/careersection/2/jobdetail.ftl?job=0U6R&lang=en"
+},
+{
+"platform": "pageup",
+"tenant": "udel",
+"url": "https://careers.udel.edu/cw/en-us/listing/"
+},
+{
+"platform": "pageup",
+"tenant": "ufl",
+"url": "https://explore.jobs.ufl.edu/cw/en-us/listing/"
+},
+{
+"platform": "pageup",
+"tenant": "unicef",
+"url": "https://jobs.unicef.org/cw/en-us/listing/"
+},
+{
+"platform": "pageup",
+"tenant": "astonmartin-detail",
+"url": "https://careers.astonmartin.com/cw/en/job/511982/senior-engineermanufacturing-engineering-trim-and-final"
+},
+{
+"platform": "pageup",
+"tenant": "mtu-detail",
+"url": "https://www.employment.mtu.edu/cw/en-us/job/494229/food-service-helper-12-mon-1st-ptnb"
+},
+{
+"platform": "pageup",
+"tenant": "895",
+"url": "https://careers.pageuppeople.com/895/cw/en/listing/"
+},
+{
+"platform": "pageup",
+"tenant": "udel-rss",
+"url": "https://careers.udel.edu/cw/en-us/listing/?rss=true"
+},
+{
+"platform": "brassring",
+"tenant": "25879",
+"url": "https://sjobs.brassring.com/TGnewUI/Search/Home/Home?partnerid=25879&siteid=5295"
+},
+{
+"platform": "brassring",
+"tenant": "26003",
+"url": "https://sjobs.brassring.com/TGnewUI/Search/Home/Home?partnerid=26003&siteid=5325"
+},
+{
+"platform": "brassring",
+"tenant": "25771",
+"url": "https://sjobs.brassring.com/TGnewUI/Search/Home/Home?partnerid=25771&siteid=5403"
+},
+{
+"platform": "brassring",
+"tenant": "30011",
+"url": "https://krb-sjobs.brassring.com/TGnewUI/Search/Home/Home?partnerid=30011&siteid=5460"
+},
+{
+"platform": "successfactors",
+"tenant": "assaabloy",
+"url": "https://assaabloy.jobs2web.com/search/"
+},
+{
+"platform": "successfactors",
+"tenant": "illinois",
+"url": "https://illinois.jobs2web.com/search/"
+},
+{
+"platform": "successfactors",
+"tenant": "bnsf",
+"url": "https://bnsf.jobs2web.com/search/"
+},
+{
+"platform": "successfactors",
+"tenant": "assaabloy-sitemap",
+"url": "https://assaabloy.jobs2web.com/sitemap.xml"
+},
+{
+"platform": "successfactors",
+"tenant": "illinois-detail",
+"url": "https://illinois.jobs2web.com/job/Alton-CLINICAL-NURSE-MANAGER-IL-62002/1404091300/"
+},
+{
+"platform": "successfactors",
+"tenant": "bnsf-detail",
+"url": "https://bnsf.jobs2web.com/job/Aberdeen-Conductor-Trainee-Aberdeen%2C-SD-SD-57401/1357918400/"
+},
+{
+"platform": "hibob",
+"tenant": "credo-sitemap",
+"url": "https://credo.careers.hibob.com/sitemap.xml"
+},
+{
+"platform": "hibob",
+"tenant": "interwell-detail",
+"url": "https://interwell.careers.hibob.com/jobs/f93f4006-c84e-4949-a19c-c82fb2229f17"
+},
+{
+"platform": "hibob",
+"tenant": "ecologi-detail",
+"url": "https://ecologi.careers.hibob.com/jobs/1916688-product-manager"
+},
+{
+"platform": "hibob",
+"tenant": "zodia",
+"url": "https://zodiamarkets.careers.hibob.com/jobs"
+},
+{
+"platform": "firststage",
+"tenant": "wayve",
+"url": "https://wayve.firststage.co/jobs?layout=list"
+},
+{
+"platform": "firststage",
+"tenant": "quantumbase",
+"url": "https://quantumbase.firststage.co/jobs"
+},
+{
+"platform": "firststage",
+"tenant": "intersect",
+"url": "https://intersect-mbo.firststage.co/jobs"
+},
+{
+"platform": "firststage",
+"tenant": "wayve-sitemap",
+"url": "https://wayve.firststage.co/sitemap.xml"
+},
+{
+"platform": "hirebridge",
+"tenant": "jalexanders",
+"url": "https://jobs.hirebridge.com/jalexanders/hourly/"
+},
+{
+"platform": "hirebridge",
+"tenant": "ctr",
+"url": "https://jobs.hirebridge.com/ctr/"
+},
+{
+"platform": "hirebridge",
+"tenant": "thesmith",
+"url": "https://jobs.hirebridge.com/thesmith/"
+},
+{
+"platform": "hirebridge",
+"tenant": "rss6284",
+"url": "http://rss.hirebridge.com/6284.rss"
+},
+{
+"platform": "hirebridge",
+"tenant": "rss6741",
+"url": "http://rss.hirebridge.com/6741.rss"
+},
+{
+"platform": "hirebridge",
+"tenant": "cat6284",
+"url": "https://www.hirebridge.com/jobseeker2/categorysearch.asp?cid=6284"
+},
+{
+"platform": "polymer",
+"tenant": "api-accept",
+"url": "https://api.polymer.co/v1/hire/organizations/polymer/jobs",
+"headers": {
+"Accept": "application/json"
+}
+},
+{
+"platform": "polymer",
+"tenant": "api-q",
+"url": "https://api.polymer.co/v1/hire/organizations/polymer/jobs?page=1&limit=20",
+"headers": {
+"Accept": "application/json"
+}
+},
+{
+"platform": "polymer",
+"tenant": "sitemap",
+"url": "https://jobs.polymer.co/sitemap.xml"
+},
+{
+"platform": "polymer",
+"tenant": "board-json",
+"url": "https://jobs.polymer.co/polymer.json"
+},
+{
+"platform": "zoho",
+"tenant": "talenture",
+"url": "https://talenture.zohorecruit.com/jobs/Careers"
+},
+{
+"platform": "zoho",
+"tenant": "workbetternow",
+"url": "https://workbetternow.zohorecruit.com/jobs/Careers"
+},
+{
+"platform": "zoho",
+"tenant": "talenture-sitemap",
+"url": "https://talenture.zohorecruit.com/sitemap.xml"
+},
+{
+"platform": "zoho",
+"tenant": "tgocorp",
+"url": "https://tgocorp-tgocorp.zohorecruit.com/jobs/ARMM-Logistics"
+},
+{
+"platform": "trinet",
+"tenant": "aen-jobs",
+"url": "https://app.trinethire.com/companies/1095006-academic-engagement-network/jobs"
+},
+{
+"platform": "trinet",
+"tenant": "aen-detail",
+"url": "https://app.trinethire.com/companies/1095006-academic-engagement-network/jobs/123608-assistant-director-of-programs-and-communications"
+},
+{
+"platform": "trinet",
+"tenant": "job116962",
+"url": "https://app.trinethire.com/jobs/116962-senior-director-new-product-planning"
+},
+{
+"platform": "trinet",
+"tenant": "job106127",
+"url": "https://app.trinethire.com/jobs/106127-post-process-technician"
+},
+{
+"platform": "jobboardfire",
+"tenant": "pm-sitemap",
+"url": "https://productmarketing.jobboardfire.com/sitemap.xml"
+},
+{
+"platform": "jobboardfire",
+"tenant": "pm-jobs",
+"url": "https://productmarketing.jobboardfire.com/jobs"
+},
+{
+"platform": "jobboardfire",
+"tenant": "pm-rss",
+"url": "https://productmarketing.jobboardfire.com/rss"
+},
+{
+"platform": "dover",
+"tenant": "incompass-detail",
+"url": "https://jobs.dover.com/incompass-labs/301f26db-b695-4316-9616-bfaa1fca2837"
+},
+{
+"platform": "dover",
+"tenant": "careers-sitemap",
+"url": "https://jobs.dover.com/feed/careers_sitemap"
+},
+{
+"platform": "dayforce",
+"tenant": "wheeler-detail",
+"url": "https://jobs.dayforcehcm.com/wheeler/CANDIDATEPORTAL/jobs/17787"
+},
+{
+"platform": "dayforce",
+"tenant": "wfad-detail",
+"url": "https://jobs.dayforcehcm.com/wfad/CANDIDATEPORTAL/jobs/1240"
+},
+{
+"platform": "dayforce",
+"tenant": "twh",
+"url": "https://jobs.dayforcehcm.com/twh/CANDIDATEPORTAL"
+},
+{
+"platform": "dayforce",
+"tenant": "wheeler-api",
+"url": "https://jobs.dayforcehcm.com/api/geo/wheeler/jobposting/search",
+"headers": {
+"Accept": "application/json",
+"Referer": "https://jobs.dayforcehcm.com/wheeler/CANDIDATEPORTAL",
+"Origin": "https://jobs.dayforcehcm.com"
+}
+},
+{
+"platform": "ultipro",
+"tenant": "che-board",
+"url": "https://recruiting.ultipro.com/CHE1023CRRY/JobBoard/f99546c8-1543-437d-b13b-ac58c6e27205/"
+},
+{
+"platform": "ultipro",
+"tenant": "eos-board",
+"url": "https://recruiting.ultipro.com/EOS1000EOSI/JobBoard/1170f284-cf46-4ff7-b32f-76e224e7a2d4/"
+},
+{
+"platform": "smartrecruiters",
+"tenant": "visa-careers",
+"url": "https://careers.smartrecruiters.com/Visa"
+},
+{
+"platform": "smartrecruiters",
+"tenant": "sr-self",
+"url": "https://jobs.smartrecruiters.com/smartrecruiters"
+},
+{
+"platform": "smartrecruiters",
+"tenant": "sr-detail",
+"url": "https://jobs.smartrecruiters.com/smartrecruiters/743999790203419-product-designer-design-systems"
+},
+{
+"platform": "smartrecruiters",
+"tenant": "bosch",
+"url": "https://jobs.smartrecruiters.com/BoschGroup"
+},
+{
+"platform": "jobkit",
+"tenant": "rails",
+"url": "https://jobs.rubyonrails.org/"
+},
+{
+"platform": "jobkit",
+"tenant": "rails-sitemap",
+"url": "https://jobs.rubyonrails.org/sitemap.xml"
+},
+{
+"platform": "jobkit",
+"tenant": "rails-rss",
+"url": "https://jobs.rubyonrails.org/jobs.rss"
+},
+{
+"platform": "ejobsitesoftware",
+"tenant": "marketron",
+"url": "https://jobs.marketron.com/"
+},
+{
+"platform": "ejobsitesoftware",
+"tenant": "marketron-sitemap",
+"url": "https://jobs.marketron.com/sitemap.xml"
+},
+{
+"platform": "talenetic",
+"tenant": "tjn",
+"url": "https://www.thejobnetwork.com/"
+},
+{
+"platform": "talenetic",
+"tenant": "tjn-jobs",
+"url": "https://www.thejobnetwork.com/jobs/"
+},
+{
+"platform": "talenetic",
+"tenant": "tjn-sitemap",
+"url": "https://www.thejobnetwork.com/sitemap.xml"
+},
+{
+"platform": "jobboard.com",
+"tenant": "itjobstech",
+"url": "https://itjobstech.jobboard.com/jobs/"
+},
+{
+"platform": "jobboard.com",
+"tenant": "itjobstech-sitemap",
+"url": "https://itjobstech.jobboard.com/sitemap.xml"
+},
+{
+"platform": "jobboard.com",
+"tenant": "preview",
+"url": "https://preview.jobboard.com/jobs/"
+},
+{
+"platform": "exenzo",
+"tenant": "marketingfacts",
+"url": "https://marketingfacts.frontend.exenzo.com/"
+},
+{
+"platform": "exenzo",
+"tenant": "marketingfacts-detail",
+"url": "https://marketingfacts.frontend.exenzo.com/vacature/manager-marketing-communicatie-dn"
+},
+{
+"platform": "exenzo",
+"tenant": "marketingfacts-sitemap",
+"url": "https://marketingfacts.frontend.exenzo.com/sitemap.xml"
+},
+{
+"platform": "bamboohr",
+"tenant": "cascadedental",
+"url": "https://cascadedental.bamboohr.com/careers/list"
+},
+{
+"platform": "bamboohr",
+"tenant": "cascadedental-page",
+"url": "https://cascadedental.bamboohr.com/careers/"
+}
+]

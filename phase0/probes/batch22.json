@@ -1,0 +1,127 @@
+[
+ {
+  "platform": "smartrecruiters",
+  "tenant": "abbvie-live1",
+  "url": "https://jobs.smartrecruiters.com/AbbVie/3743990016785846-medical-science-liaison-gastroenterology-piemonte-liguria-valle-d-aosta-sardegna"
+ },
+ {
+  "platform": "smartrecruiters",
+  "tenant": "abbvie-live2",
+  "url": "https://jobs.smartrecruiters.com/AbbVie/3743990016785706-strategic-accounts-lead"
+ },
+ {
+  "platform": "smartrecruiters",
+  "tenant": "abbvie-more",
+  "url": "https://jobs.smartrecruiters.com/AbbVie/api/more?page=1"
+ },
+ {
+  "platform": "smartrecruiters",
+  "tenant": "playtech-list",
+  "url": "https://jobs.smartrecruiters.com/Playtech"
+ },
+ {
+  "platform": "smartrecruiters",
+  "tenant": "servicenow-list",
+  "url": "https://jobs.smartrecruiters.com/ServiceNow"
+ },
+ {
+  "platform": "successfactors",
+  "tenant": "assaabloy-live1",
+  "url": "https://assaabloy.jobs2web.com/job/Tulsa-Slitter-Operator-OK-74116/1444025533/"
+ },
+ {
+  "platform": "successfactors",
+  "tenant": "assaabloy-live2",
+  "url": "https://assaabloy.jobs2web.com/job/Kennesaw-Sourcing-&-Procurement-Lead-GA-30144/1447729333/"
+ },
+ {
+  "platform": "successfactors",
+  "tenant": "bnsf-live1",
+  "url": "https://bnsf.jobs2web.com/job/Centralia-Conductor-Trainee-Centralia%2C-IL-IL-62801/1429853400/"
+ },
+ {
+  "platform": "successfactors",
+  "tenant": "illinois-live1",
+  "url": "https://illinois.jobs2web.com/job/Centralia-DOC-Centralia-CC-Health-Information-Administrator-IL-62801/1433855400/"
+ },
+ {
+  "platform": "werecruit",
+  "tenant": "bundle",
+  "url": "https://careers.werecruit.io/bundles/jobs/scripts-light.js?v=hMj9qnfGW_omNtizFog5euZF6zE"
+ },
+ {
+  "platform": "werecruit",
+  "tenant": "vacoa-job",
+  "url": "https://careers.werecruit.io/fr/vacoa/offres/acheteur-experimente---secteur-energie-640753"
+ },
+ {
+  "platform": "werecruit",
+  "tenant": "myjob-job",
+  "url": "https://careers.werecruit.io/fr/myjob-interim/offres/agent-de-production-f97d1a"
+ },
+ {
+  "platform": "werecruit",
+  "tenant": "bodemer-job",
+  "url": "https://careers.werecruit.io/fr/groupe-bodemer/offres/adjointe-chef-datelier-88bf0b"
+ },
+ {
+  "platform": "pageup",
+  "tenant": "895-detail",
+  "url": "https://careers.pageuppeople.com/895/cw/en/job/496945/data-engineer"
+ },
+ {
+  "platform": "pageup",
+  "tenant": "513-detail2",
+  "url": "https://careers.pageuppeople.com/513/cw/en/job/692558/senior-marketing-technology-specialist"
+ },
+ {
+  "platform": "pageup",
+  "tenant": "udel-list",
+  "url": "https://careers.udel.edu/cw/en-us/listing/"
+ },
+ {
+  "platform": "pageup",
+  "tenant": "ufl-rss",
+  "url": "https://explore.jobs.ufl.edu/cw/en-us/listing/?rss=true"
+ },
+ {
+  "platform": "pageup",
+  "tenant": "astonmartin-list",
+  "url": "https://careers.astonmartin.com/cw/en/listing/"
+ },
+ {
+  "platform": "pageup",
+  "tenant": "mtu-list",
+  "url": "https://www.employment.mtu.edu/cw/en-us/listing/"
+ },
+ {
+  "platform": "avature",
+  "tenant": "dfiretail-detail",
+  "url": "https://dfiretailgroup.avature.net/careers/JobDetail/Hong-Kong-Locum-Pharmacist/15549"
+ },
+ {
+  "platform": "avature",
+  "tenant": "siemens-detail",
+  "url": "https://jobs.siemens-energy.com/jobs/FolderDetail/Gas-Turbine-Field-Service-Technician/287923"
+ },
+ {
+  "platform": "zoho",
+  "tenant": "gatesourcehrus-live",
+  "url": "https://gatesourcehrus.zohorecruit.com/jobs/Careers/730923000012443018/Commercial-Manager-business-development-maritime-logistics-Guyana"
+ },
+ {
+  "platform": "zoho",
+  "tenant": "jamppharma-live",
+  "url": "https://jamppharma.zohorecruit.com/jobs/Careers/589893000022894278/Pr-pos-e-de-production"
+ },
+ {
+  "platform": "zoho",
+  "tenant": "talenture-live",
+  "url": "https://talenture.zohorecruit.com/jobs/Careers/665110000259867200/Safety-Environment-Specialist-Projects-Construction-HSE"
+ },
+ {
+  "platform": "zoho",
+  "tenant": "tgocorp-live",
+  "url": "https://tgocorp-tgocorp.zohorecruit.com/jobs/ARMM-Logistics/823212000005653765/Delivery-Driver-up-to-25-per-hour-Bonus-of-500-ZR"
+ }
+]

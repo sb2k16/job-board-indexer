@@ -1,0 +1,167 @@
+[
+ {
+  "platform": "niceboard",
+  "tenant": "wisconsinliteracyjobs-sm-jobs",
+  "url": "https://wisconsinliteracyjobs.niceboard.co/sitemap-jobs.xml"
+ },
+ {
+  "platform": "niceboard",
+  "tenant": "avajobboard-sm-jobs",
+  "url": "https://avajobboard.niceboard.co/sitemap-jobs.xml"
+ },
+ {
+  "platform": "paycom",
+  "tenant": "sitemap-bare",
+  "url": "https://www.paycomonline.net/v4/ats/sitemap.php"
+ },
+ {
+  "platform": "paycom",
+  "tenant": "sitemap-ck",
+  "url": "https://www.paycomonline.net/v4/ats/sitemap.php?clientkey=0013BFED4F70D85BB26D0961BCF5695E"
+ },
+ {
+  "platform": "paycom",
+  "tenant": "sprawl-json",
+  "url": "https://www.paycomonline.net/career-portal/sprawl.json"
+ },
+ {
+  "platform": "paycom",
+  "tenant": "sprawl-js",
+  "url": "https://www.paycomonline.net/v4/assets/generated/sprawl/sprawl.min.js"
+ },
+ {
+  "platform": "ultipro",
+  "tenant": "che-detail",
+  "url": "https://recruiting.ultipro.com/CHE1023CRRY/JobBoard/f99546c8-1543-437d-b13b-ac58c6e27205/OpportunityDetail?opportunityId=b88549ff-b779-4e07-ba1c-fae82deb5eb0"
+ },
+ {
+  "platform": "polymer",
+  "tenant": "board-chunk",
+  "url": "https://jobs.polymer.co/packs/js/job_board_application-d28c830f98ef7789ac82.chunk.js"
+ },
+ {
+  "platform": "paradox",
+  "tenant": "mchire-jobs",
+  "url": "https://jobs.mchire.com/jobs"
+ },
+ {
+  "platform": "paradox",
+  "tenant": "mchire-sitemap",
+  "url": "https://jobs.mchire.com/sitemap.xml"
+ },
+ {
+  "platform": "jobboardfire",
+  "tenant": "pm-sm-companies",
+  "url": "https://productmarketing.jobboardfire.com/sitemap-companies.xml"
+ },
+ {
+  "platform": "dover",
+  "tenant": "sitemap-index",
+  "url": "https://jobs.dover.com/sitemap.xml"
+ },
+ {
+  "platform": "brassring",
+  "tenant": "search-preload",
+  "url": "https://sjobs.brassring.com/TGnewUI/Search/home/HomeWithPreLoad?partnerid=25385&siteid=5526&PageType=searchResults&%2520SearchType=linkquery&LinkID=4393346"
+ },
+ {
+  "platform": "brassring",
+  "tenant": "detail-preload",
+  "url": "https://krb-sjobs.brassring.com/TGnewUI/Search/home/HomeWithPreLoad?PageType=JobDetails&partnerid=30013&siteid=5476&jobid=2244469&AL=1"
+ },
+ {
+  "platform": "brassring",
+  "tenant": "hobby-search-preload",
+  "url": "https://sjobs.brassring.com/TGnewUI/Search/home/HomeWithPreLoad?partnerid=25879&siteid=5295&PageType=searchResults"
+ },
+ {
+  "platform": "rival",
+  "tenant": "kofax-detail",
+  "url": "https://jobs.silkroad.com/Kofax/careers/jobs/220738"
+ },
+ {
+  "platform": "rival",
+  "tenant": "riverside-detail",
+  "url": "https://jobs.silkroad.com/RiversideCC/Careers/jobs/10217"
+ },
+ {
+  "platform": "rival",
+  "tenant": "kofax-list",
+  "url": "https://jobs.silkroad.com/Kofax/careers"
+ },
+ {
+  "platform": "rival",
+  "tenant": "riverside-list",
+  "url": "https://jobs.silkroad.com/RiversideCC/Careers"
+ },
+ {
+  "platform": "rival",
+  "tenant": "dole-listings",
+  "url": "https://dolecareers.silkroad.com/Careers/EmploymentListings.html"
+ },
+ {
+  "platform": "talentreef",
+  "tenant": "posting-public",
+  "url": "https://apply.jobappnetwork.com/clients/10043/posting/10653263/en"
+ },
+ {
+  "platform": "csod",
+  "tenant": "legacy-search",
+  "url": "https://ccac.csod.com/ats/careersite/search.aspx?site=13&c=ccac"
+ },
+ {
+  "platform": "csod",
+  "tenant": "req-detail",
+  "url": "https://ymcanyc.csod.com/ux/ats/careersite/1/home/requisition/1745?c=ymcanyc"
+ },
+ {
+  "platform": "ultipro",
+  "tenant": "che-detail-cc",
+  "url": "https://recruiting.ultipro.com/CHE1023CRRY/JobBoard/a35d322a-e379-410c-97be-eef5b253d8b8/OpportunityDetail?opportunityId=1457b0a0-e473-4265-8e00-15220a8150ce"
+ },
+ {
+  "platform": "ultipro",
+  "tenant": "mercy-detail-cc",
+  "url": "https://recruiting2.ultipro.com/MER1024MERCY/JobBoard/230871ec-46c2-4b45-bb94-8edd6f04be57/OpportunityDetail?opportunityId=8ea5d638-ed5a-4aaf-a118-d0b7b05caab6"
+ },
+ {
+  "platform": "paycom",
+  "tenant": "detail-cc",
+  "url": "https://www.paycomonline.net/v4/ats/web.php/portal/9F4B6A3080FD0D39F0296591DC73E450/jobs/1573"
+ },
+ {
+  "platform": "paycom",
+  "tenant": "portal-cc",
+  "url": "https://www.paycomonline.net/v4/ats/web.php/portal/9F4B6A3080FD0D39F0296591DC73E450/career-page"
+ },
+ {
+  "platform": "dover",
+  "tenant": "apply-page",
+  "url": "https://app.dover.com/apply/careerflowai/6a236838-e554-41aa-ad19-5c6fe8b8b767"
+ },
+ {
+  "platform": "dayforce",
+  "tenant": "whsmith-detail",
+  "url": "https://jobs.dayforcehcm.com/en-GB/whsmith/WHSTravelCareersSite/jobs/16402"
+ },
+ {
+  "platform": "dayforce",
+  "tenant": "whsmith-board",
+  "url": "https://jobs.dayforcehcm.com/en-GB/whsmith/WHSTravelCareersSite"
+ },
+ {
+  "platform": "niceboard",
+  "tenant": "ava-job",
+  "url": "https://avajobboard.niceboard.co/job/2558730-guest-talent-assistant-seasonal-events-disney"
+ },
+ {
+  "platform": "hibob",
+  "tenant": "ustwo-detail",
+  "url": "https://ustwo.careers.hibob.com/jobs/80e36043-3dad-4c5f-bbeb-0f691f018457"
+ },
+ {
+  "platform": "paradox",
+  "tenant": "mchire-page2",
+  "url": "https://jobs.mchire.com/jobs/page/2"
+ }
+]

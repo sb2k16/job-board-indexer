@@ -1,0 +1,13 @@
+ssl: false
+serverPort: 4900
+source_coordination:
+  partition_prefix: "jbi-local-"
+  store:
+    jdbc:
+      url: "jdbc:postgresql://postgres:5432/jbi"
+      username: "jbi"
+      password: "jbi"
+      ttl: "P2D"
+      # The table comes from db/V1__source_coordination.sql (db-migrate); creating it from
+      # several replicas at once races in Data Prepper 2.17.0.
+      skip_table_creation: true

@@ -1,0 +1,81 @@
+[
+ {
+  "platform": "smartrecruiters",
+  "tenant": "careers-abbvie-more",
+  "url": "https://careers.smartrecruiters.com/AbbVie/api/more?page=1"
+ },
+ {
+  "platform": "smartrecruiters",
+  "tenant": "careers-playtech-groups",
+  "url": "https://careers.smartrecruiters.com/Playtech/api/groups?page=1"
+ },
+ {
+  "platform": "smartrecruiters",
+  "tenant": "jobs-playtech-groups",
+  "url": "https://jobs.smartrecruiters.com/Playtech/api/groups?page=1"
+ },
+ {
+  "platform": "smartrecruiters",
+  "tenant": "playtech-detail",
+  "url": "https://jobs.smartrecruiters.com/Playtech/744000132588409-greek-dealer"
+ },
+ {
+  "platform": "smartrecruiters",
+  "tenant": "playtech-detail2",
+  "url": "https://jobs.smartrecruiters.com/Playtech/744000132652739-english-dealer"
+ },
+ {
+  "platform": "pageup",
+  "tenant": "astonmartin-d1-try1",
+  "url": "https://careers.astonmartin.com/cw/en/job/511841/procurement-manager-direct"
+ },
+ {
+  "platform": "pageup",
+  "tenant": "astonmartin-d2-try1",
+  "url": "https://careers.astonmartin.com/cw/en/job/511953/lead-engineer-body-closures"
+ },
+ {
+  "platform": "pageup",
+  "tenant": "employment-d1-try1",
+  "url": "https://www.employment.mtu.edu/cw/en-us/job/494251/director-for-charitable-giving"
+ },
+ {
+  "platform": "pageup",
+  "tenant": "employment-d2-try1",
+  "url": "https://www.employment.mtu.edu/cw/en-us/job/494252/food-service-helper-9mon-1st"
+ },
+ {
+  "platform": "pageup",
+  "tenant": "udel-d1-try1",
+  "url": "https://careers.udel.edu/cw/en-us/job/503508/part-time-technology-transfer-analyst-research-office"
+ },
+ {
+  "platform": "pageup",
+  "tenant": "udel-d2-try1",
+  "url": "https://careers.udel.edu/cw/en-us/job/503787/substitute-ud-early-learning-center"
+ },
+ {
+  "platform": "pageup",
+  "tenant": "astonmartin-d1-try2",
+  "url": "https://careers.astonmartin.com/cw/en/job/511841/procurement-manager-direct",
+  "headers": {
+   "Accept": "text/html,application/xhtml+xml"
+  }
+ },
+ {
+  "platform": "pageup",
+  "tenant": "employment-d1-try2",
+  "url": "https://www.employment.mtu.edu/cw/en-us/job/494251/director-for-charitable-giving",
+  "headers": {
+   "Accept": "text/html,application/xhtml+xml"
+  }
+ },
+ {
+  "platform": "pageup",
+  "tenant": "udel-d1-try2",
+  "url": "https://careers.udel.edu/cw/en-us/job/503508/part-time-technology-transfer-analyst-research-office",
+  "headers": {
+   "Accept": "text/html,application/xhtml+xml"
+  }
+ }
+]

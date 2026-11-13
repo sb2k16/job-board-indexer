@@ -1,0 +1,27 @@
+[
+{
+"platform": "jobboard.com",
+"tenant": "itjobstech-detail",
+"url": "https://itjobstech.jobboard.com/jobs/traveling-retail-merchandiser-overnight-baldwin-city-kansas/3065997200-2/"
+},
+{
+"platform": "jobboard.com",
+"tenant": "itjobstech-detail2",
+"url": "https://itjobstech.jobboard.com/jobs/retail-merchandiser-california-city-california/3065997225-2/"
+},
+{
+"platform": "jobboard.com",
+"tenant": "itjobstech-cat",
+"url": "https://itjobstech.jobboard.com/jobs/python-jobs/"
+},
+{
+"platform": "jobboard.com",
+"tenant": "preview-cat",
+"url": "https://preview.jobboard.com/jobs/"
+},
+{
+"platform": "ejobsitesoftware",
+"tenant": "marketron-http",
+"url": "http://jobs.marketron.com/"
+}
+]

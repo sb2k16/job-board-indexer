@@ -1,0 +1,45 @@
+# Local stack: Postgres (coordination store), OpenSearch, a fake board server and 3 crawler replicas.
+# Image:    PLATFORM=linux/arm64 ../docker/build.sh local   (jbi-crawler:local)
+# Pipeline: python3 ../config/render_pipeline.py pipelines.tmpl.yaml pipelines.yaml
+# Run:      docker compose up -d
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment: { POSTGRES_USER: jbi, POSTGRES_PASSWORD: jbi, POSTGRES_DB: jbi }
+    ports: ["55432:5432"]
+    healthcheck: { test: ["CMD", "pg_isready", "-U", "jbi"], interval: 2s, retries: 30 }
+  opensearch:
+    image: opensearchproject/opensearch:2.19.2
+    environment:
+      discovery.type: single-node
+      DISABLE_SECURITY_PLUGIN: "true"
+      DISABLE_INSTALL_DEMO_CONFIG: "true"
+      OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
+    ports: ["9200:9200"]
+    healthcheck: { test: ["CMD-SHELL", "curl -sf localhost:9200/_cluster/health"], interval: 5s, retries: 60 }
+  db-migrate:
+    # Creates the coordination table once, before any crawler starts (crawlers use skip_table_creation).
+    image: postgres:16-alpine
+    environment: { PGPASSWORD: jbi }
+    command: ["psql", "-h", "postgres", "-U", "jbi", "-d", "jbi", "-v", "ON_ERROR_STOP=1", "-f", "/db/V1__source_coordination.sql"]
+    volumes: ["../db:/db:ro"]
+    depends_on:
+      postgres: { condition: service_healthy }
+  fixture:
+    image: python:3.12-alpine
+    command: ["python3", "/srv/server.py"]
+    volumes: ["./fixture-board:/srv:ro"]
+    ports: ["8080:8080"]
+  crawler:
+    image: jbi-crawler:local
+    deploy: { replicas: 3 }
+    environment:
+      JAVA_OPTS: "-Xmx384m -XX:+ExitOnOutOfMemoryError"
+    volumes:
+      - ./pipelines.yaml:/usr/share/data-prepper/pipelines/pipelines.yaml:ro
+      - ./data-prepper-config.yaml:/usr/share/data-prepper/config/data-prepper-config.yaml:ro
+      - ./tenants:/etc/jbi/tenants:ro
+    depends_on:
+      db-migrate: { condition: service_completed_successfully }
+      opensearch: { condition: service_healthy }
+      fixture: { condition: service_started }

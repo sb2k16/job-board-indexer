@@ -1,0 +1,37 @@
+[
+{
+"platform": "applicantpro",
+"tenant": "opc-detail",
+"url": "https://www.applicantpro.com/openings/opc/jobs/3874718"
+},
+{
+"platform": "applicantpro",
+"tenant": "opc-detail-tenant",
+"url": "https://opc.applicantpro.com/jobs/3874718"
+},
+{
+"platform": "isolved",
+"tenant": "directviz-detail",
+"url": "https://directviz.isolvedhire.com/jobs/1580856.html"
+},
+{
+"platform": "dover",
+"tenant": "reycoelectric-detail",
+"url": "https://jobs.dover.com/reycoelectric/fab047d1-2d7f-4d42-a633-f8d1d3543a22"
+},
+{
+"platform": "dover",
+"tenant": "techhatch-detail",
+"url": "https://jobs.dover.com/techhatchtalentpartners/f28587b9-b444-47ba-958b-a3651a2f04f6"
+},
+{
+"platform": "hireology",
+"tenant": "nextpoint-detail",
+"url": "https://careers.hireology.com/nextpoint/2857197/description"
+},
+{
+"platform": "hireology",
+"tenant": "burnham-detail",
+"url": "https://careers.hireology.com/burnhamnationwide/2844779/description"
+}
+]

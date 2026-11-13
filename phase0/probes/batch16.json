@@ -1,0 +1,140 @@
+[
+{
+"platform": "dayforce",
+"tenant": "wheeler-post",
+"url": "https://jobs.dayforcehcm.com/api/geo/wheeler/jobposting/search",
+"method": "POST",
+"headers": {
+"Content-Type": "application/json",
+"Accept": "application/json"
+},
+"body": "{\"clientNamespace\": \"wheeler\", \"jobBoardCode\": \"CANDIDATEPORTAL\", \"isoCultureCode\": \"en-US\", \"pageNumber\": 1, \"pageSize\": 20}"
+},
+{
+"platform": "dayforce",
+"tenant": "wfad-post",
+"url": "https://jobs.dayforcehcm.com/api/geo/wfad/jobposting/search",
+"method": "POST",
+"headers": {
+"Content-Type": "application/json",
+"Accept": "application/json"
+},
+"body": "{\"clientNamespace\": \"wfad\", \"jobBoardCode\": \"CANDIDATEPORTAL\", \"isoCultureCode\": \"en-US\", \"pageNumber\": 1, \"pageSize\": 20}"
+},
+{
+"platform": "dayforce",
+"tenant": "twh-post",
+"url": "https://jobs.dayforcehcm.com/api/geo/twh/jobposting/search",
+"method": "POST",
+"headers": {
+"Content-Type": "application/json",
+"Accept": "application/json"
+},
+"body": "{\"clientNamespace\": \"twh\", \"jobBoardCode\": \"CANDIDATEPORTAL\", \"isoCultureCode\": \"en-US\", \"pageNumber\": 1, \"pageSize\": 20}"
+},
+{
+"platform": "smartrecruiters",
+"tenant": "abbvie",
+"url": "https://jobs.smartrecruiters.com/AbbVie"
+},
+{
+"platform": "smartrecruiters",
+"tenant": "abbvie-detail",
+"url": "https://jobs.smartrecruiters.com/AbbVie/3743990004593916-senior-counsel-global-alliances-legal"
+},
+{
+"platform": "smartrecruiters",
+"tenant": "servicenow-detail",
+"url": "https://jobs.smartrecruiters.com/ServiceNow/743999780688647-enterprise-architect-west-us-region"
+},
+{
+"platform": "smartrecruiters",
+"tenant": "playtech",
+"url": "https://jobs.smartrecruiters.com/Playtech"
+},
+{
+"platform": "taleo",
+"tenant": "mtstatejobs",
+"url": "https://mtstatejobs.taleo.net/careersection/100/jobsearch.ftl"
+},
+{
+"platform": "taleo",
+"tenant": "baptisthlth",
+"url": "https://baptisthlth.taleo.net/careersection/2/jobsearch.ftl"
+},
+{
+"platform": "taleo",
+"tenant": "baptisthlth-detail",
+"url": "https://baptisthlth.taleo.net/careersection/2/jobdetail.ftl?job=120017"
+},
+{
+"platform": "taleo",
+"tenant": "mtstatejobs-detail",
+"url": "https://mtstatejobs.taleo.net/careersection/100/jobdetail.ftl?job=26141591"
+},
+{
+"platform": "taleo",
+"tenant": "tbe-lde",
+"url": "https://lde.tbe.taleo.net/lde01/ats/careers/v2/searchResults?org=ALMANSSP&cws=39"
+},
+{
+"platform": "taleo",
+"tenant": "tbe-tre",
+"url": "https://tre.tbe.taleo.net/tre01/ats/careers/v2/searchResults?org=BAA9G6&cws=37"
+},
+{
+"platform": "taleo",
+"tenant": "tbe-lde-detail",
+"url": "https://lde.tbe.taleo.net/lde01/ats/careers/v2/viewRequisition?org=ALMANSSP&cws=39&rid=14776"
+},
+{
+"platform": "paycor",
+"tenant": "client2",
+"url": "https://recruitingbypaycor.com/career/CareerHome.action?clientId=8a7883d0843a56f501845879ab4f0ef7"
+},
+{
+"platform": "zoho",
+"tenant": "jamppharma",
+"url": "https://jamppharma.zohorecruit.com/jobs/Careers"
+},
+{
+"platform": "zoho",
+"tenant": "gatesourcehrus",
+"url": "https://gatesourcehrus.zohorecruit.com/jobs/Careers"
+},
+{
+"platform": "zoho",
+"tenant": "recruteaction",
+"url": "https://recruteaction.zohorecruit.com/jobs/Careers"
+},
+{
+"platform": "zoho",
+"tenant": "jamppharma-detail",
+"url": "https://jamppharma.zohorecruit.com/jobs/Careers/589893000001067358/Application-de-candidature-spontan%C3%A9e-Spontaneous"
+},
+{
+"platform": "zoho",
+"tenant": "recruteaction-detail",
+"url": "https://recruteaction.zohorecruit.com/jobs/Careers/60508000047795653/"
+},
+{
+"platform": "trinet",
+"tenant": "rocketride",
+"url": "https://app.trinethire.com/companies/1071922-rocketride-inc/jobs"
+},
+{
+"platform": "trinet",
+"tenant": "rocketride-detail",
+"url": "https://app.trinethire.com/companies/1071922-rocketride-inc/jobs/122441-ai-developer-intern"
+},
+{
+"platform": "ultipro",
+"tenant": "men-board",
+"url": "https://recruiting2.ultipro.com/MEN1002MENZI/JobBoard/c62dfe4d-64ad-4642-8cd0-17a30715a697"
+},
+{
+"platform": "ultipro",
+"tenant": "geo-board",
+"url": "https://recruiting2.ultipro.com/GEO1010GEODI/JobBoard/2a3cb756-a2e9-420c-beb9-f22e12ae0c00"
+}
+]

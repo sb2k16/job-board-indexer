@@ -1,0 +1,62 @@
+[
+{
+"platform": "madgex",
+"tenant": "insidehighered-rss",
+"url": "https://careers.insidehighered.com/jobsrss/?countrycode=US"
+},
+{
+"platform": "madgex",
+"tenant": "sciencecareers",
+"url": "https://jobs.sciencecareers.org/jobsrss/"
+},
+{
+"platform": "madgex",
+"tenant": "timeshighered",
+"url": "https://www.timeshighereducation.com/unijobs/jobsrss/"
+},
+{
+"platform": "madgex",
+"tenant": "bmj",
+"url": "https://www.bmj.com/careers/jobsrss/"
+},
+{
+"platform": "madgex",
+"tenant": "economist",
+"url": "https://jobs.economist.com/jobsrss/"
+},
+{
+"platform": "madgex",
+"tenant": "chronicle",
+"url": "https://jobs.chronicle.com/jobsrss/"
+},
+{
+"platform": "madgex",
+"tenant": "pharmiweb-rss",
+"url": "https://www.pharmiweb.jobs/jobsrss/"
+},
+{
+"platform": "jobiqo",
+"tenant": "miamijobs-search",
+"url": "https://www.miamijobs.com/jobs"
+},
+{
+"platform": "jobiqo",
+"tenant": "mediajobcenter-search",
+"url": "https://www.mediajobcenter.com/jobs"
+},
+{
+"platform": "jobboard.io",
+"tenant": "cityandstate-rss",
+"url": "https://jobs.cityandstateny.com/jobs.rss"
+},
+{
+"platform": "jobboard.io",
+"tenant": "hireheroes-jobs",
+"url": "https://jobs.hireheroesusa.org/jobs"
+},
+{
+"platform": "jobboard.io",
+"tenant": "nynmedia",
+"url": "http://jobs.nynmedia.com/"
+}
+]

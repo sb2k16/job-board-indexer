@@ -1,0 +1,298 @@
+[
+{
+"platform": "breezy",
+"tenant": "vetsez",
+"url": "https://vetsez.breezy.hr/json"
+},
+{
+"platform": "breezy",
+"tenant": "mindoula-health-inc",
+"url": "https://mindoula-health-inc.breezy.hr/json"
+},
+{
+"platform": "breezy",
+"tenant": "german-american-chambers-of-commerce",
+"url": "https://german-american-chambers-of-commerce.breezy.hr/json"
+},
+{
+"platform": "gem",
+"tenant": "firestorm",
+"url": "https://api.gem.com/job_board/v0/firestorm/job_posts/"
+},
+{
+"platform": "gem",
+"tenant": "the-boring-company",
+"url": "https://api.gem.com/job_board/v0/the-boring-company/job_posts/"
+},
+{
+"platform": "gem",
+"tenant": "function-health",
+"url": "https://api.gem.com/job_board/v0/function-health/job_posts/"
+},
+{
+"platform": "hirehive",
+"tenant": "irish-wheelchair-association",
+"url": "https://irish-wheelchair-association.hirehive.com/api/v1/jobs"
+},
+{
+"platform": "hirehive",
+"tenant": "jsc-bank-of-georgia",
+"url": "https://jsc-bank-of-georgia.hirehive.com/api/v1/jobs"
+},
+{
+"platform": "hirehive",
+"tenant": "voltedge",
+"url": "https://voltedge.hirehive.com/api/v1/jobs"
+},
+{
+"platform": "recruitee",
+"tenant": "60secondstonapoli",
+"url": "https://60secondstonapoli.recruitee.com/api/offers/"
+},
+{
+"platform": "recruitee",
+"tenant": "arsipa",
+"url": "https://arsipa.recruitee.com/api/offers/"
+},
+{
+"platform": "recruitee",
+"tenant": "puregymswiss",
+"url": "https://puregymswiss.recruitee.com/api/offers/"
+},
+{
+"platform": "pinpoint",
+"tenant": "indrive",
+"url": "https://indrive.pinpointhq.com/postings.json"
+},
+{
+"platform": "pinpoint",
+"tenant": "arrowglobal",
+"url": "https://arrowglobal.pinpointhq.com/postings.json"
+},
+{
+"platform": "pinpoint",
+"tenant": "forterro",
+"url": "https://forterro.pinpointhq.com/postings.json"
+},
+{
+"platform": "workable",
+"tenant": "tiger-analytics",
+"url": "https://apply.workable.com/api/v1/widget/accounts/tiger-analytics"
+},
+{
+"platform": "workable",
+"tenant": "luxasia",
+"url": "https://apply.workable.com/api/v1/widget/accounts/luxasia"
+},
+{
+"platform": "workable",
+"tenant": "mercari",
+"url": "https://apply.workable.com/api/v1/widget/accounts/mercari"
+},
+{
+"platform": "workable",
+"tenant": "valsoft-corp",
+"url": "https://apply.workable.com/api/v1/widget/accounts/valsoft-corp"
+},
+{
+"platform": "teamtailor",
+"tenant": "vardaga",
+"url": "https://vardaga.teamtailor.com/jobs.rss"
+},
+{
+"platform": "teamtailor",
+"tenant": "dfdsprofessionals",
+"url": "https://dfdsprofessionals.teamtailor.com/jobs.rss"
+},
+{
+"platform": "teamtailor",
+"tenant": "coffeedesk",
+"url": "https://coffeedesk.teamtailor.com/jobs.rss"
+},
+{
+"platform": "careerplug",
+"tenant": "i9-sports-careers",
+"url": "https://i9-sports-careers.careerplug.com/jobs"
+},
+{
+"platform": "careerplug",
+"tenant": "uptowncheapskatecareers",
+"url": "https://uptowncheapskatecareers.careerplug.com/jobs"
+},
+{
+"platform": "careerplug",
+"tenant": "lil-kickers-careers",
+"url": "https://lil-kickers-careers.careerplug.com/jobs"
+},
+{
+"platform": "manatal",
+"tenant": "ffiadvisory",
+"url": "https://ffiadvisory.careers-page.com/"
+},
+{
+"platform": "manatal",
+"tenant": "the-pss-group",
+"url": "https://the-pss-group.careers-page.com/"
+},
+{
+"platform": "manatal",
+"tenant": "yoailabs",
+"url": "https://yoailabs.careers-page.com/"
+},
+{
+"platform": "rippling",
+"tenant": "popstroke-job-board-1924",
+"url": "https://ats.rippling.com/popstroke-job-board-1924/jobs"
+},
+{
+"platform": "rippling",
+"tenant": "nocd",
+"url": "https://ats.rippling.com/nocd/jobs"
+},
+{
+"platform": "trakstar",
+"tenant": "bracinternational",
+"url": "https://bracinternational.hire.trakstar.com/jobs"
+},
+{
+"platform": "trakstar",
+"tenant": "whiteoak",
+"url": "https://whiteoak.hire.trakstar.com/jobs"
+},
+{
+"platform": "trakstar",
+"tenant": "bennington",
+"url": "https://bennington.hire.trakstar.com/jobs"
+},
+{
+"platform": "isolved",
+"tenant": "directviz",
+"url": "https://directviz.isolvedhire.com/jobs/"
+},
+{
+"platform": "isolved",
+"tenant": "midwestcityok",
+"url": "https://midwestcityok.isolvedhire.com/jobs/"
+},
+{
+"platform": "isolved",
+"tenant": "iistl",
+"url": "https://iistl.isolvedhire.com/jobs/"
+},
+{
+"platform": "gohire",
+"tenant": "shri-educare-limited-o9lf3xun",
+"url": "https://jobs.gohire.io/shri-educare-limited-o9lf3xun/"
+},
+{
+"platform": "gohire",
+"tenant": "wellnessliving-zvcrxvet",
+"url": "https://jobs.gohire.io/wellnessliving-zvcrxvet/"
+},
+{
+"platform": "gohire",
+"tenant": "taisan-r2b7bxfq",
+"url": "https://jobs.gohire.io/taisan-r2b7bxfq/"
+},
+{
+"platform": "zoho",
+"tenant": "alnahiya",
+"url": "https://alnahiya.zohorecruit.com/jobs/Careers"
+},
+{
+"platform": "zoho",
+"tenant": "intelehealth",
+"url": "https://intelehealth.zohorecruit.com/jobs/Careers"
+},
+{
+"platform": "zoho",
+"tenant": "ssati",
+"url": "https://ssati.zohorecruit.com/jobs/Careers"
+},
+{
+"platform": "deel",
+"tenant": "deel",
+"url": "https://jobs.deel.com/job-boards/deel"
+},
+{
+"platform": "deel",
+"tenant": "klarna",
+"url": "https://jobs.deel.com/job-boards/klarna"
+},
+{
+"platform": "dayforce",
+"tenant": "dbi",
+"url": "https://jobs.dayforcehcm.com/en-US/dbi/CANDIDATEPORTAL"
+},
+{
+"platform": "dayforce",
+"tenant": "hajoca",
+"url": "https://jobs.dayforcehcm.com/en-US/hajoca/CANDIDATEPORTAL"
+},
+{
+"platform": "dayforce",
+"tenant": "ohmc",
+"url": "https://jobs.dayforcehcm.com/en-US/ohmc/CANDIDATEPORTAL"
+},
+{
+"platform": "oracle",
+"tenant": "ejwl.fa.us2",
+"url": "https://ejwl.fa.us2.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&expand=requisitionList&finder=findReqs;siteNumber=CX,limit=10",
+"headers": {
+"Accept": "application/json"
+}
+},
+{
+"platform": "oracle",
+"tenant": "edyo.fa.us2",
+"url": "https://edyo.fa.us2.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&expand=requisitionList&finder=findReqs;siteNumber=CX,limit=10",
+"headers": {
+"Accept": "application/json"
+}
+},
+{
+"platform": "join",
+"tenant": "100marketing",
+"url": "https://join.com/companies/100marketing"
+},
+{
+"platform": "jobvite",
+"tenant": "medvet",
+"url": "https://jobs.jobvite.com/medvet/jobs"
+},
+{
+"platform": "jobvite",
+"tenant": "ziffdavis",
+"url": "https://jobs.jobvite.com/ziffdavis/jobs"
+},
+{
+"platform": "jobvite",
+"tenant": "pilgrims",
+"url": "https://jobs.jobvite.com/pilgrims/jobs"
+},
+{
+"platform": "avature",
+"tenant": "missionpethealth",
+"url": "https://missionpethealth.avature.net/careers/SearchJobs"
+},
+{
+"platform": "avature",
+"tenant": "dfiretailgroup",
+"url": "https://dfiretailgroup.avature.net/careers/SearchJobs"
+},
+{
+"platform": "taleo",
+"tenant": "cognizant",
+"url": "https://cognizant.taleo.net/careersection/2/jobsearch.ftl"
+},
+{
+"platform": "taleo",
+"tenant": "uhg",
+"url": "https://uhg.taleo.net/careersection/2/jobsearch.ftl"
+},
+{
+"platform": "taleo",
+"tenant": "worleyparsons",
+"url": "https://worleyparsons.taleo.net/careersection/2/jobsearch.ftl"
+}
+]

@@ -1,0 +1,450 @@
+[
+{
+"platform": "workday",
+"tenant": "nvidia",
+"url": "https://nvidia.wd5.myworkdayjobs.com/wday/cxs/nvidia/NVIDIAExternalCareerSite/jobs",
+"method": "POST",
+"body": "{\"appliedFacets\":{},\"limit\":5,\"offset\":0,\"searchText\":\"\"}",
+"headers": {
+"Content-Type": "application/json",
+"Accept": "application/json"
+}
+},
+{
+"platform": "workday",
+"tenant": "intel",
+"url": "https://intel.wd1.myworkdayjobs.com/wday/cxs/intel/External/jobs",
+"method": "POST",
+"body": "{\"appliedFacets\":{},\"limit\":5,\"offset\":0,\"searchText\":\"\"}",
+"headers": {
+"Content-Type": "application/json",
+"Accept": "application/json"
+}
+},
+{
+"platform": "workday",
+"tenant": "salesforce",
+"url": "https://salesforce.wd12.myworkdayjobs.com/wday/cxs/salesforce/External_Career_Site/jobs",
+"method": "POST",
+"body": "{\"appliedFacets\":{},\"limit\":5,\"offset\":0,\"searchText\":\"\"}",
+"headers": {
+"Content-Type": "application/json",
+"Accept": "application/json"
+}
+},
+{
+"platform": "oracle",
+"tenant": "oracle",
+"url": "https://eeho.fa.us2.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&expand=requisitionList&finder=findReqs;siteNumber=CX_45001,limit=5,offset=0"
+},
+{
+"platform": "oracle",
+"tenant": "jpmc",
+"url": "https://jpmc.fa.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&expand=requisitionList&finder=findReqs;siteNumber=CX_1001,limit=5,offset=0"
+},
+{
+"platform": "taleo",
+"tenant": "chevron",
+"url": "https://chevron.taleo.net/careersection/2/jobsearch.ftl"
+},
+{
+"platform": "taleo",
+"tenant": "ibm-t",
+"url": "https://aa224.taleo.net/careersection/ex/jobsearch.ftl"
+},
+{
+"platform": "taleo",
+"tenant": "kpmg",
+"url": "https://kpmg.taleo.net/careersection/ex/jobsearch.ftl"
+},
+{
+"platform": "successfactors",
+"tenant": "sap",
+"url": "https://jobs.sap.com/search/"
+},
+{
+"platform": "successfactors",
+"tenant": "sap-sitemap",
+"url": "https://jobs.sap.com/sitemap.xml"
+},
+{
+"platform": "successfactors",
+"tenant": "siemens-energy",
+"url": "https://jobs.siemens-energy.com/en_US/jobs/Jobs"
+},
+{
+"platform": "successfactors",
+"tenant": "career5",
+"url": "https://career5.successfactors.eu/career?company=SAP"
+},
+{
+"platform": "icims",
+"tenant": "uscareers-ups",
+"url": "https://careers-ups.icims.com/jobs/search?ss=1&in_iframe=1"
+},
+{
+"platform": "icims",
+"tenant": "jobs-amtrak",
+"url": "https://careers-amtrak.icims.com/jobs/search?ss=1&in_iframe=1"
+},
+{
+"platform": "icims",
+"tenant": "hyatt",
+"url": "https://careers-hyatt.icims.com/jobs/search?ss=1&in_iframe=1"
+},
+{
+"platform": "avature",
+"tenant": "bloomberg",
+"url": "https://bloomberg.avature.net/careers/SearchJobs"
+},
+{
+"platform": "avature",
+"tenant": "mcdonalds",
+"url": "https://mcdonalds.avature.net/careers/SearchJobs"
+},
+{
+"platform": "avature",
+"tenant": "koch",
+"url": "https://koch.avature.net/careers/SearchJobs"
+},
+{
+"platform": "bamboohr",
+"tenant": "bamboohr",
+"url": "https://bamboohr.bamboohr.com/careers/list"
+},
+{
+"platform": "bamboohr",
+"tenant": "cardinalpath",
+"url": "https://bitwarden.bamboohr.com/careers/list"
+},
+{
+"platform": "bamboohr",
+"tenant": "nonexistent",
+"url": "https://jbi-nonexistent-tenant-xyz.bamboohr.com/careers/list"
+},
+{
+"platform": "eightfold",
+"tenant": "netflix",
+"url": "https://explore.jobs.netflix.net/api/apply/v2/jobs?domain=netflix.com&num=5"
+},
+{
+"platform": "eightfold",
+"tenant": "eightfold",
+"url": "https://eightfold.eightfold.ai/careers"
+},
+{
+"platform": "eightfold",
+"tenant": "amex",
+"url": "https://aexp.eightfold.ai/careers"
+},
+{
+"platform": "jobvite",
+"tenant": "logitech",
+"url": "https://jobs.jobvite.com/logitech/jobs"
+},
+{
+"platform": "jobvite",
+"tenant": "egnyte",
+"url": "https://jobs.jobvite.com/egnyte/jobs"
+},
+{
+"platform": "jobvite",
+"tenant": "jobvite",
+"url": "https://jobs.jobvite.com/jobvite/jobs"
+},
+{
+"platform": "jobvite",
+"tenant": "nonexistent",
+"url": "https://jobs.jobvite.com/jbi-nonexistent-tenant-xyz/jobs"
+},
+{
+"platform": "jazzhr",
+"tenant": "jazzhr",
+"url": "https://jazz.applytojob.com/apply"
+},
+{
+"platform": "jazzhr",
+"tenant": "clevertech",
+"url": "https://clevertech.applytojob.com/apply"
+},
+{
+"platform": "jazzhr",
+"tenant": "nonexistent",
+"url": "https://jbi-nonexistent-tenant-xyz.applytojob.com/apply"
+},
+{
+"platform": "join",
+"tenant": "join",
+"url": "https://join.com/companies/join"
+},
+{
+"platform": "join",
+"tenant": "heyjobs",
+"url": "https://join.com/companies/heyjobs"
+},
+{
+"platform": "comeet",
+"tenant": "comeet",
+"url": "https://www.comeet.com/jobs/comeet/30.005"
+},
+{
+"platform": "comeet",
+"tenant": "spotinst",
+"url": "https://www.comeet.com/jobs/monday/41.00B"
+},
+{
+"platform": "freshteam",
+"tenant": "freshworks",
+"url": "https://freshworks.freshteam.com/jobs"
+},
+{
+"platform": "freshteam",
+"tenant": "freshteam",
+"url": "https://careers.freshteam.com/jobs"
+},
+{
+"platform": "zoho",
+"tenant": "zoho",
+"url": "https://careers.zohorecruit.com/jobs/Careers"
+},
+{
+"platform": "zoho",
+"tenant": "zylker",
+"url": "https://zylker.zohorecruit.com/jobs/Careers"
+},
+{
+"platform": "hibob",
+"tenant": "hibob",
+"url": "https://hibob.careers.hibob.com/"
+},
+{
+"platform": "hibob",
+"tenant": "bob",
+"url": "https://bob.careers.hibob.com/"
+},
+{
+"platform": "trakstar",
+"tenant": "trakstar",
+"url": "https://trakstar.hire.trakstar.com/"
+},
+{
+"platform": "trakstar",
+"tenant": "recruiterbox",
+"url": "https://recruiterbox.hire.trakstar.com/jobs"
+},
+{
+"platform": "hireology",
+"tenant": "hireology",
+"url": "https://careers.hireology.com/hireology"
+},
+{
+"platform": "dover",
+"tenant": "dover",
+"url": "https://app.dover.com/jobs/dover"
+},
+{
+"platform": "dover",
+"tenant": "api",
+"url": "https://app.dover.com/api/v1/careers-page/dover/jobs"
+},
+{
+"platform": "kula",
+"tenant": "kula",
+"url": "https://careers.kula.ai/kula"
+},
+{
+"platform": "gohire",
+"tenant": "gohire",
+"url": "https://jobs.gohire.io/gohire"
+},
+{
+"platform": "careerplug",
+"tenant": "careerplug",
+"url": "https://careerplug.careerplug.com/jobs"
+},
+{
+"platform": "careerplug",
+"tenant": "x",
+"url": "https://careers.careerplug.com/jobs"
+},
+{
+"platform": "hirehive",
+"tenant": "hirehive",
+"url": "https://hirehive.hirehive.com/"
+},
+{
+"platform": "hirehive",
+"tenant": "api",
+"url": "https://hirehive.hirehive.com/api/v1/jobs"
+},
+{
+"platform": "recooty",
+"tenant": "recooty",
+"url": "https://jobs.recooty.com/recooty"
+},
+{
+"platform": "deel",
+"tenant": "deel",
+"url": "https://jobs.deel.com/job-boards/deel"
+},
+{
+"platform": "deel",
+"tenant": "gh",
+"url": "https://job-boards.greenhouse.io/deel"
+},
+{
+"platform": "paycom",
+"tenant": "x",
+"url": "https://www.paycomonline.net/v4/ats/web.php/jobs"
+},
+{
+"platform": "paycor",
+"tenant": "x",
+"url": "https://recruitingbypaycor.com/career/CareerHome.action?clientId=8a7883d07a6e8ef7017a7e2be9b02aa2"
+},
+{
+"platform": "paylocity",
+"tenant": "x",
+"url": "https://recruiting.paylocity.com/Recruiting/Jobs/All/0d8d6a2c-6a25-4fbb-ae52-7dcb8ea10e3d"
+},
+{
+"platform": "adp",
+"tenant": "x",
+"url": "https://myjobs.adp.com/adp/cx"
+},
+{
+"platform": "adp",
+"tenant": "wfn",
+"url": "https://workforcenow.adp.com/mascsr/default/mdf/recruitment/recruitment.html?cid=b19a1a0e-a4e6-48a6-8fd8-c6df5c9a9a5e"
+},
+{
+"platform": "dayforce",
+"tenant": "dayforce",
+"url": "https://jobs.dayforcehcm.com/en-US/ceridian/CANDIDATEPORTAL"
+},
+{
+"platform": "brassring",
+"tenant": "x",
+"url": "https://sjobs.brassring.com/TGnewUI/Search/Home/Home?partnerid=25037&siteid=5010"
+},
+{
+"platform": "csod",
+"tenant": "csod",
+"url": "https://csod.csod.com/ux/ats/careersite/4/home?c=csod"
+},
+{
+"platform": "csod",
+"tenant": "x",
+"url": "https://careers.csod.com/ux/ats/careersite/1/home"
+},
+{
+"platform": "ultipro",
+"tenant": "x",
+"url": "https://recruiting.ultipro.com/ULT1000UKGI/JobBoard/2a4fcd12-9ae0-4e20-a9a4-e8a1ed4f6a44"
+},
+{
+"platform": "pageup",
+"tenant": "pageup",
+"url": "https://careers.pageuppeople.com/513/cw/en/listing"
+},
+{
+"platform": "pageup",
+"tenant": "x",
+"url": "https://careers.pageuppeople.com/688/cw/en/listing"
+},
+{
+"platform": "isolved",
+"tenant": "isolved",
+"url": "https://isolved.isolvedhire.com/jobs/"
+},
+{
+"platform": "applicantpro",
+"tenant": "x",
+"url": "https://www.applicantpro.com/openings/applicantpro/jobs"
+},
+{
+"platform": "hiringthing",
+"tenant": "x",
+"url": "https://hiringthing.applicantstack.com/x/openings"
+},
+{
+"platform": "polymer",
+"tenant": "x",
+"url": "https://jobs.polymer.co/polymer"
+},
+{
+"platform": "polymer",
+"tenant": "api",
+"url": "https://api.polymer.co/v1/hire/organizations/polymer-3/jobs"
+},
+{
+"platform": "rippling",
+"tenant": "rippling",
+"url": "https://ats.rippling.com/rippling/jobs"
+},
+{
+"platform": "rippling",
+"tenant": "api",
+"url": "https://ats.rippling.com/api/v2/board/rippling-careers/jobs"
+},
+{
+"platform": "breezy",
+"tenant": "breezy",
+"url": "https://breezy.breezy.hr/json"
+},
+{
+"platform": "breezy",
+"tenant": "x",
+"url": "https://koddi.breezy.hr/json"
+},
+{
+"platform": "recruitee",
+"tenant": "x",
+"url": "https://mollie.recruitee.com/api/offers"
+},
+{
+"platform": "recruitee",
+"tenant": "y",
+"url": "https://sendcloud.recruitee.com/api/offers"
+},
+{
+"platform": "pinpoint",
+"tenant": "x",
+"url": "https://pinpoint.pinpointhq.com/postings.json"
+},
+{
+"platform": "teamtailor",
+"tenant": "x",
+"url": "https://sinch.teamtailor.com/jobs.rss"
+},
+{
+"platform": "teamtailor",
+"tenant": "y",
+"url": "https://scoutbee.teamtailor.com/jobs.rss"
+},
+{
+"platform": "personio",
+"tenant": "x",
+"url": "https://moss.jobs.personio.de/xml"
+},
+{
+"platform": "personio",
+"tenant": "y",
+"url": "https://sennder.jobs.personio.de/xml"
+},
+{
+"platform": "gem",
+"tenant": "x",
+"url": "https://api.gem.com/job_board/v0/gem-test/job_posts/"
+},
+{
+"platform": "workable",
+"tenant": "x",
+"url": "https://apply.workable.com/api/v1/widget/accounts/workshopdigital"
+},
+{
+"platform": "workable",
+"tenant": "y",
+"url": "https://apply.workable.com/api/v1/widget/accounts/carecru"
+}
+]

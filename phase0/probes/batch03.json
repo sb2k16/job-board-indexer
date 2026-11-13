@@ -1,0 +1,212 @@
+[
+{
+"platform": "rippling",
+"tenant": "rippling",
+"url": "https://ats.rippling.com/rippling/jobs"
+},
+{
+"platform": "rippling",
+"tenant": "demo",
+"url": "https://ats.rippling.com/dunder-mifflin50317daf-bf46-4119-a983-c418321babdc64b6d522e654ea8f9c154f84/jobs"
+},
+{
+"platform": "deel",
+"tenant": "deel",
+"url": "https://jobs.deel.com/job-boards/deel"
+},
+{
+"platform": "icims",
+"tenant": "evms",
+"url": "https://internal-evms.icims.com/jobs/search?ss=1"
+},
+{
+"platform": "teamtailor",
+"tenant": "spotify",
+"url": "https://spotify.teamtailor.com/jobs.rss"
+},
+{
+"platform": "teamtailor",
+"tenant": "demo",
+"url": "https://demo-enterprise.teamtailor.com/jobs.rss"
+},
+{
+"platform": "jboard",
+"tenant": "showcase",
+"url": "https://jboard.io/showcase"
+},
+{
+"platform": "jobboard.io",
+"tenant": "home",
+"url": "https://jobboard.io/"
+},
+{
+"platform": "niceboard",
+"tenant": "superpath",
+"url": "https://jobs.superpath.co/"
+},
+{
+"platform": "niceboard",
+"tenant": "fintexer",
+"url": "https://fintexer.com/jobs"
+},
+{
+"platform": "niceboard",
+"tenant": "growcycling",
+"url": "https://www.growcycling.com/jobs"
+},
+{
+"platform": "niceboard",
+"tenant": "home",
+"url": "https://www.niceboard.co/"
+},
+{
+"platform": "smartjobboard",
+"tenant": "jobsinortho",
+"url": "https://www.jobsinortho.com/jobs/"
+},
+{
+"platform": "smartjobboard",
+"tenant": "chemicalengineer",
+"url": "https://jobs.thechemicalengineer.com/jobs/"
+},
+{
+"platform": "smartjobboard",
+"tenant": "showcase",
+"url": "https://smartjobboard.com/?p=1689"
+},
+{
+"platform": "madgex",
+"tenant": "guardian",
+"url": "https://jobs.theguardian.com/jobs/"
+},
+{
+"platform": "madgex",
+"tenant": "pharmiweb",
+"url": "https://www.pharmiweb.jobs/jobs/"
+},
+{
+"platform": "madgex",
+"tenant": "newscientist",
+"url": "https://jobs.newscientist.com/jobs/"
+},
+{
+"platform": "wpjobmanager",
+"tenant": "home",
+"url": "https://wpjobmanager.com/showcase/"
+},
+{
+"platform": "jobboardfire",
+"tenant": "productmarketing",
+"url": "https://productmarketing.jobboardfire.com/"
+},
+{
+"platform": "jobboardfire",
+"tenant": "home",
+"url": "https://www.jobboardfire.com/"
+},
+{
+"platform": "jobiqo",
+"tenant": "home",
+"url": "https://www.jobiqo.com/"
+},
+{
+"platform": "talenetic",
+"tenant": "home",
+"url": "https://www.talenetic.com/"
+},
+{
+"platform": "jobmount",
+"tenant": "home",
+"url": "https://www.jobmount.com/"
+},
+{
+"platform": "careersitecloud",
+"tenant": "home",
+"url": "https://www.careersitecloud.com/"
+},
+{
+"platform": "jobboard.com",
+"tenant": "home",
+"url": "https://www.jobboard.com/"
+},
+{
+"platform": "artha",
+"tenant": "home",
+"url": "https://www.arthajobboard.com/"
+},
+{
+"platform": "jobboardsoftware",
+"tenant": "home",
+"url": "https://www.jobboardsoftware.com/"
+},
+{
+"platform": "jobboardhq",
+"tenant": "home",
+"url": "https://www.jobboardhq.com/"
+},
+{
+"platform": "nodex",
+"tenant": "home",
+"url": "https://www.nodex.co.uk/"
+},
+{
+"platform": "ejobboard",
+"tenant": "home",
+"url": "https://www.ejobboard.com/"
+},
+{
+"platform": "ejobsite",
+"tenant": "home",
+"url": "https://www.ejobsitesoftware.com/"
+},
+{
+"platform": "jobkit",
+"tenant": "home",
+"url": "https://www.jobkit.com/"
+},
+{
+"platform": "hireology",
+"tenant": "home",
+"url": "https://careers.hireology.com/"
+},
+{
+"platform": "paradox",
+"tenant": "home",
+"url": "https://www.paradox.ai/"
+},
+{
+"platform": "talentreef",
+"tenant": "home",
+"url": "https://www.jobappnetwork.com/"
+},
+{
+"platform": "firststage",
+"tenant": "home",
+"url": "https://www.firststage.co/"
+},
+{
+"platform": "rival",
+"tenant": "home",
+"url": "https://www.rivalhr.com/"
+},
+{
+"platform": "werecruit",
+"tenant": "home",
+"url": "https://www.werecruit.io/"
+},
+{
+"platform": "hirebridge",
+"tenant": "home",
+"url": "https://www.hirebridge.com/"
+},
+{
+"platform": "phenom",
+"tenant": "home",
+"url": "https://www.phenom.com/"
+},
+{
+"platform": "trinet",
+"tenant": "home",
+"url": "https://trinet.applytojob.com/apply"
+}
+]

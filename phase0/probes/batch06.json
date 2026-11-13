@@ -1,0 +1,132 @@
+[
+{
+"platform": "madgex",
+"tenant": "pharmiweb",
+"url": "https://www.pharmiweb.jobs/searchjobs/"
+},
+{
+"platform": "madgex",
+"tenant": "insidehighered",
+"url": "https://careers.insidehighered.com/searchjobs/"
+},
+{
+"platform": "madgex",
+"tenant": "getafinancejob",
+"url": "https://www.getafinancejob.com/searchjobs/"
+},
+{
+"platform": "madgex",
+"tenant": "multilingualvacancies",
+"url": "https://www.multilingualvacancies.com/searchjobs/"
+},
+{
+"platform": "madgex",
+"tenant": "jobs.co.uk",
+"url": "https://www.jobs.co.uk/searchjobs/"
+},
+{
+"platform": "talenetic",
+"tenant": "britishmedicaljobs",
+"url": "https://www.britishmedicaljobs.com/"
+},
+{
+"platform": "talenetic",
+"tenant": "topengineer",
+"url": "https://www.topengineer.com/"
+},
+{
+"platform": "jobiqo",
+"tenant": "newsday",
+"url": "https://jobs.newsday.com/"
+},
+{
+"platform": "jobiqo",
+"tenant": "miamijobs",
+"url": "https://www.miamijobs.com/"
+},
+{
+"platform": "jobiqo",
+"tenant": "mediajobcenter",
+"url": "https://www.mediajobcenter.com/"
+},
+{
+"platform": "jobiqo",
+"tenant": "startus",
+"url": "https://www.startus.cc/jobs"
+},
+{
+"platform": "jobboard.io",
+"tenant": "motionographer",
+"url": "https://motionographer.com/jobs/"
+},
+{
+"platform": "jobboard.io",
+"tenant": "blooloop",
+"url": "https://blooloop.com/jobs/"
+},
+{
+"platform": "jobboard.io",
+"tenant": "hireheroes",
+"url": "https://jobs.hireheroesusa.org/"
+},
+{
+"platform": "jobboard.io",
+"tenant": "cityandstate",
+"url": "https://jobs.cityandstateny.com/"
+},
+{
+"platform": "jobboard.io",
+"tenant": "cancercareers",
+"url": "https://jobs.cancercareers.org/"
+},
+{
+"platform": "ejobsitesoftware",
+"tenant": "justoracle",
+"url": "https://www.justoracle.com/"
+},
+{
+"platform": "artha",
+"tenant": "vendor",
+"url": "https://arthajobboard.com/"
+},
+{
+"platform": "wpjobmanager",
+"tenant": "lathire",
+"url": "https://lathire.com/?feed=job_feed"
+},
+{
+"platform": "wpjobmanager",
+"tenant": "oavt",
+"url": "https://oavt.org/?feed=job_feed"
+},
+{
+"platform": "wpjobmanager",
+"tenant": "ymcaneo",
+"url": "https://www.ymcaneo.ca/?feed=job_feed"
+},
+{
+"platform": "wpjobmanager",
+"tenant": "employmentoptions",
+"url": "https://employmentoptions.ca/jm-ajax/get_listings/"
+},
+{
+"platform": "phenom",
+"tenant": "cvshealth",
+"url": "https://jobs.cvshealth.com/us/en/search-results"
+},
+{
+"platform": "phenom",
+"tenant": "oreillyauto",
+"url": "https://careers.oreillyauto.com/us/en/search-results"
+},
+{
+"platform": "phenom",
+"tenant": "dollartree",
+"url": "https://careers.dollartree.com/us/en/search-results"
+},
+{
+"platform": "phenom",
+"tenant": "cvshealth-sitemap",
+"url": "https://jobs.cvshealth.com/us/en/sitemap_index.xml"
+}
+]

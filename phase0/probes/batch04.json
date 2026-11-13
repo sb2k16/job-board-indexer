@@ -1,0 +1,367 @@
+[
+{
+"platform": "adp",
+"tenant": "cid56385b92",
+"url": "https://workforcenow.adp.com/mascsr/default/careercenter/public/events/staffing/v1/job-requisitions?cid=56385b92-402c-477a-89b4-4599bbee0c03&lang=en_US&$top=20"
+},
+{
+"platform": "adp",
+"tenant": "cide5360e53",
+"url": "https://workforcenow.adp.com/mascsr/default/careercenter/public/events/staffing/v1/job-requisitions?cid=e5360e53-0e72-41c4-b1bf-01f1613310c6&lang=en_US&$top=20"
+},
+{
+"platform": "adp",
+"tenant": "cid7a599ddd",
+"url": "https://workforcenow.adp.com/mascsr/default/careercenter/public/events/staffing/v1/job-requisitions?cid=7a599ddd-ecbd-4514-882c-dc5e9c535edc&lang=en_US&$top=20"
+},
+{
+"platform": "adp",
+"tenant": "myjobs-primecareers",
+"url": "https://myjobs.adp.com/primecareers/cx/job-listing"
+},
+{
+"platform": "applicantpro",
+"tenant": "opc",
+"url": "https://opc.applicantpro.com/jobs/"
+},
+{
+"platform": "applicantpro",
+"tenant": "cayugahealthsystem",
+"url": "https://cayugahealthsystem.applicantpro.com/jobs/"
+},
+{
+"platform": "applicantpro",
+"tenant": "sportadvisory",
+"url": "https://sportadvisory.applicantpro.com/jobs/"
+},
+{
+"platform": "comeet",
+"tenant": "cyera",
+"url": "https://www.comeet.com/jobs/cyera/17.008"
+},
+{
+"platform": "comeet",
+"tenant": "quantummachines",
+"url": "https://www.comeet.com/jobs/quantummachines/D6.000"
+},
+{
+"platform": "comeet",
+"tenant": "silverfort",
+"url": "https://www.comeet.com/jobs/silverfort/54.007"
+},
+{
+"platform": "csod",
+"tenant": "turnerconstruction",
+"url": "https://turnerconstruction.csod.com/ux/ats/careersite/4/home?c=turnerconstruction"
+},
+{
+"platform": "csod",
+"tenant": "worldbankgroup",
+"url": "https://worldbankgroup.csod.com/ux/ats/careersite/6/home?c=worldbankgroup"
+},
+{
+"platform": "csod",
+"tenant": "illinois",
+"url": "https://illinois.csod.com/ux/ats/careersite/8/home?c=illinois"
+},
+{
+"platform": "dover",
+"tenant": "zooplive",
+"url": "https://app.dover.com/jobs/zooplive"
+},
+{
+"platform": "dover",
+"tenant": "engineears",
+"url": "https://app.dover.com/EngineEars/careers/f0b0dced-bfc1-4d97-8e62-387773d1ef10"
+},
+{
+"platform": "eightfold",
+"tenant": "costar",
+"url": "https://costar.eightfold.ai/api/apply/v2/jobs?num=10&start=0"
+},
+{
+"platform": "eightfold",
+"tenant": "morganstanley",
+"url": "https://morganstanley.eightfold.ai/careers"
+},
+{
+"platform": "eightfold",
+"tenant": "bostonscientific",
+"url": "https://bostonscientific.eightfold.ai/api/apply/v2/jobs?num=10&start=0"
+},
+{
+"platform": "firststage",
+"tenant": "wayve",
+"url": "https://wayve.firststage.co/jobs"
+},
+{
+"platform": "firststage",
+"tenant": "agility-gwg",
+"url": "https://agility-gwg.firststage.co/jobs"
+},
+{
+"platform": "firststage",
+"tenant": "reflexivity",
+"url": "https://reflexivity.firststage.co/jobs"
+},
+{
+"platform": "freshteam",
+"tenant": "talent360",
+"url": "https://talent360.freshteam.com/jobs"
+},
+{
+"platform": "freshteam",
+"tenant": "sciera",
+"url": "https://sciera.freshteam.com/jobs"
+},
+{
+"platform": "freshteam",
+"tenant": "stormideas",
+"url": "https://stormideas.freshteam.com/jobs"
+},
+{
+"platform": "hibob",
+"tenant": "credo",
+"url": "https://credo.careers.hibob.com/jobs"
+},
+{
+"platform": "hibob",
+"tenant": "interwell",
+"url": "https://interwell.careers.hibob.com/jobs"
+},
+{
+"platform": "hibob",
+"tenant": "ustwo",
+"url": "https://ustwo.careers.hibob.com/jobs"
+},
+{
+"platform": "hirebridge",
+"tenant": "stoneyriver",
+"url": "https://jobs.hirebridge.com/stoneyriver/"
+},
+{
+"platform": "hirebridge",
+"tenant": "jalexanders",
+"url": "https://jobs.hirebridge.com/jalexanders/"
+},
+{
+"platform": "hirebridge",
+"tenant": "rss5559",
+"url": "http://rss.hirebridge.com/5559.rss"
+},
+{
+"platform": "hireology",
+"tenant": "seniorhelpers-tucsonaz",
+"url": "https://careers.hireology.com/seniorhelpers-tucsonaz"
+},
+{
+"platform": "hireology",
+"tenant": "longofchattanoogaautomall",
+"url": "https://careers.hireology.com/longofchattanoogaautomall"
+},
+{
+"platform": "hireology",
+"tenant": "abc-oahu",
+"url": "https://careers.hireology.com/alwaysbestcareseniorservices-oahu"
+},
+{
+"platform": "hiringthing",
+"tenant": "wealthcounsel-llc",
+"url": "https://wealthcounsel-llc.hiringthing.com/"
+},
+{
+"platform": "hiringthing",
+"tenant": "oppco",
+"url": "https://oppco.hiringthing.com/"
+},
+{
+"platform": "hiringthing",
+"tenant": "pacmin-inc",
+"url": "https://pacmin-inc.hiringthing.com/"
+},
+{
+"platform": "icims",
+"tenant": "covenanthealth",
+"url": "https://careers-covenanthealth.icims.com/jobs/search?ss=1&in_iframe=1"
+},
+{
+"platform": "icims",
+"tenant": "us-erac",
+"url": "https://us-erac.icims.com/jobs/search?ss=1&in_iframe=1"
+},
+{
+"platform": "icims",
+"tenant": "actslife",
+"url": "https://careers-actslife.icims.com/jobs/search?ss=1&in_iframe=1"
+},
+{
+"platform": "jazzhr",
+"tenant": "fincons",
+"url": "https://fincons.applytojob.com/apply"
+},
+{
+"platform": "jazzhr",
+"tenant": "afterschoolmatters",
+"url": "https://afterschoolmatters.applytojob.com/apply"
+},
+{
+"platform": "jazzhr",
+"tenant": "instinctscience",
+"url": "https://instinctscience.applytojob.com/apply"
+},
+{
+"platform": "kula",
+"tenant": "10xgenomics",
+"url": "https://careers.kula.ai/10xgenomics"
+},
+{
+"platform": "kula",
+"tenant": "avantstay",
+"url": "https://careers.kula.ai/avantstay"
+},
+{
+"platform": "kula",
+"tenant": "shinkei",
+"url": "https://careers.kula.ai/shinkei"
+},
+{
+"platform": "paylocity",
+"tenant": "xml27577",
+"url": "https://recruiting.paylocity.com/recruiting/jobs/xml?id=27577"
+},
+{
+"platform": "paylocity",
+"tenant": "xml26333",
+"url": "https://recruiting.paylocity.com/recruiting/jobs/xml?id=26333"
+},
+{
+"platform": "paylocity",
+"tenant": "schaller",
+"url": "https://recruiting.paylocity.com/recruiting/jobs/All/c974bbca-640d-4719-a6d7-d635d7feb6f8/Schaller-Acura"
+},
+{
+"platform": "recooty",
+"tenant": "gururo",
+"url": "https://jobs.recooty.com/gururo-private-limited"
+},
+{
+"platform": "recooty",
+"tenant": "matthew-weiner",
+"url": "https://jobs.recooty.com/matthew-weiner"
+},
+{
+"platform": "recooty",
+"tenant": "stand-by-personnel",
+"url": "https://jobs.recooty.com/stand-by-personnel"
+},
+{
+"platform": "talentreef",
+"tenant": "southern-multifoods",
+"url": "https://apply.jobappnetwork.com/southern-multifoods/en"
+},
+{
+"platform": "talentreef",
+"tenant": "star-brands-winghouse",
+"url": "https://apply.jobappnetwork.com/star-brands-winghouse/en"
+},
+{
+"platform": "talentreef",
+"tenant": "charlestowne",
+"url": "https://apply.jobappnetwork.com/charlestowne/en"
+},
+{
+"platform": "trinet",
+"tenant": "academic-engagement-network",
+"url": "https://app.trinethire.com/companies/1095006-academic-engagement-network/jobs"
+},
+{
+"platform": "werecruit",
+"tenant": "vacoa",
+"url": "https://careers.werecruit.io/fr/vacoa"
+},
+{
+"platform": "werecruit",
+"tenant": "myjob-interim",
+"url": "https://careers.werecruit.io/fr/myjob-interim"
+},
+{
+"platform": "werecruit",
+"tenant": "groupe-bodemer",
+"url": "https://careers.werecruit.io/fr/groupe-bodemer"
+},
+{
+"platform": "niceboard",
+"tenant": "ctvc",
+"url": "https://ctvc.niceboard.co/"
+},
+{
+"platform": "niceboard",
+"tenant": "avajobboard",
+"url": "https://avajobboard.niceboard.co/"
+},
+{
+"platform": "niceboard",
+"tenant": "wisconsinliteracyjobs",
+"url": "https://wisconsinliteracyjobs.niceboard.co/"
+},
+{
+"platform": "jobboardhq",
+"tenant": "grandforksmfrcjobs",
+"url": "https://grandforksmfrcjobs.jobboardhq.com/search"
+},
+{
+"platform": "jobboardhq",
+"tenant": "jbcjobs",
+"url": "https://jbcjobs.jobboardhq.com/search"
+},
+{
+"platform": "jobboardhq",
+"tenant": "vandenberg",
+"url": "https://vandenberg.jobboardhq.com/search"
+},
+{
+"platform": "jboard",
+"tenant": "golf-jobs",
+"url": "https://www.golf-jobs.com/jobs"
+},
+{
+"platform": "jboard",
+"tenant": "usa.jobs",
+"url": "https://usa.jobs/jobs"
+},
+{
+"platform": "jboard",
+"tenant": "nuclearinst",
+"url": "https://jobs.nuclearinst.com/jobs"
+},
+{
+"platform": "jboard",
+"tenant": "charityjobs.ie",
+"url": "https://www.charityjobs.ie/jobs"
+},
+{
+"platform": "smartjobboard",
+"tenant": "academiccareers",
+"url": "https://www.academiccareers.com/jobs/"
+},
+{
+"platform": "smartjobboard",
+"tenant": "psychologicalscience",
+"url": "https://jobs.psychologicalscience.org/jobs/"
+},
+{
+"platform": "smartjobboard",
+"tenant": "hireveterans",
+"url": "https://hireveterans.com/jobs/"
+},
+{
+"platform": "wpjobmanager",
+"tenant": "jobs.blog",
+"url": "https://jobs.blog/?feed=job_feed"
+},
+{
+"platform": "paradox",
+"tenant": "mchire",
+"url": "https://jobs.mchire.com/"
+}
+]

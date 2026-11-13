@@ -1,0 +1,44 @@
+{
+  "index_patterns": ["jobs-*"],
+  "template": {
+    "settings": {
+      "number_of_shards": 3,
+      "number_of_replicas": 1
+    },
+    "aliases": { "jobs": {} },
+    "mappings": {
+      "dynamic": "strict",
+      "properties": {
+        "job_key":         { "type": "keyword" },
+        "title":           { "type": "text", "fields": { "keyword": { "type": "keyword", "ignore_above": 512 } } },
+        "company":         { "type": "text", "fields": { "keyword": { "type": "keyword", "ignore_above": 256 } } },
+        "description":     { "type": "text" },
+        "location":        { "type": "text", "fields": { "keyword": { "type": "keyword", "ignore_above": 512 } } },
+        "remote":          { "type": "boolean" },
+        "employment_type": { "type": "keyword" },
+        "requisition_id":  { "type": "keyword" },
+        "salary_min":      { "type": "scaled_float", "scaling_factor": 100 },
+        "salary_max":      { "type": "scaled_float", "scaling_factor": 100 },
+        "salary_currency": { "type": "keyword" },
+        "posted_at":       { "type": "date" },
+        "first_seen":      { "type": "date" },
+        "last_checked":    { "type": "date" },
+        "last_changed":    { "type": "date" },
+        "closed_at":       { "type": "date" },
+        "crawl_started":   { "type": "date" },
+        "content_hash":    { "type": "keyword" },
+        "status":          { "type": "keyword" },
+        "source_links": {
+          "properties": {
+            "url":             { "type": "keyword" },
+            "application_url": { "type": "keyword" },
+            "platform":        { "type": "keyword" },
+            "board_id":        { "type": "keyword" },
+            "last_seen":       { "type": "date" },
+            "state":           { "type": "keyword" }
+          }
+        }
+      }
+    }
+  }
+}

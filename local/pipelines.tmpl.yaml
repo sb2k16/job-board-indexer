@@ -1,0 +1,32 @@
+version: "2"
+job-crawl:
+  workers: 2
+  delay: 100
+  source:
+    job_board_crawler:
+      refresh_interval: "PT3M"
+      leader_interval: "PT10S"
+      workers: 2
+      acknowledgments: true
+      platforms:
+        - name: greenhouse
+          base_url: "http://fixture:8080"
+          tenants_file: /etc/jbi/tenants/greenhouse.csv
+  buffer:
+    bounded_blocking:
+      buffer_size: 4096
+      batch_size: 256
+  sink:
+    - opensearch:
+        hosts: ["http://opensearch:9200"]
+        insecure: true
+        index: "jobs-v1"
+        index_type: custom
+        template_type: index-template
+        template_file: "/etc/jbi/jobs-template.json"
+        document_id: "${/job_key}"
+        action: "upsert"
+        script:
+          source: __UPSERT_SCRIPT__
+        max_retries: 5
+        bulk_size: 5

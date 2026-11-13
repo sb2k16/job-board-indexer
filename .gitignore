@@ -1,0 +1,15 @@
+# Build
+.gradle/
+build/
+*.class
+__pycache__/
+.idea/
+*.iml
+.DS_Store
+
+# Generated from local/pipelines.tmpl.yaml by config/render_pipeline.py
+local/pipelines.yaml
+# Full Stripe board snapshot (5.7 MB); regenerate from the public Greenhouse API if needed
+local/fixture-board/boards/stripe-full.json
+# Raw Phase 0 probe responses (26 MB of third-party pages); kept locally only
+phase0/samples/

@@ -1,0 +1,27 @@
+[
+{
+"platform": "madgex",
+"tenant": "sciencecareers-page",
+"url": "https://jobs.sciencecareers.org/searchjobs/"
+},
+{
+"platform": "madgex",
+"tenant": "chronicle-page",
+"url": "https://jobs.chronicle.com/searchjobs/"
+},
+{
+"platform": "madgex",
+"tenant": "economist-page",
+"url": "https://jobs.economist.com/searchjobs/"
+},
+{
+"platform": "jobboard.io",
+"tenant": "nynmedia-rss",
+"url": "https://jobs.nynmedia.com/jobs.rss"
+},
+{
+"platform": "jobboard.io",
+"tenant": "hireheroes-rss",
+"url": "https://jobs.hireheroesusa.org/jobs.rss"
+}
+]

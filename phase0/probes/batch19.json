@@ -1,0 +1,103 @@
+[
+{
+"platform": "workday",
+"tenant": "nvidia-detail",
+"url": "https://nvidia.wd5.myworkdayjobs.com/wday/cxs/nvidia/NVIDIAExternalCareerSite/job/US-CA-Santa-Clara/Senior-Site-Reliability-Engineer---HPC_JR2013271",
+"headers": {
+"Accept": "application/json"
+}
+},
+{
+"platform": "workday",
+"tenant": "nvidia-detail2",
+"url": "https://nvidia.wd5.myworkdayjobs.com/wday/cxs/nvidia/NVIDIAExternalCareerSite/job/China-Shenzhen/AI-Developer-Technology-Engineering-Intern---2027_JR2024818",
+"headers": {
+"Accept": "application/json"
+}
+},
+{
+"platform": "oracle",
+"tenant": "edyo-detail",
+"url": "https://edyo.fa.us2.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitionDetails?expand=all&onlyData=true&finder=ById;Id=%2226003993%22",
+"headers": {
+"Accept": "application/json"
+}
+},
+{
+"platform": "oracle",
+"tenant": "edyo-detail-site",
+"url": "https://edyo.fa.us2.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitionDetails?expand=all&onlyData=true&finder=ById;Id=%2226003993%22,siteNumber=%22CX_1%22",
+"headers": {
+"Accept": "application/json"
+}
+},
+{
+"platform": "eightfold",
+"tenant": "costar-detail",
+"url": "https://costar.eightfold.ai/api/apply/v2/jobs/446721826862?domain=costar.com",
+"headers": {
+"Accept": "application/json"
+}
+},
+{
+"platform": "adp",
+"tenant": "detail",
+"url": "https://workforcenow.adp.com/mascsr/default/careercenter/public/events/staffing/v1/job-requisitions/9205253588606_12?cid=e5360e53-0e72-41c4-b1bf-01f1613310c6&ccId=19000101_000001&lang=en_US",
+"headers": {
+"Accept": "application/json"
+}
+},
+{
+"platform": "workable",
+"tenant": "tiger-detail",
+"url": "https://apply.workable.com/api/v2/accounts/tiger-analytics/jobs/BF4F8D2793",
+"headers": {
+"Accept": "application/json"
+}
+},
+{
+"platform": "breezy",
+"tenant": "vetsez-detail",
+"url": "https://vetsez.breezy.hr/p/ddf6ace039b401-net-developer-remote-opportunity"
+},
+{
+"platform": "avature",
+"tenant": "bloomberg-detail",
+"url": "https://bloomberg.avature.net/careers/JobDetail/Product-Delivery-Manager-Engineering-COO-Office/12444"
+},
+{
+"platform": "madgex",
+"tenant": "insidehighered-detail",
+"url": "https://careers.insidehighered.com/job/3572493/post-doctoral-associate-in-the-division-of-science-mathematics-dr-taoufik-hmidi/"
+},
+{
+"platform": "teamtailor",
+"tenant": "vardaga-detail",
+"url": "https://vardaga.teamtailor.com/jobs/8679124-underskoterska-pa-heltid-sokes-till-vardaga-i-hagersten"
+},
+{
+"platform": "personio",
+"tenant": "desotec-detail",
+"url": "https://desotec.jobs.personio.com/job/2844884"
+},
+{
+"platform": "jobiqo",
+"tenant": "miamijobs-detail",
+"url": null
+},
+{
+"platform": "phenom",
+"tenant": "cvshealth-detail",
+"url": "https://jobs.cvshealth.com/us/en/job/CVSCHLUSR0996880EXTERNALENUS"
+},
+{
+"platform": "hirebridge",
+"tenant": "detail",
+"url": "https://recruit.hirebridge.com/v3/careercenter/v2/details.aspx?jid=640450&cid=6741"
+},
+{
+"platform": "jobboardly",
+"tenant": "detail",
+"url": "https://medicalcourierjobs.com/jobs/medical-courier-150b183d"
+}
+]

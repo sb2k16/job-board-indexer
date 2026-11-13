@@ -1,0 +1,97 @@
+[
+{
+"platform": "csod",
+"tenant": "js",
+"url": "https://worldbankgroup.csod.com/player-career-site/1.25.6/pages/home.js"
+},
+{
+"platform": "dover",
+"tenant": "js",
+"url": "https://jobs.dover.com/static/search-builder2/static/js/index-4StHXN38.js"
+},
+{
+"platform": "hibob",
+"tenant": "js",
+"url": "https://front.hibob.com/master-ca5a2f0db82396c349fbcfb3addf624abaeca12b/careers/main.20067ce59282d294.js"
+},
+{
+"platform": "hireology",
+"tenant": "js",
+"url": "https://app.hireology.com/assets/javascripts/react_packed/runtime-career_site-3e4d7dca.js"
+},
+{
+"platform": "talentreef",
+"tenant": "js",
+"url": "https://apply.jobappnetwork.com/static/js/main.fdcc1884.js"
+},
+{
+"platform": "trinet",
+"tenant": "js",
+"url": "https://dg4guz6k8vg2i.cloudfront.net/assets/public/application-4346481b8c4cdb69bb53dfd02e58638375e320aab199e5417aef0a1ff35210d1.js"
+},
+{
+"platform": "hirebridge",
+"tenant": "js",
+"url": "https://jobs.hirebridge.com/stoneyriver/assets/main-rw8aL3Kb.js"
+},
+{
+"platform": "dayforce",
+"tenant": "js",
+"url": "https://jobs.dayforcehcm.com/_next/static/chunks/pages/_app-9e792888e604e575.js"
+},
+{
+"platform": "paradox",
+"tenant": "js",
+"url": "https://cdn.sites.mchire.com/mchire-prod-careersites/dded915ad8/main.bundle.js"
+},
+{
+"platform": "polymer",
+"tenant": "js",
+"url": "https://jobs.polymer.co/packs/js/runtime~job_board_application-3e414e164a6ac8688f01.js"
+},
+{
+"platform": "applicantpro",
+"tenant": "js",
+"url": "https://opc.applicantpro.com/js/web-components/applicant-pro-components.js?version=1794297228"
+},
+{
+"platform": "dover",
+"tenant": "sitemap",
+"url": "https://jobs.dover.com/sitemap.xml"
+},
+{
+"platform": "hireology",
+"tenant": "sitemap",
+"url": "https://careers.hireology.com/sitemap_index.xml"
+},
+{
+"platform": "applicantpro",
+"tenant": "sitemap",
+"url": "https://feeds.applicantpro.com/site_map_index.xml"
+},
+{
+"platform": "niceboard",
+"tenant": "api-wisconsin",
+"url": "https://wisconsinliteracyjobs.niceboard.co/api/jobs"
+},
+{
+"platform": "niceboard",
+"tenant": "api-ava",
+"url": "https://avajobboard.niceboard.co/api/jobs"
+},
+{
+"platform": "dayforce",
+"tenant": "robots",
+"url": "https://jobs.dayforcehcm.com/robots.txt"
+},
+{
+"platform": "trinet",
+"tenant": "robots",
+"url": "https://app.trinethire.com/robots.txt"
+},
+{
+"platform": "csod",
+"tenant": "api-robots",
+"url": "https://us.api.csod.com/robots.txt"
+}
+]

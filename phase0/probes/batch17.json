@@ -1,0 +1,87 @@
+[
+{
+"platform": "firststage",
+"tenant": "quantumbase-detail",
+"url": "https://quantumbase.firststage.co/jobs/55aZWkTViO/view"
+},
+{
+"platform": "firststage",
+"tenant": "intersect-detail",
+"url": "https://intersect-mbo.firststage.co/jobs/n1ga8NbXev/view"
+},
+{
+"platform": "pageup",
+"tenant": "ufl-detail",
+"url": "https://explore.jobs.ufl.edu/cw/en-us/job/536559/hpwt-custodial-worker-ii"
+},
+{
+"platform": "pageup",
+"tenant": "astonmartin-detail2",
+"url": "https://careers.astonmartin.com/cw/en/job/511982/senior-engineermanufacturing-engineering-trim-and-final"
+},
+{
+"platform": "pageup",
+"tenant": "mtu-detail2",
+"url": "https://www.employment.mtu.edu/cw/en-us/job/494229/food-service-helper-12-mon-1st-ptnb"
+},
+{
+"platform": "pageup",
+"tenant": "unicef-detail",
+"url": "https://jobs.unicef.org/cw/en-us/listing/?page=2"
+},
+{
+"platform": "taleo",
+"tenant": "tbe-tre-detail",
+"url": "https://tre.tbe.taleo.net/tre01/ats/careers/v2/viewRequisition?org=BAA9G6&cws=37&rid=917"
+},
+{
+"platform": "jobboard.com",
+"tenant": "itjobstech-sm1",
+"url": "https://itjobstech.jobboard.com/xml-sitemaps/1.xml"
+},
+{
+"platform": "jobboardfire",
+"tenant": "pm-sitemap-pages",
+"url": "https://productmarketing.jobboardfire.com/sitemap-pages.xml"
+},
+{
+"platform": "ejobsitesoftware",
+"tenant": "marketron2",
+"url": "https://jobs.marketron.com/"
+},
+{
+"platform": "ejobsitesoftware",
+"tenant": "marketron-jobs",
+"url": "https://jobs.marketron.com/jobs/"
+},
+{
+"platform": "dayforce",
+"tenant": "sitemap",
+"url": "https://jobs.dayforcehcm.com/sitemap.xml"
+},
+{
+"platform": "dayforce",
+"tenant": "wheeler-locale",
+"url": "https://jobs.dayforcehcm.com/en-US/wheeler/CANDIDATEPORTAL"
+},
+{
+"platform": "rival",
+"tenant": "vai",
+"url": "https://www.vai.org/careers/"
+},
+{
+"platform": "rival",
+"tenant": "vai-jobs",
+"url": "https://www.vai.org/careers/open-positions/"
+},
+{
+"platform": "smartrecruiters",
+"tenant": "sitemap",
+"url": "https://jobs.smartrecruiters.com/sitemap.xml"
+},
+{
+"platform": "hibob",
+"tenant": "credo-api",
+"url": "https://credo.careers.hibob.com/api/jobs"
+}
+]
