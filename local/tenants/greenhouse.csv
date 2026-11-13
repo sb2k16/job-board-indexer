@@ -33,3 +33,11 @@ synth-27,Synth 27
 synth-28,Synth 28
 synth-29,Synth 29
 synth-30,Synth 30
+fault-500,Fault Co
+fault-429,Fault Co
+fault-timeout,Fault Co
+fault-truncated,Fault Co
+fault-short,Fault Co
+fault-html,Fault Co
+fault-flaky,Fault Co
+blocked-board,Fault Co

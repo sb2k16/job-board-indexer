@@ -49,9 +49,9 @@ public class PlatformSpec {
     @JsonProperty("fields")
     private Map<String, FieldSpec> fields = new LinkedHashMap<>();
 
-    /** Read by the politeness layer (T2.4); carried here so the spec format does not change later. */
+    /** The platform's whole budget across all pods; each pod takes its share (T2.4). */
     @JsonProperty("rate_limit")
-    private Map<String, Object> rateLimit;
+    private RateLimitSpec rateLimit = new RateLimitSpec();
 
     public String getName() {
         return name;
@@ -85,8 +85,31 @@ public class PlatformSpec {
         return fields;
     }
 
-    public Map<String, Object> getRateLimit() {
+    public RateLimitSpec getRateLimit() {
         return rateLimit;
+    }
+
+    /**
+     * Platform-wide request budget. The budget is per platform, not per host: tenants on their own
+     * subdomains still share it. Defaults apply when the spec leaves a value out.
+     */
+    public static class RateLimitSpec {
+        public static final double DEFAULT_REQUESTS_PER_SECOND = 2.0;
+        public static final int DEFAULT_MAX_CONCURRENCY = 2;
+
+        @JsonProperty("requests_per_second")
+        private double requestsPerSecond = DEFAULT_REQUESTS_PER_SECOND;
+
+        @JsonProperty("max_concurrency")
+        private int maxConcurrency = DEFAULT_MAX_CONCURRENCY;
+
+        public double getRequestsPerSecond() {
+            return requestsPerSecond;
+        }
+
+        public int getMaxConcurrency() {
+            return maxConcurrency;
+        }
     }
 
     /** The listing request and what a trustworthy response looks like. */

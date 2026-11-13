@@ -31,7 +31,7 @@ problem it found.
 | `list.marker` | yes | Paths that must exist on every page. A page without them is a **failed fetch, never zero jobs** |
 | `list.total` | no | Path to the platform's job count. The snapshot is complete only when the parsed count equals it |
 | `pagination` | no | See below; default `style: none` |
-| `rate_limit` | no | Carried for the politeness layer (T2.4), for example `requests_per_second: 1` |
+| `rate_limit` | no | The platform's whole budget across all pods: `requests_per_second` (default 2) and `max_concurrency` (default 2). Each pod takes 1/`politeness.replicas` of it, and a host's robots.txt Crawl-delay applies on top |
 | `fields` | `title`, `url` | Job record field to source; see below |
 
 ## Pagination

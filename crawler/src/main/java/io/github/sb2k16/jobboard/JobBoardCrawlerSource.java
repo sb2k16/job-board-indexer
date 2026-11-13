@@ -36,6 +36,7 @@ public class JobBoardCrawlerSource extends CrawlerSourcePlugin {
                                  final JobBoardCrawler crawler,
                                  final JobBoardExecutorServiceProvider executorServiceProvider) {
         super(PLUGIN_NAME, pluginMetrics, config, pluginFactory, acknowledgementSetManager, crawler, executorServiceProvider);
+        crawler.setAcknowledgementSetManager(acknowledgementSetManager);
     }
 
     @Override

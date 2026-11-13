@@ -33,7 +33,9 @@ class JobBoardPluginWiringTest {
         when(pluginMetrics.counter(anyString())).thenReturn(mock(Counter.class));
 
         try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext()) {
-            context.registerBean(JobBoardSourceConfig.class, () -> mock(JobBoardSourceConfig.class));
+            final JobBoardSourceConfig config = mock(JobBoardSourceConfig.class);
+            when(config.getPoliteness()).thenReturn(new PolitenessConfig());
+            context.registerBean(JobBoardSourceConfig.class, () -> config);
             context.registerBean(PluginMetrics.class, () -> pluginMetrics);
             context.scan(JobBoardCrawlerSource.class.getPackageName());
             context.refresh();

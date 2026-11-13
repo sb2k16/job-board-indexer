@@ -8,6 +8,16 @@ job-crawl:
       leader_interval: "PT10S"
       workers: 2
       acknowledgments: true
+      politeness:
+        replicas: 3                 # compose runs 3 crawler replicas; each takes a third of every budget
+        request_timeout: "PT5S"     # synth boards answer after 3 s, fault-timeout after 8 s
+        max_attempts: 3
+        backoff_base: "PT0.2S"
+        backoff_cap: "PT1S"
+      board_state:
+        url: "jdbc:postgresql://postgres:5432/jbi"
+        username: jbi
+        password: jbi
       platforms:
         - name: greenhouse
           spec: /etc/jbi/specs/greenhouse.yaml

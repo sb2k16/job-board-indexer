@@ -38,6 +38,21 @@ public class JobBoardSourceConfig implements CrawlerSourceConfig {
     @JsonProperty("leader_interval")
     private Duration leaderInterval = Duration.ofMinutes(1);
 
+    @JsonProperty("politeness")
+    private PolitenessConfig politeness = new PolitenessConfig();
+
+    /** Optional; without it nothing is recorded and no snapshot history exists (local tests only). */
+    @JsonProperty("board_state")
+    private BoardStateConfig boardState;
+
+    public PolitenessConfig getPoliteness() {
+        return politeness;
+    }
+
+    public BoardStateConfig getBoardState() {
+        return boardState;
+    }
+
     public List<PlatformConfig> getPlatforms() {
         return platforms;
     }

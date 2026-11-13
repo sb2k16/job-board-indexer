@@ -35,6 +35,7 @@ dependencies {
     compileOnly 'javax.inject:javax.inject:1'
     compileOnly 'jakarta.validation:jakarta.validation-api:3.1.1'
     compileOnly 'org.springframework:spring-context:5.3.39'
+    compileOnly 'com.zaxxer:HikariCP:5.1.0'
 
     testImplementation "org.opensearch.dataprepper:data-prepper-api:${dp}"
     testImplementation "org.opensearch.dataprepper.plugins.source.source_crawler:source-crawler:${dp}"
@@ -47,6 +48,8 @@ dependencies {
     testImplementation 'javax.inject:javax.inject:1'
     testImplementation 'jakarta.validation:jakarta.validation-api:3.1.1'
     testImplementation 'org.springframework:spring-context:5.3.39'
+    testImplementation 'com.zaxxer:HikariCP:5.1.0'
+    testImplementation 'org.postgresql:postgresql:42.7.7'
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     testImplementation 'org.mockito:mockito-core:5.12.0'
@@ -59,4 +62,7 @@ test {
     // Tests run the specs that ship, not copies of them.
     systemProperty 'jbi.specs.dir', rootProject.file('config/specs').absolutePath
     inputs.dir rootProject.file('config/specs')
+    // JdbcBoardStateStoreIT runs only when a database is given: -Djbi.test.jdbc.url=jdbc:postgresql://localhost:55432/jbi
+    systemProperty 'jbi.test.jdbc.url', System.getProperty('jbi.test.jdbc.url', '')
+    systemProperty 'jbi.db.dir', rootProject.file('db').absolutePath
 }

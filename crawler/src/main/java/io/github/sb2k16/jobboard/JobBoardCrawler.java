@@ -21,6 +21,15 @@ import org.opensearch.dataprepper.model.source.coordinator.enhanced.EnhancedSour
 import io.github.sb2k16.jobboard.adapter.AdapterRegistry;
 import io.github.sb2k16.jobboard.adapter.BoardFetchException;
 import io.github.sb2k16.jobboard.adapter.HttpFetcher;
+import io.github.sb2k16.jobboard.fetch.FetchPolicy;
+import io.github.sb2k16.jobboard.fetch.FetcherFactory;
+import io.github.sb2k16.jobboard.fetch.JdkHttpTransport;
+import io.github.sb2k16.jobboard.fetch.Ticker;
+import io.github.sb2k16.jobboard.state.BoardStateException;
+import io.github.sb2k16.jobboard.state.BoardStateStore;
+import io.github.sb2k16.jobboard.state.JdbcBoardStateStore;
+import io.github.sb2k16.jobboard.state.Outcome;
+import org.opensearch.dataprepper.model.acknowledgements.AcknowledgementSetManager;
 import io.github.sb2k16.jobboard.adapter.PlatformAdapter;
 import io.github.sb2k16.jobboard.spec.PlatformSpec;
 import io.github.sb2k16.jobboard.spec.SpecAdapter;
@@ -51,7 +60,18 @@ import static org.opensearch.dataprepper.plugins.source.source_crawler.coordinat
 
 /**
  * Leader: once per refresh interval, creates one worker partition per board.
- * Worker: fetches one board through its platform adapter and writes one event per job.
+ * Worker: fetches one board through its platform adapter and politeness layer, writes one event
+ * per job, and records the outcome in {@code board_state}.
+ *
+ * <p>A complete snapshot joins the board's {@code snapshot_history} only after the sink has
+ * confirmed every job: its events go into an acknowledgement set of our own, whose callback
+ * commits the snapshot and only then completes the framework's set (which completes the
+ * partition). If the sink fails or the pod dies first, nothing is committed and the partition's
+ * lease lapses, so another pod retries it.
+ *
+ * <p>A failed fetch is recorded and its partition completed, not thrown: the framework would
+ * otherwise hold the partition until its lease lapses and retry it every lease (retryable) or
+ * daily for 30 days (non-retryable). The board is fetched again at the next refresh.
  */
 @Named
 public class JobBoardCrawler implements Crawler<PaginationCrawlerWorkerProgressState> {
@@ -60,35 +80,76 @@ public class JobBoardCrawler implements Crawler<PaginationCrawlerWorkerProgressS
     static final String COMPANY = "company";
     static final String CRAWL_STARTED = "crawl_started";
     static final int WRITE_BATCH = 100;
+    /** Below the framework's own 2 h acknowledgement timeout, so ours always resolves first. */
+    static final Duration SNAPSHOT_ACK_TIMEOUT = Duration.ofHours(1);
     private static final int BUFFER_WRITE_TIMEOUT_MILLIS = (int) Duration.ofSeconds(30).toMillis();
     private static final Logger LOG = LoggerFactory.getLogger(JobBoardCrawler.class);
 
     private final JobBoardSourceConfig config;
     private final Map<String, PlatformAdapter> adapters = new HashMap<>();
-    private final HttpFetcher fetcher;
+    private final Map<String, HttpFetcher> fetchers = new HashMap<>();
     private final TenantLoader tenantLoader;
+    private final BoardStateStore store;
+    private volatile AcknowledgementSetManager acknowledgementSetManager;
     private final Counter boardsComplete;
     private final Counter boardsIncomplete;
     private final Counter boardsFailed;
+    private final Counter boardsGone;
+    private final Counter boardsBlocked;
+    private final Counter boardsSuperseded;
+    private final Counter snapshotsCommitted;
+    private final Counter snapshotsRejected;
     private final Counter jobsEmitted;
 
     @Inject
     public JobBoardCrawler(final JobBoardSourceConfig config, final PluginMetrics pluginMetrics) {
-        this(config, pluginMetrics, AdapterRegistry.defaultRegistry(), new HttpFetcher(), new TenantLoader());
+        this(config, pluginMetrics, AdapterRegistry.defaultRegistry(), null, new TenantLoader(), openStore(config));
     }
 
+    /** @param fetcher used for every platform when not null (tests); otherwise each platform gets a polite fetcher */
     JobBoardCrawler(final JobBoardSourceConfig config, final PluginMetrics pluginMetrics, final AdapterRegistry registry,
-                    final HttpFetcher fetcher, final TenantLoader tenantLoader) {
+                    final HttpFetcher fetcher, final TenantLoader tenantLoader, final BoardStateStore store) {
         this.config = config;
-        this.fetcher = fetcher;
         this.tenantLoader = tenantLoader;
+        this.store = store;
         this.boardsComplete = pluginMetrics.counter("boardsComplete");
         this.boardsIncomplete = pluginMetrics.counter("boardsIncomplete");
         this.boardsFailed = pluginMetrics.counter("boardsFailed");
+        this.boardsGone = pluginMetrics.counter("boardsGone");
+        this.boardsBlocked = pluginMetrics.counter("boardsBlocked");
+        this.boardsSuperseded = pluginMetrics.counter("boardsSuperseded");
+        this.snapshotsCommitted = pluginMetrics.counter("snapshotsCommitted");
+        this.snapshotsRejected = pluginMetrics.counter("snapshotsRejected");
         this.jobsEmitted = pluginMetrics.counter("jobsEmitted");
+        final PolitenessConfig p = config.getPoliteness();
+        final FetcherFactory factory = fetcher != null ? null : new FetcherFactory(new JdkHttpTransport(), Ticker.SYSTEM,
+                p.getRobotsTtl(), p.getRequestTimeout(), p.getBreakerThreshold(), p.getBreakerCooldown());
         for (final PlatformConfig platform : config.getPlatforms()) {
-            adapters.put(platform.getName(), resolveAdapter(platform, registry));
+            final PlatformAdapter adapter = resolveAdapter(platform, registry);
+            adapters.put(platform.getName(), adapter);
+            fetchers.put(platform.getName(), fetcher != null ? fetcher : factory.forPlatform(platform.getName(), policy(adapter, p)));
         }
+    }
+
+    /** The source hands over its acknowledgement manager; snapshots need it to wait for the sink. */
+    public void setAcknowledgementSetManager(final AcknowledgementSetManager manager) {
+        this.acknowledgementSetManager = manager;
+    }
+
+    private static BoardStateStore openStore(final JobBoardSourceConfig config) {
+        final BoardStateConfig c = config.getBoardState();
+        if (c == null || c.getUrl() == null) {
+            LOG.warn("No board_state database configured: outcomes and snapshot history are not recorded");
+            return BoardStateStore.NONE;
+        }
+        return new JdbcBoardStateStore(c.getUrl(), c.getUsername(), c.getPassword(), c.getMaxPoolSize(), c.getHistorySize());
+    }
+
+    static FetchPolicy policy(final PlatformAdapter adapter, final PolitenessConfig p) {
+        final PlatformSpec.RateLimitSpec rate = adapter instanceof SpecAdapter
+                ? ((SpecAdapter) adapter).getSpec().getRateLimit() : new PlatformSpec.RateLimitSpec();
+        return new FetchPolicy(rate.getRequestsPerSecond(), rate.getMaxConcurrency(), p.getReplicas(), p.getMaxAttempts(),
+                p.getBackoffBase(), p.getBackoffCap(), p.getMaxRetryAfter(), p.getRequestTimeout());
     }
 
     @Override
@@ -132,40 +193,137 @@ public class JobBoardCrawler implements Crawler<PaginationCrawlerWorkerProgressS
                 .filter(p -> p.getName().equals(platformName))
                 .findFirst()
                 .orElseThrow(() -> new SaaSCrawlerException("Platform " + platformName + " is no longer configured", false));
-        final PlatformAdapter adapter = adapters.get(platform.getName());
+        final String board = tenant.getBoard();
 
-        final BoardSnapshot snapshot;
         try {
-            snapshot = adapter.fetchBoard(platform, tenant, fetcher);
-        } catch (final BoardFetchException e) {
-            boardsFailed.increment();
-            throw new SaaSCrawlerException(e.getMessage(), e, e.isRetryable());
-        }
-        if (snapshot.isComplete()) {
-            boardsComplete.increment();
-        } else {
-            boardsIncomplete.increment();
-            LOG.warn("{}/{}: parsed {} jobs but platform reports {}", platformName, tenant.getBoard(),
-                    snapshot.getJobs().size(), snapshot.getReportedTotal());
-        }
+            if (store.isSuperseded(platformName, board, crawlStarted)) {
+                // A newer crawl of this board already ran; this one is a leftover (a retry after a lapsed lease).
+                boardsSuperseded.increment();
+                LOG.info("{}/{}: crawl {} superseded by a newer crawl, skipped", platformName, board, crawlStarted);
+                completeEmpty(acknowledgementSet);
+                return;
+            }
 
-        final List<Record<Event>> records = toRecords(snapshot, crawlStarted);
+            final Instant attemptedAt = Instant.now();
+            final BoardSnapshot snapshot;
+            try {
+                snapshot = adapters.get(platformName).fetchBoard(platform, tenant, fetchers.get(platformName));
+            } catch (final BoardFetchException e) {
+                final Outcome outcome = classify(e);
+                count(outcome);
+                store.recordAttempt(platformName, board, crawlStarted, attemptedAt, outcome, null, e.getMessage());
+                LOG.warn("{}/{}: {} ({})", platformName, board, outcome, e.getMessage());
+                completeEmpty(acknowledgementSet);
+                return;
+            }
+
+            final Outcome outcome = snapshot.isComplete() ? Outcome.COMPLETE : Outcome.PARTIAL;
+            count(outcome);
+            store.recordAttempt(platformName, board, crawlStarted, attemptedAt, outcome, snapshot.getJobs().size(),
+                    outcome == Outcome.PARTIAL ? "parsed " + snapshot.getJobs().size() + " jobs, platform reports "
+                            + snapshot.getReportedTotal() : null);
+            if (outcome == Outcome.PARTIAL) {
+                LOG.warn("{}/{}: parsed {} jobs but platform reports {}; not a snapshot", platformName, board,
+                        snapshot.getJobs().size(), snapshot.getReportedTotal());
+            }
+
+            final List<Record<Event>> records = toRecords(snapshot, crawlStarted);
+            final AcknowledgementSetManager manager = acknowledgementSetManager;
+            if (outcome == Outcome.COMPLETE && acknowledgementSet != null && manager != null) {
+                final int jobCount = records.size();
+                final AcknowledgementSet snapshotAck = manager.create(
+                        result -> onSnapshotAcknowledged(result, platformName, board, crawlStarted, jobCount, acknowledgementSet),
+                        SNAPSHOT_ACK_TIMEOUT);
+                write(records, buffer, snapshotAck, platformName, board);
+                snapshotAck.complete();
+            } else {
+                write(records, buffer, acknowledgementSet, platformName, board);
+                if (acknowledgementSet != null) {
+                    acknowledgementSet.complete();
+                }
+                if (outcome == Outcome.COMPLETE) {
+                    // Acknowledgments off: the buffer write is the strongest confirmation available.
+                    store.commitSnapshot(platformName, board, crawlStarted, Instant.now(), records.size());
+                    snapshotsCommitted.increment();
+                }
+            }
+            jobsEmitted.increment(records.size());
+            LOG.info("{}/{}: emitted {} jobs ({})", platformName, board, records.size(), outcome);
+        } catch (final BoardStateException e) {
+            // board_state unavailable: leave the partition to be retried rather than lose the outcome.
+            throw new SaaSCrawlerException("board_state unavailable for " + platformName + "/" + board + ": " + e.getMessage(), e, true);
+        }
+    }
+
+    private void onSnapshotAcknowledged(final boolean result, final String platform, final String board, final Instant crawlStarted,
+                                        final int jobCount, final AcknowledgementSet partitionAck) {
+        // Runs on the acknowledgement executor, which discards exceptions: log everything here.
+        try {
+            if (result) {
+                store.commitSnapshot(platform, board, crawlStarted, Instant.now(), jobCount);
+                snapshotsCommitted.increment();
+                partitionAck.complete();
+            } else {
+                snapshotsRejected.increment();
+                store.recordAttempt(platform, board, crawlStarted, Instant.now(), Outcome.FAILED, jobCount,
+                        "sink did not confirm every job");
+                LOG.warn("{}/{}: sink did not confirm crawl {}; no snapshot, partition left to its lease", platform, board, crawlStarted);
+                partitionAck.cancel();
+            }
+        } catch (final RuntimeException e) {
+            LOG.error("{}/{}: could not record the outcome of crawl {}; partition left to its lease", platform, board, crawlStarted, e);
+            partitionAck.cancel();
+        }
+    }
+
+    private static void write(final List<Record<Event>> records, final Buffer<Record<Event>> buffer, final AcknowledgementSet ack,
+                              final String platform, final String board) {
         try {
             for (int i = 0; i < records.size(); i += WRITE_BATCH) {
                 final List<Record<Event>> batch = records.subList(i, Math.min(records.size(), i + WRITE_BATCH));
-                if (acknowledgementSet != null) {
-                    batch.forEach(r -> acknowledgementSet.add(r.getData()));
+                if (ack != null) {
+                    batch.forEach(r -> ack.add(r.getData()));
                 }
                 buffer.writeAll(batch, BUFFER_WRITE_TIMEOUT_MILLIS);
             }
         } catch (final Exception e) {
-            throw new SaaSCrawlerException("Buffer write failed for " + platformName + "/" + tenant.getBoard(), e, true);
+            if (ack != null) {
+                ack.cancel();
+            }
+            throw new SaaSCrawlerException("Buffer write failed for " + platform + "/" + board, e, true);
         }
+    }
+
+    private static void completeEmpty(final AcknowledgementSet acknowledgementSet) {
         if (acknowledgementSet != null) {
             acknowledgementSet.complete();
         }
-        jobsEmitted.increment(records.size());
-        LOG.info("{}/{}: emitted {} jobs (complete={})", platformName, tenant.getBoard(), records.size(), snapshot.isComplete());
+    }
+
+    static Outcome classify(final BoardFetchException e) {
+        if (e.getKind() == BoardFetchException.Kind.ROBOTS && !e.isRetryable()) {
+            return Outcome.BLOCKED;
+        }
+        return e.isBoardGone() ? Outcome.GONE : Outcome.FAILED;
+    }
+
+    private void count(final Outcome outcome) {
+        switch (outcome) {
+            case COMPLETE:
+                boardsComplete.increment();
+                break;
+            case PARTIAL:
+                boardsIncomplete.increment();
+                break;
+            case GONE:
+                boardsGone.increment();
+                break;
+            case BLOCKED:
+                boardsBlocked.increment();
+                break;
+            default:
+                boardsFailed.increment();
+        }
     }
 
     /**

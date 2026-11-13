@@ -15,6 +15,7 @@ trap 'rm -rf "$CTX"' EXIT
 cp "$ROOT"/crawler/build/libs/job-board-crawler-*.jar "$CTX/"
 cp "$ROOT/config/jobs-template.json" "$CTX/"
 cp -R "$ROOT/config/specs" "$CTX/specs"
+cp "$ROOT/config/log4j2-rolling.properties" "$CTX/"
 docker build --platform "$PLATFORM" --build-arg "DATA_PREPPER_VERSION=$DP_VERSION" \
   -f "$ROOT/docker/Dockerfile" -t "jbi-crawler:$TAG" "$CTX"
 echo "built jbi-crawler:$TAG (Data Prepper $DP_VERSION)"

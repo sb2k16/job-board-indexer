@@ -22,6 +22,14 @@ import org.opensearch.dataprepper.model.record.Record;
 import org.opensearch.dataprepper.model.source.coordinator.enhanced.EnhancedSourceCoordinator;
 import io.github.sb2k16.jobboard.adapter.AdapterRegistry;
 import io.github.sb2k16.jobboard.adapter.BoardFetchException;
+import io.github.sb2k16.jobboard.state.BoardState;
+import io.github.sb2k16.jobboard.state.BoardStateException;
+import io.github.sb2k16.jobboard.state.BoardStateStore;
+import io.github.sb2k16.jobboard.state.InMemoryBoardStateStore;
+import io.github.sb2k16.jobboard.state.Outcome;
+import org.opensearch.dataprepper.model.acknowledgements.AcknowledgementSetManager;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import io.github.sb2k16.jobboard.adapter.HttpFetcher;
 import io.github.sb2k16.jobboard.adapter.PlatformAdapter;
 import io.github.sb2k16.jobboard.model.BoardSnapshot;
@@ -62,6 +70,8 @@ class JobBoardCrawlerTest {
     private PlatformAdapter adapter;
     private JobBoardSourceConfig config;
     private EnhancedSourceCoordinator coordinator;
+    private InMemoryBoardStateStore store;
+    private static final Instant CRAWL = Instant.parse("2026-11-13T00:00:00Z");
 
     @BeforeEach
     void setUp() throws Exception {
@@ -70,6 +80,7 @@ class JobBoardCrawlerTest {
         adapter = mock(PlatformAdapter.class);
         when(adapter.name()).thenReturn("fake");
         coordinator = mock(EnhancedSourceCoordinator.class);
+        store = new InMemoryBoardStateStore(10);
         config = new ObjectMapper().findAndRegisterModules().readValue(
                 "{\"refresh_interval\":\"PT6H\",\"platforms\":[{\"name\":\"fake\",\"tenants\":"
                         + "[{\"board\":\"a\",\"company\":\"A\"},{\"board\":\"b\",\"company\":\"B\"}]}]}",
@@ -77,7 +88,7 @@ class JobBoardCrawlerTest {
     }
 
     private JobBoardCrawler crawler() {
-        return new JobBoardCrawler(config, metrics, new AdapterRegistry(List.of(adapter)), mock(HttpFetcher.class), new TenantLoader());
+        return new JobBoardCrawler(config, metrics, new AdapterRegistry(List.of(adapter)), mock(HttpFetcher.class), new TenantLoader(), store);
     }
 
     private LeaderPartition leader(final Instant lastPoll) {
@@ -112,7 +123,7 @@ class JobBoardCrawlerTest {
     void constructor_unknownAdapter_fails() {
         final AdapterRegistry empty = new AdapterRegistry(List.of());
         assertThrows(IllegalArgumentException.class,
-                () -> new JobBoardCrawler(config, metrics, empty, mock(HttpFetcher.class), new TenantLoader()));
+                () -> new JobBoardCrawler(config, metrics, empty, mock(HttpFetcher.class), new TenantLoader(), store));
     }
 
     @Test
@@ -132,7 +143,7 @@ class JobBoardCrawlerTest {
                 "{\"platforms\":[{\"name\":\"bad\",\"spec\":\"" + bad + "\",\"tenants\":[{\"board\":\"a\"}]}]}",
                 JobBoardSourceConfig.class);
         assertThrows(io.github.sb2k16.jobboard.spec.SpecLoader.InvalidSpecException.class,
-                () -> new JobBoardCrawler(withSpec, metrics, new AdapterRegistry(List.of()), mock(HttpFetcher.class), new TenantLoader()));
+                () -> new JobBoardCrawler(withSpec, metrics, new AdapterRegistry(List.of()), mock(HttpFetcher.class), new TenantLoader(), store));
     }
 
     private PaginationCrawlerWorkerProgressState work() {
@@ -173,15 +184,148 @@ class JobBoardCrawlerTest {
         assertThat(keys.stream().distinct().count(), equalTo(250L));
     }
 
+    @SuppressWarnings("unchecked")
+    private static Buffer<Record<Event>> buffer() {
+        return mock(Buffer.class);
+    }
+
+    private static List<JobRecord> jobs(final int n) {
+        final List<JobRecord> jobs = new ArrayList<>();
+        for (int i = 0; i < n; i++) {
+            jobs.add(new JobRecord().setTitle("T" + i).setCompany("A").setLocation("Austin, TX").setUrl("u" + i)
+                    .setPlatform("fake").setBoardId("a"));
+        }
+        return jobs;
+    }
+
     @Test
-    void executePartition_fetchFailure_throwsAndWritesNothing() throws Exception {
-        when(adapter.fetchBoard(any(), any(Tenant.class), any())).thenThrow(new BoardFetchException("HTTP 503", true));
-        @SuppressWarnings("unchecked") final Buffer<Record<Event>> buffer = mock(Buffer.class);
+    void executePartition_fetchFailures_areRecordedNotThrown_andNeverSnapshots() throws Exception {
+        final Object[][] cases = {
+                {BoardFetchException.http("u", 503), Outcome.FAILED},
+                {BoardFetchException.http("u", 429), Outcome.FAILED},
+                {new BoardFetchException("timed out", null, true, BoardFetchException.Kind.NETWORK, 0), Outcome.FAILED},
+                {new BoardFetchException("board marker missing", false), Outcome.FAILED},
+                {new BoardFetchException("circuit open", null, true, BoardFetchException.Kind.CIRCUIT_OPEN, 0), Outcome.FAILED},
+                {BoardFetchException.http("u", 404), Outcome.GONE},
+                {new BoardFetchException("robots", null, false, BoardFetchException.Kind.ROBOTS, 0), Outcome.BLOCKED},
+        };
+        int failures = 0;
+        for (final Object[] c : cases) {
+            org.mockito.Mockito.doThrow((BoardFetchException) c[0]).when(adapter).fetchBoard(any(), any(Tenant.class), any());
+            final Buffer<Record<Event>> buffer = buffer();
+            final AcknowledgementSet ack = mock(AcknowledgementSet.class);
+            crawler().executePartition(work(), buffer, ack);
+            verify(buffer, never()).writeAll(any(), anyInt());
+            verify(ack).complete();                       // the partition is done; the next refresh retries the board
+            final BoardState state = store.get("fake", "a").orElseThrow();
+            assertThat(state.getLastOutcome(), equalTo(((Outcome) c[1]).name()));
+            assertThat(state.getConsecutiveFailures(), equalTo(++failures));
+            assertThat(state.getSnapshotHistory(), equalTo(List.of()));
+        }
+    }
+
+    @Test
+    void executePartition_partialSnapshot_emitsJobsButNoSnapshot() throws Exception {
+        when(adapter.fetchBoard(any(), any(Tenant.class), any())).thenReturn(new BoardSnapshot(jobs(3), 5, false));
+        final Buffer<Record<Event>> buffer = buffer();
         final AcknowledgementSet ack = mock(AcknowledgementSet.class);
-        final SaaSCrawlerException e = assertThrows(SaaSCrawlerException.class, () -> crawler().executePartition(work(), buffer, ack));
+        crawler().executePartition(work(), buffer, ack);
+        verify(ack, times(3)).add(any(Event.class));
+        verify(ack).complete();
+        assertThat(store.get("fake", "a").orElseThrow().getLastOutcome(), equalTo("PARTIAL"));
+        assertThat(store.history("fake", "a"), equalTo(List.of()));
+    }
+
+    /** Captures the snapshot acknowledgement set and its callback. */
+    private static final class Acks {
+        final AcknowledgementSetManager manager = mock(AcknowledgementSetManager.class);
+        final AcknowledgementSet snapshotAck = mock(AcknowledgementSet.class);
+        final AtomicReference<Consumer<Boolean>> callback = new AtomicReference<>();
+
+        Acks() {
+            when(manager.create(any(), any(Duration.class))).thenAnswer(inv -> {
+                callback.set(inv.getArgument(0));
+                return snapshotAck;
+            });
+        }
+    }
+
+    @Test
+    void executePartition_completeSnapshot_commitsOnlyAfterSinkConfirms() throws Exception {
+        when(adapter.fetchBoard(any(), any(Tenant.class), any())).thenReturn(new BoardSnapshot(jobs(4), 4, true));
+        final Acks acks = new Acks();
+        final JobBoardCrawler crawler = crawler();
+        crawler.setAcknowledgementSetManager(acks.manager);
+        final AcknowledgementSet partitionAck = mock(AcknowledgementSet.class);
+
+        crawler.executePartition(work(), buffer(), partitionAck);
+
+        verify(acks.snapshotAck, times(4)).add(any(Event.class));   // events wait on our set,
+        verify(acks.snapshotAck).complete();
+        verify(partitionAck, never()).add(any(Event.class));        // not on the framework's
+        verify(partitionAck, never()).complete();                   // so the partition stays open
+        assertThat(store.history("fake", "a"), equalTo(List.of()));  // and nothing is committed yet
+
+        acks.callback.get().accept(true);                           // the sink confirms every job
+        assertThat(store.history("fake", "a"), equalTo(List.of(CRAWL)));
+        assertThat(store.get("fake", "a").orElseThrow().getLastJobCount(), equalTo(4));
+        verify(partitionAck).complete();
+    }
+
+    @Test
+    void executePartition_sinkRejects_noSnapshot_partitionLeftToLease() throws Exception {
+        when(adapter.fetchBoard(any(), any(Tenant.class), any())).thenReturn(new BoardSnapshot(jobs(2), 2, true));
+        final Acks acks = new Acks();
+        final JobBoardCrawler crawler = crawler();
+        crawler.setAcknowledgementSetManager(acks.manager);
+        final AcknowledgementSet partitionAck = mock(AcknowledgementSet.class);
+
+        crawler.executePartition(work(), buffer(), partitionAck);
+        acks.callback.get().accept(false);
+
+        assertThat(store.history("fake", "a"), equalTo(List.of()));
+        assertThat(store.get("fake", "a").orElseThrow().getLastOutcome(), equalTo("FAILED"));
+        verify(partitionAck).cancel();
+        verify(partitionAck, never()).complete();
+    }
+
+    @Test
+    void executePartition_failureAfterSnapshots_keepsHistoryAndCountsStreak() throws Exception {
+        store.commitSnapshot("fake", "a", CRAWL.minus(Duration.ofHours(12)), CRAWL, 4);
+        store.commitSnapshot("fake", "a", CRAWL.minus(Duration.ofHours(6)), CRAWL, 4);
+        when(adapter.fetchBoard(any(), any(Tenant.class), any())).thenThrow(BoardFetchException.http("u", 500));
+        crawler().executePartition(work(), buffer(), mock(AcknowledgementSet.class));
+        final BoardState state = store.get("fake", "a").orElseThrow();
+        assertThat(state.getSnapshotHistory().size(), equalTo(2));
+        assertThat(state.getConsecutiveFailures(), equalTo(1));
+        assertThat(state.getLastConfirmed(), equalTo(CRAWL));
+    }
+
+    @Test
+    void executePartition_supersededCrawl_isSkippedWithoutFetching() throws Exception {
+        store.recordAttempt("fake", "a", CRAWL.plus(Duration.ofHours(6)), Instant.now(), Outcome.COMPLETE, 1, null);
+        final AcknowledgementSet ack = mock(AcknowledgementSet.class);
+        crawler().executePartition(work(), buffer(), ack);
+        verify(adapter, never()).fetchBoard(any(), any(Tenant.class), any());
+        verify(ack).complete();
+    }
+
+    @Test
+    void executePartition_acknowledgmentsOff_commitsAfterBufferWrite() throws Exception {
+        when(adapter.fetchBoard(any(), any(Tenant.class), any())).thenReturn(new BoardSnapshot(jobs(2), 2, true));
+        crawler().executePartition(work(), buffer(), null);
+        assertThat(store.history("fake", "a"), equalTo(List.of(CRAWL)));
+    }
+
+    @Test
+    void executePartition_boardStateDown_isRetryable() throws Exception {
+        final BoardStateStore down = mock(BoardStateStore.class);
+        when(down.isSuperseded(any(), any(), any())).thenThrow(new BoardStateException("db down", null));
+        final JobBoardCrawler crawler = new JobBoardCrawler(config, metrics, new AdapterRegistry(List.of(adapter)),
+                mock(HttpFetcher.class), new TenantLoader(), down);
+        final SaaSCrawlerException e = assertThrows(SaaSCrawlerException.class,
+                () -> crawler.executePartition(work(), buffer(), mock(AcknowledgementSet.class)));
         assertThat(e.isRetryable(), equalTo(true));
-        verify(buffer, never()).writeAll(any(), anyInt());
-        verify(ack, never()).complete();
     }
 
     @Test

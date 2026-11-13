@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 /** Serves canned bodies by URL and records every request, in order. */
-class FakeFetcher extends HttpFetcher {
+class FakeFetcher implements HttpFetcher {
     final List<String> requests = new ArrayList<>();
     private final Map<String, String> bodies = new LinkedHashMap<>();
     private Function<String, String> responder = url -> null;

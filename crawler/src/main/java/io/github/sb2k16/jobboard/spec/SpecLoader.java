@@ -74,6 +74,10 @@ public final class SpecLoader {
             }
         }
         validatePagination(spec.getPagination(), problems);
+        if (spec.getRateLimit() == null || spec.getRateLimit().getRequestsPerSecond() <= 0
+                || spec.getRateLimit().getMaxConcurrency() < 1) {
+            problems.add("rate_limit.requests_per_second must be > 0 and max_concurrency >= 1");
+        }
 
         for (final String required : List.of("title", "url")) {
             if (!spec.getFields().containsKey(required)) {
