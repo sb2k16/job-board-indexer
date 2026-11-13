@@ -115,6 +115,26 @@ class JobBoardCrawlerTest {
                 () -> new JobBoardCrawler(config, metrics, empty, mock(HttpFetcher.class), new TenantLoader()));
     }
 
+    @Test
+    void resolveAdapter_platformWithSpec_runsOnSpecEngine() {
+        final String specs = System.getProperty("jbi.specs.dir", "../config/specs");
+        final PlatformConfig lever = new PlatformConfig("lever", null, null, List.of()).setSpec(specs + "/lever.yaml");
+        final PlatformAdapter resolved = JobBoardCrawler.resolveAdapter(lever, new AdapterRegistry(List.of()));
+        assertThat(resolved instanceof io.github.sb2k16.jobboard.spec.SpecAdapter, equalTo(true));
+        assertThat(resolved.name(), equalTo("lever"));
+    }
+
+    @Test
+    void constructor_invalidSpec_failsAtStartup(@org.junit.jupiter.api.io.TempDir final java.nio.file.Path dir) throws Exception {
+        final java.nio.file.Path bad = dir.resolve("bad.yaml");
+        java.nio.file.Files.writeString(bad, "name: bad\nformat: json\nlist: { url: u, items: x }\nfields: { title: t }\n");
+        final JobBoardSourceConfig withSpec = new ObjectMapper().findAndRegisterModules().readValue(
+                "{\"platforms\":[{\"name\":\"bad\",\"spec\":\"" + bad + "\",\"tenants\":[{\"board\":\"a\"}]}]}",
+                JobBoardSourceConfig.class);
+        assertThrows(io.github.sb2k16.jobboard.spec.SpecLoader.InvalidSpecException.class,
+                () -> new JobBoardCrawler(withSpec, metrics, new AdapterRegistry(List.of()), mock(HttpFetcher.class), new TenantLoader()));
+    }
+
     private PaginationCrawlerWorkerProgressState work() {
         final PaginationCrawlerWorkerProgressState work = new PaginationCrawlerWorkerProgressState();
         work.setKeyAttributes(Map.of("platform", "fake", "board", "a", "company", "A", "crawl_started", "2026-11-13T00:00:00Z"));

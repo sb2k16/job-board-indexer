@@ -1,0 +1,25 @@
+# HireBridge per-client RSS: rss.hirebridge.com/{cid}.rss, Google Base (g:) tags per item.
+# rss.hirebridge.com has no robots.txt (404, checked 2026-11-13).
+# Each item carries two pubDate elements: the first is the feed's build time (same on every item),
+# the last is the posting date.
+name: hirebridge
+access_class: A
+format: xml
+base_url: https://rss.hirebridge.com
+namespaces:
+  g: http://base.google.com/ns/1.0
+list:
+  url: "{base_url}/{board}.rss"
+  items: /rss/channel/item
+  marker: [/rss/channel]        # an empty board is a channel with no item
+pagination:
+  style: none
+fields:
+  platform_job_id: g:id
+  title: title
+  company: g:employer
+  location: { path: g:location, transform: [normalize_list] }   # ",Portland,OR,97224"
+  description: { path: description, transform: [html_to_text] }
+  employment_type: g:job_type
+  posted_at: { path: "pubDate[last()]", type: datetime, format: rfc1123 }
+  url: link

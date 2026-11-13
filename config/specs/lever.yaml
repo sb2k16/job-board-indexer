@@ -1,0 +1,30 @@
+# Lever Postings API: a JSON array of postings, paged with skip/limit.
+# robots.txt on api.lever.co: Allow /, Crawl-delay 1 (checked 2026-11-13).
+name: lever
+access_class: A
+format: json
+base_url: https://api.lever.co
+list:
+  url: "{base_url}/v0/postings/{board}?mode=json"
+  items: "$"                    # the body itself is the array; anything else is a failed fetch
+  marker: ["$"]
+pagination:
+  style: offset
+  param: skip
+  size_param: limit
+  page_size: 100
+rate_limit:
+  requests_per_second: 1        # Crawl-delay 1; enforced by the politeness layer (T2.4)
+fields:
+  platform_job_id: id
+  title: text
+  location: categories.location
+  country: country
+  employment_type: categories.commitment
+  remote: { path: workplaceType, type: boolean, true_values: [remote] }
+  description:
+    concat: [description, lists.*.content, additional]
+    transform: [html_to_text]
+  posted_at: { path: createdAt, type: datetime, format: epoch_millis }
+  url: hostedUrl
+  application_url: applyUrl

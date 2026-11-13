@@ -13,7 +13,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /** Minimal HTML to text for descriptions. */
-final class Html {
+public final class Html {
     private static final Pattern BLOCK_TAGS = Pattern.compile("(?i)<\\s*(br|/p|/li|/h[1-6]|/div|/tr)\\s*/?>");
     private static final Pattern TAGS = Pattern.compile("<[^>]*>");
     private static final Pattern NUMERIC_ENTITY = Pattern.compile("&#(x?[0-9a-fA-F]+);");
@@ -23,7 +23,7 @@ final class Html {
     private Html() {
     }
 
-    static String unescape(final String value) {
+    public static String unescape(final String value) {
         if (value == null) {
             return null;
         }
@@ -46,7 +46,7 @@ final class Html {
                 .replace("&amp;", "&");
     }
 
-    static String toText(final String html) {
+    public static String toText(final String html) {
         if (html == null) {
             return null;
         }

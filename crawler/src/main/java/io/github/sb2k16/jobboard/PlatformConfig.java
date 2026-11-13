@@ -26,6 +26,11 @@ public class PlatformConfig {
     @JsonProperty("adapter")
     private String adapter;
 
+    /** Path to a platform spec file (class A); when set, the spec engine runs this platform. */
+    @JsonProperty("spec")
+    private String spec;
+
+    /** Overrides the spec's base_url (staging mirrors, local fixtures). */
     @JsonProperty("base_url")
     private String baseUrl;
 
@@ -49,9 +54,18 @@ public class PlatformConfig {
         return name;
     }
 
-    /** Adapter name; defaults to the platform name. */
+    /** Adapter name for a platform without a spec (class C); defaults to the platform name. */
     public String getAdapter() {
         return adapter != null ? adapter : name;
+    }
+
+    public String getSpec() {
+        return spec;
+    }
+
+    public PlatformConfig setSpec(final String spec) {
+        this.spec = spec;
+        return this;
     }
 
     public String getBaseUrl() {

@@ -30,6 +30,7 @@ dependencies {
     compileOnly 'io.micrometer:micrometer-core:1.13.0'
     compileOnly 'com.fasterxml.jackson.core:jackson-databind:2.17.2'
     compileOnly 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.17.2'
+    compileOnly 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.17.2'
     compileOnly 'org.slf4j:slf4j-api:2.0.13'
     compileOnly 'javax.inject:javax.inject:1'
     compileOnly 'jakarta.validation:jakarta.validation-api:3.1.1'
@@ -41,6 +42,7 @@ dependencies {
     testImplementation 'io.micrometer:micrometer-core:1.13.0'
     testImplementation 'com.fasterxml.jackson.core:jackson-databind:2.17.2'
     testImplementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.17.2'
+    testImplementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.17.2'
     testImplementation 'org.slf4j:slf4j-api:2.0.13'
     testImplementation 'javax.inject:javax.inject:1'
     testImplementation 'jakarta.validation:jakarta.validation-api:3.1.1'
@@ -54,4 +56,7 @@ dependencies {
 
 test {
     useJUnitPlatform()
+    // Tests run the specs that ship, not copies of them.
+    systemProperty 'jbi.specs.dir', rootProject.file('config/specs').absolutePath
+    inputs.dir rootProject.file('config/specs')
 }

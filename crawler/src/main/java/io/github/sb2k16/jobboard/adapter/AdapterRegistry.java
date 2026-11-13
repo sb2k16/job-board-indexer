@@ -14,7 +14,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/** Name to adapter lookup. */
+/**
+ * Name to adapter lookup for coded adapters (class C). Class A platforms do not register here:
+ * they run on {@link io.github.sb2k16.jobboard.spec.SpecAdapter} from their spec file.
+ */
 public class AdapterRegistry {
     private final Map<String, PlatformAdapter> adapters = new HashMap<>();
 
@@ -27,7 +30,7 @@ public class AdapterRegistry {
     }
 
     public static AdapterRegistry defaultRegistry() {
-        return new AdapterRegistry(List.of(new GreenhouseAdapter()));
+        return new AdapterRegistry(List.of());
     }
 
     public Optional<PlatformAdapter> get(final String name) {

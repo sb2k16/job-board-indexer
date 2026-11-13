@@ -1,0 +1,23 @@
+# Greenhouse Job Board API: one GET returns every job with its content.
+name: greenhouse
+access_class: A
+format: json
+base_url: https://boards-api.greenhouse.io
+list:
+  url: "{base_url}/v1/boards/{board}/jobs?content=true"
+  items: jobs
+  marker: [jobs, meta.total]
+  total: meta.total            # complete only when every reported job was parsed
+pagination:
+  style: none
+fields:
+  platform_job_id: id
+  title: title
+  company: company_name         # the tenant's company name wins when it has one
+  location: location.name
+  description:
+    path: content
+    transform: [html_unescape, html_to_text]   # content is HTML, entity-escaped once more
+  requisition_id: requisition_id
+  posted_at: { path: first_published, type: datetime, format: iso }
+  url: absolute_url

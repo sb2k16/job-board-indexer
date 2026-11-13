@@ -21,7 +21,7 @@ import java.time.Duration;
  * circuit breaker) is task T2.4 and wraps this class.
  */
 public class HttpFetcher {
-    static final String USER_AGENT = "JobBoardIndexer/0.1 (+https://github.com/sb2k16/data-prepper)";
+    static final String USER_AGENT = "JobBoardIndexer/0.1 (+https://github.com/sb2k16/job-board-indexer)";
     private static final Duration TIMEOUT = Duration.ofSeconds(30);
 
     private final HttpClient client;

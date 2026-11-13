@@ -10,8 +10,17 @@ job-crawl:
       acknowledgments: true
       platforms:
         - name: greenhouse
+          spec: /etc/jbi/specs/greenhouse.yaml
           base_url: "http://fixture:8080"
           tenants_file: /etc/jbi/tenants/greenhouse.csv
+        - name: lever
+          spec: /etc/jbi/specs/lever.yaml
+          base_url: "http://fixture:8080"
+          tenants_file: /etc/jbi/tenants/lever.csv
+        - name: hirebridge
+          spec: /etc/jbi/specs/hirebridge.yaml
+          base_url: "http://fixture:8080"
+          tenants_file: /etc/jbi/tenants/hirebridge.csv
   buffer:
     bounded_blocking:
       buffer_size: 4096

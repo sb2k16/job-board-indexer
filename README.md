@@ -17,6 +17,7 @@ Crawling indexes only what robots.txt allows and uses public job-board endpoints
 | `docker/` | Image = `opensearchproject/data-prepper:<version>` + the plugin jar |
 | `db/` | Coordination table migration, run once before the crawlers start |
 | `config/` | OpenSearch index template, upsert script, pipeline renderer |
+| `config/specs/` | Platform specs: one YAML per class A platform, run by the spec engine ([format](config/specs/README.md)) |
 | `local/` | Docker Compose stack: Postgres, OpenSearch, a fake board server and 3 crawler replicas |
 | `tests/` | Integration tests against the local stack |
 | `phase0/` | Platform feasibility study (coverage matrix, probes) |

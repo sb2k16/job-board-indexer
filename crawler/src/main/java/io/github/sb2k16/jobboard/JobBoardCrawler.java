@@ -22,6 +22,9 @@ import io.github.sb2k16.jobboard.adapter.AdapterRegistry;
 import io.github.sb2k16.jobboard.adapter.BoardFetchException;
 import io.github.sb2k16.jobboard.adapter.HttpFetcher;
 import io.github.sb2k16.jobboard.adapter.PlatformAdapter;
+import io.github.sb2k16.jobboard.spec.PlatformSpec;
+import io.github.sb2k16.jobboard.spec.SpecAdapter;
+import io.github.sb2k16.jobboard.spec.SpecLoader;
 import io.github.sb2k16.jobboard.model.BoardSnapshot;
 import io.github.sb2k16.jobboard.model.JobRecord;
 import io.github.sb2k16.jobboard.model.Tenant;
@@ -36,6 +39,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -60,7 +64,7 @@ public class JobBoardCrawler implements Crawler<PaginationCrawlerWorkerProgressS
     private static final Logger LOG = LoggerFactory.getLogger(JobBoardCrawler.class);
 
     private final JobBoardSourceConfig config;
-    private final AdapterRegistry registry;
+    private final Map<String, PlatformAdapter> adapters = new HashMap<>();
     private final HttpFetcher fetcher;
     private final TenantLoader tenantLoader;
     private final Counter boardsComplete;
@@ -76,7 +80,6 @@ public class JobBoardCrawler implements Crawler<PaginationCrawlerWorkerProgressS
     JobBoardCrawler(final JobBoardSourceConfig config, final PluginMetrics pluginMetrics, final AdapterRegistry registry,
                     final HttpFetcher fetcher, final TenantLoader tenantLoader) {
         this.config = config;
-        this.registry = registry;
         this.fetcher = fetcher;
         this.tenantLoader = tenantLoader;
         this.boardsComplete = pluginMetrics.counter("boardsComplete");
@@ -84,9 +87,7 @@ public class JobBoardCrawler implements Crawler<PaginationCrawlerWorkerProgressS
         this.boardsFailed = pluginMetrics.counter("boardsFailed");
         this.jobsEmitted = pluginMetrics.counter("jobsEmitted");
         for (final PlatformConfig platform : config.getPlatforms()) {
-            if (registry.get(platform.getAdapter()).isEmpty()) {
-                throw new IllegalArgumentException("No adapter named '" + platform.getAdapter() + "' for platform " + platform.getName());
-            }
+            adapters.put(platform.getName(), resolveAdapter(platform, registry));
         }
     }
 
@@ -131,7 +132,7 @@ public class JobBoardCrawler implements Crawler<PaginationCrawlerWorkerProgressS
                 .filter(p -> p.getName().equals(platformName))
                 .findFirst()
                 .orElseThrow(() -> new SaaSCrawlerException("Platform " + platformName + " is no longer configured", false));
-        final PlatformAdapter adapter = registry.get(platform.getAdapter()).orElseThrow();
+        final PlatformAdapter adapter = adapters.get(platform.getName());
 
         final BoardSnapshot snapshot;
         try {
@@ -165,6 +166,21 @@ public class JobBoardCrawler implements Crawler<PaginationCrawlerWorkerProgressS
         }
         jobsEmitted.increment(records.size());
         LOG.info("{}/{}: emitted {} jobs (complete={})", platformName, tenant.getBoard(), records.size(), snapshot.isComplete());
+    }
+
+    /**
+     * A platform with a spec file runs on the spec engine (class A); one without names a coded
+     * adapter (class C). Either way a bad platform fails the pipeline at start-up.
+     */
+    static PlatformAdapter resolveAdapter(final PlatformConfig platform, final AdapterRegistry registry) {
+        if (platform.getSpec() != null) {
+            final PlatformSpec spec = SpecLoader.load(Path.of(platform.getSpec()));
+            LOG.info("Platform {}: spec {} ({} format, {} pagination)", platform.getName(), platform.getSpec(),
+                    spec.getFormat(), spec.getPagination().getStyle());
+            return new SpecAdapter(spec);
+        }
+        return registry.get(platform.getAdapter()).orElseThrow(() -> new IllegalArgumentException(
+                "Platform " + platform.getName() + " has no spec and no adapter named '" + platform.getAdapter() + "'"));
     }
 
     static List<Record<Event>> toRecords(final BoardSnapshot snapshot, final Instant crawlStarted) {
