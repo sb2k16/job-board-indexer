@@ -105,7 +105,10 @@ final class FieldMapper {
         for (final String t : spec.getTransform()) {
             value = transform(t, value);
         }
-        return value == null || value.isBlank() ? null : value;
+        if (spec.getRegex() != null && value != null) {
+            value = extract(spec.getRegex(), value, spec.isKeepUnmatched());
+        }
+        return value == null || value.isBlank() ? null : value.trim();
     }
 
     /**
@@ -129,6 +132,17 @@ final class FieldMapper {
         }
         m.appendTail(sb);
         return sb.toString();
+    }
+
+    private static final java.util.concurrent.ConcurrentMap<String, Pattern> REGEX_CACHE = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** First capturing group of the first match (whole match when the pattern has no group). */
+    static String extract(final String regex, final String value, final boolean keepUnmatched) {
+        final Matcher m = REGEX_CACHE.computeIfAbsent(regex, Pattern::compile).matcher(value);
+        if (!m.find()) {
+            return keepUnmatched ? value : null;
+        }
+        return m.groupCount() >= 1 ? m.group(1) : m.group();
     }
 
     static String transform(final String name, final String value) {

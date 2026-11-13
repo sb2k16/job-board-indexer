@@ -1,0 +1,25 @@
+# WP Job Manager (WordPress job-board plugin): each site publishes ?feed=job_feed. A tenant is a
+# site host, and each item names its own employer, so the tenant list leaves company empty.
+# The job_listing: namespace URI is the site's own URL, so fields match it by local name.
+# Requesting a page past the end answers 301, so pages are large and paging stops on a short page.
+name: wpjobmanager
+access_class: A
+format: xml
+list:
+  url: "https://{board}/?feed=job_feed"
+  items: /rss/channel/item
+  marker: [/rss/channel]
+pagination:
+  style: page
+  param: paged
+  size_param: posts_per_page
+  page_size: 500
+# Some sites escape text inside CDATA a second time ("&amp;amp;"), so text fields are unescaped.
+fields:
+  platform_job_id: guid
+  title: { path: title, transform: [html_unescape] }
+  company: { path: "*[local-name()='company']", transform: [html_unescape] }
+  location: { path: "*[local-name()='location']", transform: [html_unescape] }
+  description: { path: ["*[local-name()='encoded']", description], transform: [html_to_text] }
+  posted_at: { path: pubDate, type: datetime, format: rfc1123 }
+  url: link

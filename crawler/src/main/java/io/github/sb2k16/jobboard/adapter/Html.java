@@ -16,6 +16,8 @@ import java.util.regex.Pattern;
 public final class Html {
     private static final Pattern BLOCK_TAGS = Pattern.compile("(?i)<\\s*(br|/p|/li|/h[1-6]|/div|/tr)\\s*/?>");
     private static final Pattern TAGS = Pattern.compile("<[^>]*>");
+    /** A tag cut off at the end of a truncated field, such as {@code </str}. */
+    private static final Pattern TRAILING_PARTIAL_TAG = Pattern.compile("<[^>]*$");
     private static final Pattern NUMERIC_ENTITY = Pattern.compile("&#(x?[0-9a-fA-F]+);");
     private static final Pattern SPACES = Pattern.compile("[ \\t\\x0B\\f\\r]+");
     private static final Pattern BLANK_LINES = Pattern.compile("\\n\\s*\\n+");
@@ -52,6 +54,7 @@ public final class Html {
         }
         String text = BLOCK_TAGS.matcher(html).replaceAll("\n");
         text = TAGS.matcher(text).replaceAll("");
+        text = TRAILING_PARTIAL_TAG.matcher(text).replaceAll("");
         text = unescape(text);
         text = SPACES.matcher(text).replaceAll(" ");
         text = BLANK_LINES.matcher(text).replaceAll("\n\n");

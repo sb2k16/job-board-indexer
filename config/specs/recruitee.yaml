@@ -1,0 +1,25 @@
+# Recruitee careers API: {tenant}.recruitee.com/api/offers/, every published offer in one response.
+# robots.txt redirects to the tenant's careers site; the crawler follows it (checked 2026-11-13).
+name: recruitee
+access_class: A
+format: json
+list:
+  url: "https://{board}.recruitee.com/api/offers/"
+  items: offers
+  marker: [offers]
+pagination:
+  style: none
+fields:
+  platform_job_id: id
+  title: title
+  company: company_name
+  location: location
+  city: city
+  region: state_name
+  country: country
+  employment_type: employment_type_code
+  remote: { path: remote, type: boolean }
+  description: { concat: [description, requirements], transform: [html_to_text] }
+  posted_at: { path: published_at, type: datetime }
+  url: careers_url
+  application_url: careers_apply_url

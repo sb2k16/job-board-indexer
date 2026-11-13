@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0"
+		xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/"
+		xmlns:atom="http://www.w3.org/2005/Atom" >
+	<channel>
+		<opensearch:totalResults>523</opensearch:totalResults>
+		<title>Job Search RSS</title>
+		<description></description>
+		<link>https://jobs.sciencecareers.org/jobsrss/?countrycode=US</link>
+		<atom:link href="https://jobs.sciencecareers.org/jobsrss/?countrycode=US" rel="self" type="application/rss+xml" />
+		<pubDate>Fri, 13 Nov 2026 09:12:36 -0500</pubDate>
+		<lastBuildDate>Fri, 13 Nov 2026 09:12:36 -0500</lastBuildDate>
+		<generator>Science Careers</generator>
+		<item>
+			<title>Linköping University - Department of Biomedical and Clinical Sciences: Four Postdoctoral Fellowships for Future Research Leaders in Neuroscience</title>
+			<description>
+Appx $ 56,000 tax free per annum plus reseach costs:
+
+Linköping University - Department of Biomedical and Clinical Sciences:
+The programme is intended for researchers who are ready to take the next step in their academic careers.
+Linköping (Stad), Östergötland (SE)
+</description>
+			<link>https://jobs.sciencecareers.org/job/681238/four-postdoctoral-fellowships-for-future-research-leaders-in-neuroscience/?TrackID=9&amp;utm_source=rss&amp;utm_medium=feed&amp;utm_campaign=general</link>
+			<pubDate>Fri, 13 Nov 2026 13:30:00 -0500</pubDate>
+			<guid isPermaLink="true">https://jobs.sciencecareers.org/job/681238/four-postdoctoral-fellowships-for-future-research-leaders-in-neuroscience/?TrackID=9&amp;utm_source=rss&amp;utm_medium=feed&amp;utm_campaign=general</guid>
+		</item>
+<item>
+			<title>Pennsylvania State University: Assistant/Associate/Professor of Mucosal Immunology</title>
+			<description>
+See job description.:
+
+Pennsylvania State University:
+
+Assistant/Associate/Professor of Mucosal Immunology  POSITION SPECIFICS
+Assistant/Associate/Professor of Mucosal Immunology
+The Department of Veterin
+Pennsylvania
+</description>
+			<link>https://jobs.sciencecareers.org/job/681233/assistant-associate-professor-of-mucosal-immunology/?TrackID=9&amp;utm_source=rss&amp;utm_medium=feed&amp;utm_campaign=general</link>
+			<pubDate>Fri, 13 Nov 2026 05:30:05 -0500</pubDate>
+			<guid isPermaLink="true">https://jobs.sciencecareers.org/job/681233/assistant-associate-professor-of-mucosal-immunology/?TrackID=9&amp;utm_source=rss&amp;utm_medium=feed&amp;utm_campaign=general</guid>
+		</item>
+<item>
+			<title>Pennsylvania State University: Department Head- Biology</title>
+			<description>
+See job description.:
+
+Pennsylvania State University:
+
+Department Head- Biology  POSITION SPECIFICS
+The Department of Biology within the Eberly College of Science at The Pennsylvania State University, Uni
+Pennsylvania
+</description>
+			<link>https://jobs.sciencecareers.org/job/681229/department-head-biology/?TrackID=9&amp;utm_source=rss&amp;utm_medium=feed&amp;utm_campaign=general</link>
+			<pubDate>Thu, 12 Nov 2026 21:56:25 -0500</pubDate>
+			<guid isPermaLink="true">https://jobs.sciencecareers.org/job/681229/department-head-biology/?TrackID=9&amp;utm_source=rss&amp;utm_medium=feed&amp;utm_campaign=general</guid>
+		</item>
+</channel>
+</rss>

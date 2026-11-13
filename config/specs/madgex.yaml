@@ -1,0 +1,27 @@
+# Wiley Madgex job boards: /jobsrss/ on each board's host, 20 items per page, with an
+# opensearch:totalResults count. Titles read "Employer: Job title"; the description is a teaser
+# whose last line is the location. Links carry tracking parameters, which the url field drops.
+# robots.txt on the checked boards disallows only /invalid-request/, /analytics/ and email or
+# preview paths (2026-11-13).
+name: madgex
+access_class: A
+format: xml
+namespaces:
+  opensearch: http://a9.com/-/spec/opensearch/1.1/
+list:
+  url: "https://{board}/jobsrss/"
+  items: /rss/channel/item
+  marker: [/rss/channel]
+  total: /rss/channel/opensearch:totalResults
+pagination:
+  style: page
+  param: page
+  page_size: 20
+fields:
+  platform_job_id: { path: link, regex: "/job/(\\d+)/" }
+  title: { path: title, regex: "^[^:]+:\\s*(.+)$", keep_unmatched: true }
+  company: { path: title, regex: "^([^:]+):\\s" }
+  location: { path: description, regex: "([^\\n]+?)\\s*$" }
+  description: { path: description, transform: [trim] }
+  posted_at: { path: pubDate, type: datetime, format: rfc1123 }
+  url: { path: link, regex: "^([^?]+)" }

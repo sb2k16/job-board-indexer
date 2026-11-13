@@ -13,3 +13,4 @@ local/pipelines.yaml
 local/fixture-board/boards/stripe-full.json
 # Raw Phase 0 probe responses (26 MB of third-party pages); kept locally only
 phase0/samples/
+local/live/pipelines.yaml

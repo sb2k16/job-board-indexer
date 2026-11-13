@@ -51,6 +51,16 @@ public class FieldSpec {
     @JsonProperty("join")
     private String join;
 
+    /**
+     * Applied after the transforms: the first capturing group of the first match becomes the
+     * value. No match yields no value, unless {@code keep_unmatched} is set.
+     */
+    @JsonProperty("regex")
+    private String regex;
+
+    @JsonProperty("keep_unmatched")
+    private boolean keepUnmatched;
+
     /** boolean: values that mean true, compared case-insensitively. */
     @JsonProperty("true_values")
     private List<String> trueValues = List.of("true", "1", "yes");
@@ -93,6 +103,14 @@ public class FieldSpec {
 
     public String getJoin() {
         return join;
+    }
+
+    public String getRegex() {
+        return regex;
+    }
+
+    public boolean isKeepUnmatched() {
+        return keepUnmatched;
     }
 
     public List<String> getTrueValues() {

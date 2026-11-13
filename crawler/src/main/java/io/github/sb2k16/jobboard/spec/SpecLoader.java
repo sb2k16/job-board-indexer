@@ -142,6 +142,13 @@ public final class SpecLoader {
         if (!FieldMapper.DATETIME_FORMATS.contains(f.getFormat())) {
             problems.add(where + ".format '" + f.getFormat() + "' is not one of " + FieldMapper.DATETIME_FORMATS);
         }
+        if (f.getRegex() != null) {
+            try {
+                java.util.regex.Pattern.compile(f.getRegex());
+            } catch (final java.util.regex.PatternSyntaxException e) {
+                problems.add(where + ".regex does not compile: " + e.getDescription());
+            }
+        }
         for (final String t : f.getTransform()) {
             if (!FieldMapper.TRANSFORMS.contains(t)) {
                 problems.add(where + ".transform '" + t + "' is not one of " + FieldMapper.TRANSFORMS);

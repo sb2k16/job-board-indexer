@@ -1,0 +1,5 @@
+board,company
+# Job boards: each posting names its own employer, so company stays empty.
+lathire.com,
+oavt.org,
+jobs.blog,

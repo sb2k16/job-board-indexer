@@ -1,0 +1,22 @@
+# Pinpoint public postings: {tenant}.pinpointhq.com/postings.json. No posted date in the record.
+name: pinpoint
+access_class: A
+format: json
+list:
+  url: "https://{board}.pinpointhq.com/postings.json"
+  items: data
+  marker: [data]
+pagination:
+  style: none
+fields:
+  platform_job_id: id
+  title: title
+  location: { concat: [location.city, location.name], join: ", " }
+  city: location.city
+  region: location.province
+  employment_type: employment_type_text
+  remote: { path: workplace_type, type: boolean, true_values: [remote] }
+  description:
+    concat: [description, key_responsibilities, skills_knowledge_expertise, benefits]
+    transform: [html_to_text]
+  url: url

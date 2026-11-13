@@ -1,0 +1,116 @@
+[
+ {
+  "absolute_url": "https://jobs.gem.com/the-boring-company/48e48c87-536a-458a-9b10-c8e2123376e2",
+  "content": "<div>The Boring Company was founded to solve the problem of soul-destroying traffic by creating an underground network of tunnels. Today, we are creating the technology to increase tunneling speed and decrease costs by a factor of 10 or more with the ultimate goal of making Hyperloop adoption viable",
+  "content_plain": "The Boring Company was founded to solve the problem of soul-destroying traffic by creating an underground network of tunnels. Today, we are creating the technology to increase tunneling speed and decrease costs by a factor of 10 or more with the ultimate goal of making Hyperloop adoption viable and ",
+  "created_at": "2021-08-01T19:30:16.000Z",
+  "departments": [
+   {
+    "child_ids": [],
+    "id": "ZGVwdDoBUib0HONPfQApKdOWd36d",
+    "name": "CONSTRUCTION, TBM Maintenance & Operations",
+    "parent_id": "ZGVwdDrJ9Xo4bL9wnfod4SJ1-sVL"
+   }
+  ],
+  "employment_type": "temporary",
+  "first_published_at": "2026-02-20T23:21:22.657Z",
+  "id": "48e48c87-536a-458a-9b10-c8e2123376e2",
+  "internal_job_id": "48e48c87-536a-458a-9b10-c8e2123376e2",
+  "location": {
+   "name": "Las Vegas, United States"
+  },
+  "location_type": "in_office",
+  "offices": [
+   {
+    "child_ids": [],
+    "child_office_external_ids": [],
+    "id": "a174ea005f2cfc9ad53d29104ab698e6",
+    "location": {
+     "name": "Las Vegas, United States"
+    },
+    "name": "Las Vegas, NV",
+    "parent_id": null,
+    "parent_office_external_id": null
+   }
+  ],
+  "requisition_id": "R239",
+  "title": "Mechanical Shop Assistant",
+  "updated_at": "2026-02-20T23:21:22.657Z"
+ },
+ {
+  "absolute_url": "https://jobs.gem.com/the-boring-company/ae3abd32-80d0-4e4b-8b17-4939efd90674",
+  "content": "<div>The Boring Company was founded to solve the problem of soul-destroying traffic by creating an underground network of tunnels. Today, we are creating the technology to increase tunneling speed and decrease costs by a factor of 10 or more with the ultimate goal of making Hyperloop adoption viable",
+  "content_plain": "The Boring Company was founded to solve the problem of soul-destroying traffic by creating an underground network of tunnels. Today, we are creating the technology to increase tunneling speed and decrease costs by a factor of 10 or more with the ultimate goal of making Hyperloop adoption viable and ",
+  "created_at": "2021-11-16T00:25:54.000Z",
+  "departments": [
+   {
+    "child_ids": [],
+    "id": "ZGVwdDpSI8c6JnmGfQzcTHzrY6mN",
+    "name": "OPERATIONS, Loop Operations",
+    "parent_id": "8381fcacb5d3660664e60f8c139d37d3"
+   }
+  ],
+  "employment_type": "temporary",
+  "first_published_at": "2021-11-16T00:25:54.000Z",
+  "id": "ae3abd32-80d0-4e4b-8b17-4939efd90674",
+  "internal_job_id": "ae3abd32-80d0-4e4b-8b17-4939efd90674",
+  "location": {
+   "name": ""
+  },
+  "location_type": "in_office",
+  "offices": [
+   {
+    "child_ids": [],
+    "child_office_external_ids": [],
+    "id": "0bfaae1884a6e7829056e0da94478ef9",
+    "location": {
+     "name": ""
+    },
+    "name": "Las Vegas, NV (Loop)",
+    "parent_id": null,
+    "parent_office_external_id": null
+   }
+  ],
+  "requisition_id": "R103",
+  "title": "Loop Station Attendant (Part-time)",
+  "updated_at": "2026-09-12T01:12:00.348Z"
+ },
+ {
+  "absolute_url": "https://jobs.gem.com/the-boring-company/d36a6478-e5cd-40b4-813b-ab6c60072a4d",
+  "content": "<div>The Boring Company was founded to solve the problem of soul-destroying traffic by creating an underground network of tunnels. Today, we are creating the technology to increase tunneling speed and decrease costs by a factor of 10 or more with the ultimate goal of making Hyperloop adoption viable",
+  "content_plain": "The Boring Company was founded to solve the problem of soul-destroying traffic by creating an underground network of tunnels. Today, we are creating the technology to increase tunneling speed and decrease costs by a factor of 10 or more with the ultimate goal of making Hyperloop adoption viable and ",
+  "created_at": "2021-12-22T05:40:40.000Z",
+  "departments": [
+   {
+    "child_ids": [],
+    "id": "ZGVwdDptPxlLH9XszkAK18Ucxbvy",
+    "name": "ENGINEERING, Mechanical Engineering",
+    "parent_id": "ac329ef27d7f8cb49d656d5502b9e939"
+   }
+  ],
+  "employment_type": "full_time",
+  "first_published_at": "2026-05-06T20:30:28.384Z",
+  "id": "d36a6478-e5cd-40b4-813b-ab6c60072a4d",
+  "internal_job_id": "d36a6478-e5cd-40b4-813b-ab6c60072a4d",
+  "location": {
+   "name": "Bastrop, United States"
+  },
+  "location_type": "in_office",
+  "offices": [
+   {
+    "child_ids": [],
+    "child_office_external_ids": [],
+    "id": "d3e1b74e1f46cd9dcf023809479201be",
+    "location": {
+     "name": "Bastrop, United States"
+    },
+    "name": "Bastrop, TX",
+    "parent_id": null,
+    "parent_office_external_id": null
+   }
+  ],
+  "requisition_id": "R261",
+  "title": "Senior Hydraulics Engineer",
+  "updated_at": "2026-05-06T20:30:28.384Z"
+ }
+]

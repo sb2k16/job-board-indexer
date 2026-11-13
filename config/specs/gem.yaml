@@ -1,0 +1,22 @@
+# Gem job board API: a JSON array of job posts per board.
+# robots.txt on api.gem.com returns 403 (RFC 9309: a 4xx means no restrictions), checked 2026-11-13.
+name: gem
+access_class: A
+format: json
+base_url: https://api.gem.com
+list:
+  url: "{base_url}/job_board/v0/{board}/job_posts/"
+  items: "$"
+  marker: ["$"]
+pagination:
+  style: none
+fields:
+  platform_job_id: id
+  title: title
+  location: location.name
+  employment_type: employment_type
+  remote: { path: location_type, type: boolean, true_values: [remote] }
+  requisition_id: requisition_id
+  description: { path: [content, content_plain], transform: [html_to_text] }
+  posted_at: { path: first_published_at, type: datetime, format: iso }
+  url: absolute_url

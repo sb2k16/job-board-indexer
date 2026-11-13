@@ -1,0 +1,25 @@
+# Ashby public job board API: one GET returns every listed job with its description.
+# robots.txt on api.ashbyhq.com returns 401 (RFC 9309: a 4xx means no restrictions), checked 2026-11-13.
+name: ashby
+access_class: A
+format: json
+base_url: https://api.ashbyhq.com
+list:
+  url: "{base_url}/posting-api/job-board/{board}?includeCompensation=false"
+  items: jobs
+  marker: [jobs, apiVersion]
+pagination:
+  style: none
+fields:
+  platform_job_id: id
+  title: title
+  location: location
+  city: address.postalAddress.addressLocality
+  region: address.postalAddress.addressRegion
+  country: address.postalAddress.addressCountry
+  employment_type: employmentType
+  remote: { path: isRemote, type: boolean }
+  description: { path: [descriptionHtml, descriptionPlain], transform: [html_to_text] }
+  posted_at: { path: publishedAt, type: datetime, format: iso }
+  url: jobUrl
+  application_url: applyUrl

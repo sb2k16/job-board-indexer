@@ -1,0 +1,154 @@
+{
+ "data": [
+  {
+   "id": "426478",
+   "benefits": "<ul><li><!--block-->Help us challenge injustice by creating fair choices for millions of people across 47 countries.</li><li><!--block-->Develop your professional skills with access to mentoring, career consulting, and learning programs.</li><li><!--block-->Collaborate with teams around the world an",
+   "benefits_header": "Why join us",
+   "compensation": "",
+   "compensation_minimum": null,
+   "compensation_maximum": null,
+   "compensation_currency": null,
+   "compensation_frequency": null,
+   "compensation_visible": true,
+   "deadline_at": null,
+   "description": "<div><!--block-->We are looking for a hands-on <strong>Risks Ops </strong>to own and evolve our core <strong>Decision-Making System (DMS)</strong> and credit processing engine. In this role, you will bridge the gap between risk management, and core engineering, leading a focused team of developers t",
+   "employment_type": "full_time",
+   "employment_type_text": "Full Time",
+   "key_responsibilities": "<ul><li><!--block--><strong>Technical Leadership &amp; Ownership:</strong> Take full ownership of the end-to-end Decision-Making System (DMS) lifecycle, including system architecture, deployment pipelines, production monitoring, continuous code cleanup, and performance optimization.</li><li><!--bloc",
+   "key_responsibilities_header": "Key Responsibilities",
+   "reporting_to": "",
+   "skills_knowledge_expertise": "<ul><li><!--block--><strong>Fintech &amp; Credit Decisioning Expertise:</strong> 7+ years of total backend engineering experience, with deep domain expertise in financial technology, credit conveyors, loan processing, debt collection systems, or automated decisioning engines.</li><li><!--block--><st",
+   "skills_knowledge_expertise_header": "Skills, Knowledge and Expertise",
+   "title": "Risk Ops Engineer",
+   "url": "https://indrive.pinpointhq.com/en/postings/4bfcf26d-9a07-4a83-89ac-bf4686a9509e",
+   "path": "/en/postings/4bfcf26d-9a07-4a83-89ac-bf4686a9509e",
+   "workplace_type": "hybrid",
+   "workplace_type_text": "Hybrid",
+   "job": {
+    "id": "436036",
+    "requisition_id": "6728",
+    "department": {
+     "id": "74006",
+     "name": "inDrive Money"
+    },
+    "division": {
+     "id": "12025",
+     "name": "Growth Businesses"
+    },
+    "structure_custom_group_one": {
+     "id": "12812",
+     "name": "Business Operations Department",
+     "title": "Team"
+    }
+   },
+   "location": {
+    "id": "63364",
+    "city": "Limassol",
+    "name": "Cyprus",
+    "postal_code": null,
+    "province": "Limassol",
+    "street_address": null
+   }
+  },
+  {
+   "id": "426573",
+   "benefits": "<ul><li><!--block-->Help us challenge injustice by creating fair choices for millions of people across 47 countries.</li><li><!--block-->Develop your professional skills with access to mentoring, career consulting, and learning programs.</li><li><!--block-->Collaborate with teams around the world an",
+   "benefits_header": "Why join us",
+   "compensation": null,
+   "compensation_minimum": null,
+   "compensation_maximum": null,
+   "compensation_currency": null,
+   "compensation_frequency": null,
+   "compensation_visible": false,
+   "deadline_at": null,
+   "description": "<div><!--block-->The Country Lead \u2013 Malaysia is a hands-on leadership role responsible for guiding national strategy and execution through deep understanding of ride-hailing frameworks and marketplace dynamics. The role embeds market and competitor intelligence into country-level planning, goal sett",
+   "employment_type": "full_time",
+   "employment_type_text": "Full Time",
+   "key_responsibilities": "<ul><li><!--block-->Develop and implement operational standards and best practices in alignment with global strategy</li><li><!--block-->Facilitate collaboration between country, regional, and central teams to drive execution and knowledge sharing</li><li><!--block-->Lead automation and workflow opt",
+   "key_responsibilities_header": "Responsibilities",
+   "reporting_to": "",
+   "skills_knowledge_expertise": "<ul><li><!--block-->5 years of experience in operations, general management, or marketplace leadership roles.</li><li><!--block-->Strong track record in leading cross functional teams and managing in high growth environments.</li><li><!--block-->Experience in ride hailing, e commerce, or other platf",
+   "skills_knowledge_expertise_header": "Qualifications",
+   "title": "Country Manager",
+   "url": "https://indrive.pinpointhq.com/en/postings/406e8ed4-a2c7-458b-9055-1cc4aa4224df",
+   "path": "/en/postings/406e8ed4-a2c7-458b-9055-1cc4aa4224df",
+   "workplace_type": "hybrid",
+   "workplace_type_text": "Hybrid",
+   "job": {
+    "id": "436130",
+    "requisition_id": "6895",
+    "department": {
+     "id": "65283",
+     "name": "Market Operations & Supply"
+    },
+    "division": {
+     "id": "12724",
+     "name": "Mobility"
+    },
+    "structure_custom_group_one": {
+     "id": "10099",
+     "name": "Market Operations",
+     "title": "Team"
+    }
+   },
+   "location": {
+    "id": "59430",
+    "city": "Kuala Lumpur",
+    "name": "Malaysia",
+    "postal_code": null,
+    "province": "Federal Territory of Kuala Lumpur",
+    "street_address": null
+   }
+  },
+  {
+   "id": "428672",
+   "benefits": "<ul><li><!--block-->Help us challenge injustice by creating fair choices for millions of people across 47 countries.</li><li><!--block-->Develop your professional skills with access to mentoring, career consulting, and learning programs.</li><li><!--block-->Collaborate with teams around the world an",
+   "benefits_header": "Why join us",
+   "compensation": null,
+   "compensation_minimum": null,
+   "compensation_maximum": null,
+   "compensation_currency": null,
+   "compensation_frequency": null,
+   "compensation_visible": false,
+   "deadline_at": null,
+   "description": "<div><!--block-->The QA Load team is responsible for the performance and scalability of services across their entire lifecycle \u2014 from Go/No-Go decisions before launch to working with real production traffic. We design and execute load tests, model real-world usage scenarios, identify and eliminate b",
+   "employment_type": "full_time",
+   "employment_type_text": "Full Time",
+   "key_responsibilities": "<div><!--block--><strong>Performance Audits &amp; Integration Support:</strong><br><br>Go/No-Go decisions with our stakeholder about launches services before integrating them into our ecosystem and integrations support (audit APIs, web, databases, caches, message brokers)<br><br><strong>Design&amp;E",
+   "key_responsibilities_header": "Key Responsibilities",
+   "reporting_to": "",
+   "skills_knowledge_expertise": "<ul><li><!--block-->5+ years in Performance/SRE/Load Testing</li><li><!--block-->Strong programming skills in Golang/Kotlin/Java</li><li><!--block-->Strong k6 or JMeter DSL - Performance Testing Mastery: Hands-on expertise with modern load testing tools, especially k6 and/or JMeter (and their script",
+   "skills_knowledge_expertise_header": "Skills, Knowledge and Expertise",
+   "title": "Senior Performance Engineer",
+   "url": "https://indrive.pinpointhq.com/en/postings/c2de96f0-b778-4996-8814-ae541cd6a669",
+   "path": "/en/postings/c2de96f0-b778-4996-8814-ae541cd6a669",
+   "workplace_type": "hybrid",
+   "workplace_type_text": "Hybrid",
+   "job": {
+    "id": "438055",
+    "requisition_id": "6668",
+    "department": {
+     "id": "62974",
+     "name": "Quality Cluster"
+    },
+    "division": {
+     "id": "12021",
+     "name": "Technology"
+    },
+    "structure_custom_group_one": {
+     "id": "9836",
+     "name": "QA Load Platform",
+     "title": "Team"
+    }
+   },
+   "location": {
+    "id": "59426",
+    "city": "Almaty",
+    "name": "Kazakhstan",
+    "postal_code": null,
+    "province": "Almaty Special District",
+    "street_address": null
+   }
+  }
+ ]
+}

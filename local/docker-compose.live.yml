@@ -1,0 +1,10 @@
+# Live crawl overlay: the crawlers read real ATS and job-board platforms instead of the fixture.
+#   python3 ../config/render_pipeline.py live/pipelines.tmpl.yaml live/pipelines.yaml
+#   docker compose -f docker-compose.yml -f docker-compose.live.yml up -d --scale crawler=2
+# Specs are mounted from config/specs, so a spec edit needs a restart, not an image rebuild.
+services:
+  crawler:
+    volumes:
+      - ./live/pipelines.yaml:/usr/share/data-prepper/pipelines/pipelines.yaml:ro
+      - ./live/tenants:/etc/jbi/tenants:ro
+      - ../config/specs:/etc/jbi/specs:ro
