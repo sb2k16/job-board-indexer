@@ -23,7 +23,9 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -64,6 +66,28 @@ public class JdbcBoardStateStore implements BoardStateStore {
             + "  last_job_count = EXCLUDED.last_job_count,"
             + "  updated_at = now()";
 
+    /** Retirement streak: a confirmed-gone crawl extends it; anything else ends it. A crawl that read the board un-retires it. */
+    private static final String GONE_STREAK =
+            "UPDATE board_state SET gone_streak = CASE WHEN ? THEN gone_streak + 1 ELSE 0 END,"
+            + " retired_at = CASE WHEN ? THEN NULL ELSE retired_at END,"
+            + " status = CASE WHEN ? THEN 'active' ELSE status END"
+            + " WHERE platform = ? AND board_id = ?";
+
+    private static final String CLOSURE_STATE =
+            "SELECT gone_streak, closure_paused_at, closure_override_until, retired_at FROM board_state WHERE platform = ? AND board_id = ?";
+
+    private static final String RECORD_CLOSURE =
+            "UPDATE board_state SET last_closure_at = ?, last_closed_count = ?, closure_paused_at = NULL,"
+            + " closure_paused_reason = NULL, updated_at = now() WHERE platform = ? AND board_id = ?";
+
+    private static final String PAUSE_CLOSURE =
+            "UPDATE board_state SET closure_paused_at = COALESCE(closure_paused_at, ?), closure_paused_reason = ?,"
+            + " updated_at = now() WHERE platform = ? AND board_id = ?";
+
+    private static final String RETIRE =
+            "UPDATE board_state SET status = 'retired', retired_at = COALESCE(retired_at, ?), updated_at = now()"
+            + " WHERE platform = ? AND board_id = ?";
+
     private static final String SUPERSEDED =
             "SELECT 1 FROM board_state WHERE platform = ? AND board_id = ? AND last_crawl_started > ?";
 
@@ -72,27 +96,65 @@ public class JdbcBoardStateStore implements BoardStateStore {
             + " snapshot_history, consecutive_failures, first_failure_at, last_job_count"
             + " FROM board_state WHERE platform = ? AND board_id = ?";
 
+    /**
+     * One pool per database per process. Every pipeline builds its own source and therefore its own
+     * store; with ten group pipelines in a pod, private pools would mean ten pools per pod. Stores for
+     * the same URL and user borrow one reference-counted pool, closed when the last store closes.
+     */
+    private static final Map<String, SharedPool> POOLS = new HashMap<>();
+
+    private static final class SharedPool {
+        final HikariDataSource dataSource;
+        int users;
+
+        SharedPool(final HikariDataSource dataSource) {
+            this.dataSource = dataSource;
+        }
+    }
+
     private final DataSource dataSource;
     private final int historySize;
-    private final HikariDataSource owned;
+    private final String poolKey;
+    private boolean closed;
 
     public JdbcBoardStateStore(final String url, final String username, final String password, final int maxPoolSize,
                                final int historySize) {
-        final HikariConfig hc = new HikariConfig();
-        hc.setJdbcUrl(url);
-        hc.setUsername(username);
-        hc.setPassword(password);
-        hc.setMaximumPoolSize(maxPoolSize);
-        hc.setPoolName("jbi-board-state");
-        this.owned = new HikariDataSource(hc);
-        this.dataSource = owned;
+        this.poolKey = url + "|" + username;
+        this.dataSource = acquire(poolKey, url, username, password, maxPoolSize);
         this.historySize = historySize;
     }
 
     JdbcBoardStateStore(final DataSource dataSource, final int historySize) {
         this.dataSource = dataSource;
         this.historySize = historySize;
-        this.owned = null;
+        this.poolKey = null;
+    }
+
+    private static synchronized DataSource acquire(final String key, final String url, final String username,
+                                                   final String password, final int maxPoolSize) {
+        SharedPool pool = POOLS.get(key);
+        if (pool == null) {
+            final HikariConfig hc = new HikariConfig();
+            hc.setJdbcUrl(url);
+            hc.setUsername(username);
+            hc.setPassword(password);
+            hc.setMaximumPoolSize(maxPoolSize);
+            hc.setPoolName("jbi-board-state");
+            pool = new SharedPool(new HikariDataSource(hc));
+            POOLS.put(key, pool);
+        }
+        pool.users++;
+        return pool.dataSource;
+    }
+
+    /** The pool this store uses; other tables in the same database (job identity) share it. */
+    public DataSource dataSource() {
+        return dataSource;
+    }
+
+    /** Number of distinct pools open in this process (tests). */
+    static synchronized int openPools() {
+        return POOLS.size();
     }
 
     @Override
@@ -117,6 +179,74 @@ public class JdbcBoardStateStore implements BoardStateStore {
             }
             ps.setBoolean(i++, ok);
             ps.setBoolean(i, ok);
+            ps.executeUpdate();
+            try (PreparedStatement streak = c.prepareStatement(GONE_STREAK)) {
+                final boolean read = outcome == Outcome.COMPLETE || outcome == Outcome.PARTIAL;
+                streak.setBoolean(1, outcome == Outcome.GONE);
+                streak.setBoolean(2, read);
+                streak.setBoolean(3, read);
+                streak.setString(4, platform);
+                streak.setString(5, boardId);
+                streak.executeUpdate();
+            }
+        } catch (final SQLException e) {
+            throw new BoardStateException("board_state write failed for " + platform + "/" + boardId, e);
+        }
+    }
+
+    @Override
+    public ClosureState closureState(final String platform, final String boardId) {
+        try (Connection c = dataSource.getConnection(); PreparedStatement ps = c.prepareStatement(CLOSURE_STATE)) {
+            ps.setString(1, platform);
+            ps.setString(2, boardId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    return ClosureState.NONE;
+                }
+                return new ClosureState(rs.getInt(1), instant(rs, "closure_paused_at"), instant(rs, "closure_override_until"),
+                        instant(rs, "retired_at"));
+            }
+        } catch (final SQLException e) {
+            throw new BoardStateException("board_state read failed for " + platform + "/" + boardId, e);
+        }
+    }
+
+    @Override
+    public void recordClosure(final String platform, final String boardId, final Instant at, final int closed) {
+        update(RECORD_CLOSURE, platform, boardId, ps -> {
+            ps.setTimestamp(1, Timestamp.from(at));
+            ps.setInt(2, closed);
+            ps.setString(3, platform);
+            ps.setString(4, boardId);
+        });
+    }
+
+    @Override
+    public void pauseClosure(final String platform, final String boardId, final Instant at, final String reason) {
+        update(PAUSE_CLOSURE, platform, boardId, ps -> {
+            ps.setTimestamp(1, Timestamp.from(at));
+            ps.setString(2, reason.length() <= 500 ? reason : reason.substring(0, 500));
+            ps.setString(3, platform);
+            ps.setString(4, boardId);
+        });
+    }
+
+    @Override
+    public void retire(final String platform, final String boardId, final Instant at) {
+        update(RETIRE, platform, boardId, ps -> {
+            ps.setTimestamp(1, Timestamp.from(at));
+            ps.setString(2, platform);
+            ps.setString(3, boardId);
+        });
+    }
+
+    private interface Binder {
+        void bind(PreparedStatement ps) throws SQLException;
+    }
+
+    private void update(final String sql, final String platform, final String boardId, final Binder binder) {
+        try (Connection c = dataSource.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
+            binder.bind(ps);
             ps.executeUpdate();
         } catch (final SQLException e) {
             throw new BoardStateException("board_state write failed for " + platform + "/" + boardId, e);
@@ -193,8 +323,19 @@ public class JdbcBoardStateStore implements BoardStateStore {
 
     @Override
     public void close() {
-        if (owned != null) {
-            owned.close();
+        if (poolKey == null) {
+            return;
+        }
+        synchronized (JdbcBoardStateStore.class) {
+            if (closed) {
+                return;
+            }
+            closed = true;
+            final SharedPool pool = POOLS.get(poolKey);
+            if (pool != null && --pool.users == 0) {
+                POOLS.remove(poolKey);
+                pool.dataSource.close();
+            }
         }
     }
 }

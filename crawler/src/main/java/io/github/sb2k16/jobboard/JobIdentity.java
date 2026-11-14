@@ -137,7 +137,7 @@ public final class JobIdentity {
     }
 
     /** True if this single value can identify a requisition. */
-    static boolean isPlausibleRequisitionId(final String requisitionId) {
+    public static boolean isPlausibleRequisitionId(final String requisitionId) {
         return requisitionId != null && HAS_DIGIT.matcher(requisitionId).matches();
     }
 
@@ -178,7 +178,7 @@ public final class JobIdentity {
                 Objects.toString(job.getRemote(), "")));
     }
 
-    static String sha256(final String value) {
+    public static String sha256(final String value) {
         try {
             final byte[] digest = MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8));
             final StringBuilder sb = new StringBuilder();

@@ -9,6 +9,8 @@
 
 package io.github.sb2k16.jobboard.model;
 
+import io.github.sb2k16.jobboard.location.CountryResolver;
+
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -175,6 +177,7 @@ public class JobRecord {
         doc.put("company", company);
         doc.put("description", description);
         doc.put("location", location);
+        doc.put("countries", CountryResolver.countries(country, location));
         putIfNotNull(doc, "remote", remote);
         putIfNotNull(doc, "employment_type", employmentType);
         putIfNotNull(doc, "requisition_id", requisitionId);
@@ -187,8 +190,17 @@ public class JobRecord {
         link.put("application_url", applicationUrl != null ? applicationUrl : url);
         link.put("platform", platform);
         link.put("board_id", boardId);
+        link.put("posting_id", platformJobId != null ? platformJobId : url);
         link.put("last_seen", crawlStarted.toString());
         link.put("state", "live");
+        // This source's own view of the job: kept per link, so the merged document can be rebuilt
+        // and a change is detected per source (config/upsert.painless).
+        link.put("content_hash", contentHash);
+        putIfNotNull(link, "title", title);
+        putIfNotNull(link, "location", location);
+        putIfNotNull(link, "posted_at", postedAt == null ? null : postedAt.toString());
+        putIfNotNull(link, "employment_type", employmentType);
+        putIfNotNull(link, "remote", remote);
         doc.put("source_link", link);
         return doc;
     }

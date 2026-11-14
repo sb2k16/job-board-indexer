@@ -14,6 +14,7 @@
         "company":         { "type": "text", "fields": { "keyword": { "type": "keyword", "ignore_above": 256 } } },
         "description":     { "type": "text" },
         "location":        { "type": "text", "fields": { "keyword": { "type": "keyword", "ignore_above": 512 } } },
+        "countries":       { "type": "keyword" },
         "remote":          { "type": "boolean" },
         "employment_type": { "type": "keyword" },
         "requisition_id":  { "type": "keyword" },
@@ -35,9 +36,21 @@
             "platform":        { "type": "keyword" },
             "board_id":        { "type": "keyword" },
             "last_seen":       { "type": "date" },
-            "state":           { "type": "keyword" }
+            "state":           { "type": "keyword" },
+            "posting_id":      { "type": "keyword" },
+            "content_hash":    { "type": "keyword" },
+            "first_seen":      { "type": "date" },
+            "last_changed":    { "type": "date" },
+            "gone_at":         { "type": "date" },
+            "title":           { "type": "keyword", "index": false, "doc_values": false },
+            "location":        { "type": "keyword", "index": false, "doc_values": false },
+            "posted_at":       { "type": "date", "index": false },
+            "employment_type": { "type": "keyword" },
+            "remote":          { "type": "boolean" },
+            "countries":       { "type": "keyword" }
           }
-        }
+        },
+        "field_sources":   { "type": "object", "enabled": false }
       }
     }
   }

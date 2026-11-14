@@ -36,6 +36,23 @@ public interface BoardStateStore extends AutoCloseable {
 
     Optional<BoardState> get(String platform, String boardId);
 
+    /** Closure bookkeeping for a board (T2.5). */
+    default ClosureState closureState(final String platform, final String boardId) {
+        return ClosureState.NONE;
+    }
+
+    /** A closure run finished: how many jobs it closed links of. Clears a guard pause. */
+    default void recordClosure(final String platform, final String boardId, final Instant at, final int closed) {
+    }
+
+    /** The mass-closure guard held this board's closures. */
+    default void pauseClosure(final String platform, final String boardId, final Instant at, final String reason) {
+    }
+
+    /** The board is confirmed gone: it is marked retired (until a crawl succeeds again). */
+    default void retire(final String platform, final String boardId, final Instant at) {
+    }
+
     @Override
     default void close() {
     }

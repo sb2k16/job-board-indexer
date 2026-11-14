@@ -1,14 +1,85 @@
+boolean liveLink(def links, def url) {
+  if (url == null) { return false; }
+  for (def l : links) { if (l.url == url && l.state == 'live') { return true; } }
+  return false;
+}
 def d = params.doc;
 def s = ctx._source;
-if (s.first_seen == null) { s.first_seen = d.last_checked; s.last_changed = d.last_checked; }
-else if (s.content_hash != d.content_hash) { s.last_changed = d.last_checked; }
-for (def k : d.keySet()) { if (k != 'source_link' && k != 'first_seen' && k != 'last_changed') { s[k] = d[k]; } }
-s.remove('source_link');
+def link = d.source_link;
+def now = d.last_checked;
+def src = link.url;
+if (s.first_seen == null) {
+  // First insert: the sink starts ctx._source as a copy of the incoming document. Rebuild it.
+  for (def k : new ArrayList(s.keySet())) { s.remove(k); }
+  s.first_seen = now;
+  s.last_changed = now;
+}
+if (s.source_links == null) { s.source_links = new ArrayList(); }
+if (s.field_sources == null) { s.field_sources = new HashMap(); }
+def fs = s.field_sources;
+link.countries = d.countries;
+if (link.content_hash == null) { link.content_hash = d.content_hash; }
+
+// The link: one per source URL. Its own content hash detects a change at that source.
+def cur = null;
+for (def l : s.source_links) { if (l.url == src) { cur = l; } }
+boolean changed = false;
+if (cur == null) {
+  // The job turning up in another place is not a change to the listing; reopening a closed one is.
+  link.first_seen = link.last_seen;
+  link.last_changed = now;
+  s.source_links.add(link);
+  if (s.status == 'closed') { changed = true; }
+} else {
+  if (cur.content_hash != link.content_hash) { cur.last_changed = now; changed = true; }
+  if (cur.state != 'live') { changed = true; }
+  for (def k : link.keySet()) { cur[k] = link[k]; }
+  cur.remove('gone_at');
+}
+
+// Merged fields. A source keeps the fields it supplied (field_sources) and may update them; another
+// source fills a field that is empty or whose supplier is no longer live. No source blanks a field
+// another source supplied.
+for (def k : ['title', 'company', 'location', 'employment_type', 'requisition_id']) {
+  def v = d[k];
+  if (v != null && v != '') {
+    if (s[k] == null || s[k] == '' || fs[k] == src || !liveLink(s.source_links, fs[k])) { s[k] = v; fs[k] = src; }
+  } else if (fs[k] == src) { s[k] = null; fs.remove(k); }
+}
+// Description: the longest one wins; its supplier may still edit it.
+def dv = d.description;
+if (dv != null && dv != '') {
+  if (s.description == null || fs.description == src || !liveLink(s.source_links, fs.description)
+      || dv.length() > s.description.length()) { s.description = dv; fs.description = src; }
+} else if (fs.description == src) { s.description = null; fs.remove('description'); }
+// Posted date: the earliest one wins.
+def pv = d.posted_at;
+if (pv != null) {
+  if (s.posted_at == null || fs.posted_at == src || !liveLink(s.source_links, fs.posted_at)
+      || Instant.parse(pv).isBefore(Instant.parse(s.posted_at))) { s.posted_at = pv; fs.posted_at = src; }
+} else if (fs.posted_at == src) { s.posted_at = null; fs.remove('posted_at'); }
+// Remote and countries come from the live links: remote if any says so; countries are the union.
+boolean anyRemote = false;
+boolean knownRemote = false;
+def countries = new ArrayList();
+for (def l : s.source_links) {
+  if (l.state == 'live') {
+    if (l.remote != null) { knownRemote = true; if (l.remote == true) { anyRemote = true; } }
+    if (l.countries != null) { for (def c : l.countries) { if (!countries.contains(c)) { countries.add(c); } } }
+  }
+}
+if (knownRemote) { s.remote = anyRemote; } else { s.remote = null; }
+s.countries = countries;
+
+// Any field this script does not handle is copied as is, so the index's strict mapping rejects an
+// unexpected one (the event goes to the dead-letter path) instead of it being silently dropped.
+def handled = ['job_key', 'title', 'company', 'description', 'location', 'countries', 'remote', 'employment_type',
+               'requisition_id', 'posted_at', 'content_hash', 'crawl_started', 'last_checked', 'source_link'];
+for (def k : d.keySet()) { if (!handled.contains(k)) { s[k] = d[k]; } }
+s.job_key = d.job_key;
+s.content_hash = d.content_hash;
+s.crawl_started = d.crawl_started;
+s.last_checked = now;
+if (changed) { s.last_changed = now; }
 s.status = 'open';
 s.closed_at = null;
-if (s.source_links == null) { s.source_links = new ArrayList(); }
-boolean found = false;
-for (def l : s.source_links) {
-  if (l.url == d.source_link.url) { l.last_seen = d.source_link.last_seen; l.state = 'live'; l.application_url = d.source_link.application_url; found = true; }
-}
-if (!found) { s.source_links.add(d.source_link); }

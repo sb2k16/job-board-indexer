@@ -1,0 +1,112 @@
+# Pipeline groups: which platforms run together, how often, and in which Deployment.
+#
+# Each active group becomes one Data Prepper pipeline (named g<id>-<name>) running the
+# job_board_crawler source over its platforms. Groups share nothing but the coordination store
+# and the index, so a slow group never delays another one's refresh. Each Deployment runs every
+# pipeline assigned to it; work inside a pipeline is spread over that Deployment's pods by board
+# leases. Render with config/render_groups.py (one pipelines file per Deployment).
+#
+# A platform is rendered only when config/specs/<platform>.yaml and its tenant list exist, so the
+# full Phase 0 assignment can stay here while connectors are built. Moving a platform between
+# groups changes only this file; it takes effect on a rolling restart.
+# Source: phase0/groups.md (Nov 11) and docs/pipeline-groups-2026-11-13.md.
+
+# Light groups share one Deployment; heavy groups (big tenants, a detail fetch per job, long
+# crawls) get their own pods so their memory and threads cannot starve the light ones.
+[deployments.crawler]
+replicas = 3
+[deployments.crawler-heavy]
+replicas = 2
+
+[[group]]
+id = 1
+name = "ats-json"
+description = "Hosted ATS, documented JSON: one list call per tenant"
+deployment = "crawler"
+refresh = "PT2H"
+workers = 4
+platforms = ["greenhouse", "lever", "ashby", "workable", "recruitee", "pinpoint", "gem", "hirehive", "breezy"]
+
+[[group]]
+id = 2
+name = "enterprise-json"
+description = "Enterprise suites, internal JSON: offset paging, a detail call per job, 2,000+ jobs per tenant"
+deployment = "crawler-heavy"
+refresh = "PT6H"
+workers = 4
+platforms = ["workday", "oracle", "eightfold", "adp"]
+
+[[group]]
+id = 3
+name = "ats-feeds"
+description = "ATS feeds: XML or RSS, one request per tenant"
+deployment = "crawler"
+refresh = "PT3H"
+workers = 2
+platforms = ["paylocity", "personio", "teamtailor", "hirebridge"]
+
+[[group]]
+id = 4
+name = "ats-embedded"
+description = "ATS with job data embedded in the HTML page; detail fetch for descriptions; large tenants"
+deployment = "crawler-heavy"
+refresh = "PT6H"
+workers = 3
+platforms = ["comeet", "phenom", "rippling"]
+
+[[group]]
+id = 5
+name = "jsonld-sitemap"
+description = "JSON-LD ATS listed by sitemap: every job is a detail fetch (Hireology: 50,000 URLs per file)"
+deployment = "crawler-heavy"
+refresh = "PT12H"
+workers = 4
+platforms = ["applicantpro", "isolvedhire", "hireology", "icims"]
+
+[[group]]
+id = 6
+name = "jsonld-pages"
+description = "JSON-LD ATS listed by HTML page, one detail fetch per job, one shared adapter"
+deployment = "crawler"
+refresh = "PT12H"
+workers = 4
+platforms = ["careerplug", "hiringthing", "jazzhr", "jobvite", "freshteam", "gohire", "join", "kula", "manatal",
+             "recooty", "trakstar", "deel", "firststage", "taleo"]
+
+[[group]]
+id = 7
+name = "boards-feeds"
+description = "Job boards with feeds: RSS or embedded JSON; Madgex pages by 20; Jobiqo has a 10 s crawl delay"
+deployment = "crawler"
+refresh = "PT4H"
+workers = 2
+platforms = ["wpjobmanager", "jobboardly", "jobboardio", "madgex", "jobiqo"]
+
+[[group]]
+id = 8
+name = "boards-jsonld"
+description = "Job boards with JSON-LD: HTML list plus detail fetch; multi-employer"
+deployment = "crawler"
+refresh = "PT12H"
+workers = 2
+platforms = ["jboard", "smartjobboard", "jobboardhq", "jobboardcom", "jobkit"]
+
+[[group]]
+id = 9
+name = "html-parser"
+description = "Server HTML without feeds or JSON-LD. Declined Nov 11; kept so enabling it is a one-line change"
+deployment = "crawler-heavy"
+active = false
+refresh = "PT12H"
+workers = 2
+platforms = ["successfactors", "smartrecruiters", "pageup", "trinet", "werecruit", "avature", "zohorecruit"]
+
+[[group]]
+id = 10
+name = "session-tier"
+description = "Needs browser session state, an internal host or a token; nothing runs here under the current rules"
+deployment = "crawler-heavy"
+active = false
+refresh = "PT12H"
+workers = 2
+platforms = ["dayforce", "hibob", "brassring", "paradox", "polymer", "jobboardfire", "talentreef"]

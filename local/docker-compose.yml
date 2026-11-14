@@ -1,4 +1,5 @@
-# Local stack: Postgres (coordination store), OpenSearch, a fake board server and 3 crawler replicas.
+# Local stack: Postgres (coordination store), OpenSearch, a fake board server, 3 crawler replicas
+# and the website (http://localhost:3000).
 # Image:    PLATFORM=linux/arm64 ../docker/build.sh local   (jbi-crawler:local)
 # Pipeline: python3 ../config/render_pipeline.py pipelines.tmpl.yaml pipelines.yaml
 # Run:      docker compose up -d
@@ -19,11 +20,12 @@ services:
     healthcheck: { test: ["CMD-SHELL", "curl -sf localhost:9200/_cluster/health"], interval: 5s, retries: 60 }
   db-migrate:
     # Applies db/V*.sql in order before any crawler starts: the coordination table (crawlers use
-    # skip_table_creation) and board_state. Every file is idempotent.
+    # skip_table_creation), board_state, job identity and closure columns. Every file is idempotent.
     image: postgres:16-alpine
     environment: { PGPASSWORD: jbi }
     command: ["psql", "-h", "postgres", "-U", "jbi", "-d", "jbi", "-v", "ON_ERROR_STOP=1",
-              "-f", "/db/V1__source_coordination.sql", "-f", "/db/V2__board_state.sql"]
+              "-f", "/db/V1__source_coordination.sql", "-f", "/db/V2__board_state.sql",
+              "-f", "/db/V3__identity_and_closure.sql"]
     volumes: ["../db:/db:ro"]
     depends_on:
       postgres: { condition: service_healthy }
@@ -45,3 +47,12 @@ services:
       db-migrate: { condition: service_completed_successfully }
       opensearch: { condition: service_healthy }
       fixture: { condition: service_started }
+  web:
+    build: ../web
+    image: jbi-web:local
+    environment:
+      OPENSEARCH_URL: http://opensearch:9200
+      DATABASE_URL: postgres://jbi:jbi@postgres:5432/jbi
+    ports: ["3000:3000"]
+    depends_on:
+      opensearch: { condition: service_healthy }

@@ -1,10 +1,26 @@
 # Live crawl overlay: the crawlers read real ATS and job-board platforms instead of the fixture.
-#   python3 ../config/render_pipeline.py live/pipelines.tmpl.yaml live/pipelines.yaml
+# Pipelines come from config/groups.toml, one file per Deployment:
+#   python3 ../config/render_groups.py live/env.toml live/pipelines
 #   docker compose -f docker-compose.yml -f docker-compose.live.yml up -d --scale crawler=2
+# crawler runs the light groups. crawler-heavy runs the heavy groups (2, 4, 5) once one of their
+# platforms is built; start it with --profile heavy. Replica counts must match live/env.toml.
 # Specs are mounted from config/specs, so a spec edit needs a restart, not an image rebuild.
 services:
   crawler:
     volumes:
-      - ./live/pipelines.yaml:/usr/share/data-prepper/pipelines/pipelines.yaml:ro
+      - ./live/pipelines/crawler.yaml:/usr/share/data-prepper/pipelines/pipelines.yaml:ro
       - ./live/tenants:/etc/jbi/tenants:ro
       - ../config/specs:/etc/jbi/specs:ro
+  crawler-heavy:
+    profiles: ["heavy"]
+    image: jbi-crawler:local
+    environment:
+      JAVA_OPTS: "-Xmx768m -XX:+ExitOnOutOfMemoryError"
+    volumes:
+      - ./live/pipelines/crawler-heavy.yaml:/usr/share/data-prepper/pipelines/pipelines.yaml:ro
+      - ./data-prepper-config.yaml:/usr/share/data-prepper/config/data-prepper-config.yaml:ro
+      - ./live/tenants:/etc/jbi/tenants:ro
+      - ../config/specs:/etc/jbi/specs:ro
+    depends_on:
+      db-migrate: { condition: service_completed_successfully }
+      opensearch: { condition: service_healthy }

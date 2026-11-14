@@ -61,6 +61,7 @@ class JdbcBoardStateStoreIT {
         try (Connection c = ds.getConnection(); Statement s = c.createStatement()) {
             s.execute(ddl);
             s.execute(ddl); // idempotent
+            s.execute(Files.readString(Path.of(System.getProperty("jbi.db.dir", "../db"), "V3__identity_and_closure.sql")));
         }
         store = new JdbcBoardStateStore(ds, 3);
     }
@@ -151,5 +152,22 @@ class JdbcBoardStateStoreIT {
         final BoardState s = store.get("gh", "race").orElseThrow();
         assertThat(s.getConsecutiveFailures(), equalTo(40));
         assertThat(s.getLastCrawlStarted(), equalTo(t(39)));
+    }
+    @Test
+    void storesForTheSameDatabaseShareOnePool() {
+        final String url = System.getProperty("jbi.test.jdbc.url") + (System.getProperty("jbi.test.jdbc.url").contains("?") ? "&" : "?")
+                + "currentSchema=" + SCHEMA;
+        final String user = System.getProperty("jbi.test.jdbc.user", "jbi");
+        final String password = System.getProperty("jbi.test.jdbc.password", "jbi");
+        final int before = JdbcBoardStateStore.openPools();
+        final JdbcBoardStateStore a = new JdbcBoardStateStore(url, user, password, 4, 3);
+        final JdbcBoardStateStore b = new JdbcBoardStateStore(url, user, password, 4, 3);
+        assertThat(JdbcBoardStateStore.openPools(), equalTo(before + 1));
+        a.close();
+        a.close(); // a second close must not release b's reference
+        b.recordAttempt("gh", "shared", t(0), t(0), Outcome.FAILED, null, "HTTP 503");
+        assertThat(b.get("gh", "shared").orElseThrow().getConsecutiveFailures(), equalTo(1));
+        b.close();
+        assertThat(JdbcBoardStateStore.openPools(), equalTo(before));
     }
 }

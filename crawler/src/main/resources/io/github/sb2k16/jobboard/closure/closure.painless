@@ -1,0 +1,38 @@
+def s = ctx._source;
+boolean touched = false;
+boolean anyLive = false;
+if (s.source_links != null) {
+  for (def l : s.source_links) {
+    // params.cutoff: start of the oldest of the last N complete snapshots; a link not seen since
+    // then is gone. No cutoff (board retired): every live link of the board is gone.
+    if (l.state == 'live' && l.platform == params.platform && l.board_id == params.board
+        && (params.cutoff == null || Instant.parse(l.last_seen).isBefore(Instant.parse(params.cutoff)))) {
+      l.state = 'gone';
+      l.gone_at = params.now;
+      touched = true;
+    }
+    if (l.state == 'live') { anyLive = true; }
+  }
+}
+if (!touched) {
+  ctx.op = 'noop';
+} else {
+  // Remote and countries follow the links still live (same rule as config/upsert.painless).
+  boolean anyRemote = false;
+  boolean knownRemote = false;
+  def countries = new ArrayList();
+  for (def l : s.source_links) {
+    if (l.state == 'live') {
+      if (l.remote != null) { knownRemote = true; if (l.remote == true) { anyRemote = true; } }
+      if (l.countries != null) { for (def c : l.countries) { if (!countries.contains(c)) { countries.add(c); } } }
+    }
+  }
+  if (anyLive) {
+    if (knownRemote) { s.remote = anyRemote; } else { s.remote = null; }
+    s.countries = countries;
+  } else {
+    s.status = 'closed';
+    s.closed_at = params.now;
+  }
+  s.last_changed = params.now;
+}

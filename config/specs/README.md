@@ -74,6 +74,8 @@ posted_at: { path: createdAt, type: datetime, format: epoch_millis }
   dropped, never guessed.
 - **Company:** the tenant list's company name wins when it has one.
 - **platform_job_id** falls back to `url` when the spec has no id.
+- **countries** is derived, never mapped: the crawler resolves ISO codes from `country` and
+  `location` (`location/CountryResolver.java`). Map `country` when the platform has it.
 
 ## Adding a platform
 

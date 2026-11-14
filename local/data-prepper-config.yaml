@@ -8,6 +8,10 @@ source_coordination:
       username: "jbi"
       password: "jbi"
       ttl: "P2D"
+      # Data Prepper builds one store, and so one pool, per pipeline (default 5 connections). 2 was
+      # tried and starved under a full re-crawl: worker and acknowledgement threads queued for
+      # connections and partition updates timed out (docs/pipeline-groups-2026-11-13.md).
+      max_pool_size: 5
       # The table comes from db/V1__source_coordination.sql (db-migrate); creating it from
       # several replicas at once races in Data Prepper 2.17.0.
       skip_table_creation: true

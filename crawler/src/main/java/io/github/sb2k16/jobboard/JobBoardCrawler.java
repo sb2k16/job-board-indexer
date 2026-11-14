@@ -37,6 +37,12 @@ import io.github.sb2k16.jobboard.spec.SpecLoader;
 import io.github.sb2k16.jobboard.model.BoardSnapshot;
 import io.github.sb2k16.jobboard.model.JobRecord;
 import io.github.sb2k16.jobboard.model.Tenant;
+import io.github.sb2k16.jobboard.closure.ClosureSweeper;
+import io.github.sb2k16.jobboard.closure.HttpIndexClient;
+import io.github.sb2k16.jobboard.identity.IdentityResolver;
+import io.github.sb2k16.jobboard.identity.JdbcIdentityStore;
+import io.github.sb2k16.jobboard.identity.MemoryIdentityStore;
+import io.github.sb2k16.jobboard.state.JdbcBoardStateStore;
 import org.opensearch.dataprepper.plugins.source.source_crawler.base.Crawler;
 import org.opensearch.dataprepper.plugins.source.source_crawler.base.LeaderProgressState;
 import org.opensearch.dataprepper.plugins.source.source_crawler.coordination.partition.LeaderPartition;
@@ -90,6 +96,9 @@ public class JobBoardCrawler implements Crawler<PaginationCrawlerWorkerProgressS
     private final Map<String, HttpFetcher> fetchers = new HashMap<>();
     private final TenantLoader tenantLoader;
     private final BoardStateStore store;
+    private final IdentityResolver identity;
+    /** Null when no closure block is configured: jobs are never closed. */
+    private final ClosureSweeper sweeper;
     private volatile AcknowledgementSetManager acknowledgementSetManager;
     private final Counter boardsComplete;
     private final Counter boardsIncomplete;
@@ -112,6 +121,9 @@ public class JobBoardCrawler implements Crawler<PaginationCrawlerWorkerProgressS
         this.config = config;
         this.tenantLoader = tenantLoader;
         this.store = store;
+        this.identity = new IdentityResolver(store instanceof JdbcBoardStateStore
+                ? new JdbcIdentityStore(((JdbcBoardStateStore) store).dataSource()) : new MemoryIdentityStore());
+        this.sweeper = openSweeper(config, store);
         this.boardsComplete = pluginMetrics.counter("boardsComplete");
         this.boardsIncomplete = pluginMetrics.counter("boardsIncomplete");
         this.boardsFailed = pluginMetrics.counter("boardsFailed");
@@ -134,6 +146,20 @@ public class JobBoardCrawler implements Crawler<PaginationCrawlerWorkerProgressS
     /** The source hands over its acknowledgement manager; snapshots need it to wait for the sink. */
     public void setAcknowledgementSetManager(final AcknowledgementSetManager manager) {
         this.acknowledgementSetManager = manager;
+    }
+
+    private static ClosureSweeper openSweeper(final JobBoardSourceConfig config, final BoardStateStore store) {
+        final ClosureConfig c = config.getClosure();
+        if (c == null || c.getOpensearchUrl() == null) {
+            LOG.warn("No closure block configured: jobs that disappear from their boards are never closed");
+            return null;
+        }
+        if (store == BoardStateStore.NONE) {
+            LOG.warn("Closure needs board_state (snapshot history); jobs are never closed");
+            return null;
+        }
+        return new ClosureSweeper(c, new HttpIndexClient(c.getOpensearchUrl(), c.getIndex(), c.getUsername(), c.getPassword(),
+                c.getRequestTimeout()), store);
     }
 
     private static BoardStateStore openStore(final JobBoardSourceConfig config) {
@@ -213,6 +239,9 @@ public class JobBoardCrawler implements Crawler<PaginationCrawlerWorkerProgressS
                 count(outcome);
                 store.recordAttempt(platformName, board, crawlStarted, attemptedAt, outcome, null, e.getMessage());
                 LOG.warn("{}/{}: {} ({})", platformName, board, outcome, e.getMessage());
+                if (outcome == Outcome.GONE && sweeper != null) {
+                    sweepSafely(() -> sweeper.afterGone(platformName, board, Instant.now()), platformName, board);
+                }
                 completeEmpty(acknowledgementSet);
                 return;
             }
@@ -227,7 +256,7 @@ public class JobBoardCrawler implements Crawler<PaginationCrawlerWorkerProgressS
                         snapshot.getJobs().size(), snapshot.getReportedTotal());
             }
 
-            final List<Record<Event>> records = toRecords(snapshot, crawlStarted);
+            final List<Record<Event>> records = toRecords(snapshot, crawlStarted, identity);
             final AcknowledgementSetManager manager = acknowledgementSetManager;
             if (outcome == Outcome.COMPLETE && acknowledgementSet != null && manager != null) {
                 final int jobCount = records.size();
@@ -245,6 +274,7 @@ public class JobBoardCrawler implements Crawler<PaginationCrawlerWorkerProgressS
                     // Acknowledgments off: the buffer write is the strongest confirmation available.
                     store.commitSnapshot(platformName, board, crawlStarted, Instant.now(), records.size());
                     snapshotsCommitted.increment();
+                    sweep(platformName, board);
                 }
             }
             jobsEmitted.increment(records.size());
@@ -262,6 +292,8 @@ public class JobBoardCrawler implements Crawler<PaginationCrawlerWorkerProgressS
             if (result) {
                 store.commitSnapshot(platform, board, crawlStarted, Instant.now(), jobCount);
                 snapshotsCommitted.increment();
+                // Still under the board's lease: the partition completes only after the sweep.
+                sweep(platform, board);
                 partitionAck.complete();
             } else {
                 snapshotsRejected.increment();
@@ -273,6 +305,22 @@ public class JobBoardCrawler implements Crawler<PaginationCrawlerWorkerProgressS
         } catch (final RuntimeException e) {
             LOG.error("{}/{}: could not record the outcome of crawl {}; partition left to its lease", platform, board, crawlStarted, e);
             partitionAck.cancel();
+        }
+    }
+
+    private void sweep(final String platform, final String board) {
+        if (sweeper != null) {
+            sweepSafely(() -> sweeper.afterSnapshot(platform, board, Instant.now()), platform, board);
+        }
+    }
+
+    /** A failed sweep closes nothing and is retried after the next snapshot; it never fails the crawl. */
+    private static void sweepSafely(final java.util.function.Supplier<ClosureSweeper.Result> run, final String platform,
+                                    final String board) {
+        try {
+            run.get();
+        } catch (final RuntimeException e) {
+            LOG.error("{}/{}: closure sweep failed; it runs again after the next snapshot", platform, board, e);
         }
     }
 
@@ -341,12 +389,22 @@ public class JobBoardCrawler implements Crawler<PaginationCrawlerWorkerProgressS
                 "Platform " + platform.getName() + " has no spec and no adapter named '" + platform.getAdapter() + "'"));
     }
 
+    /** Without a database: identity held in memory (tests, single-pod runs). */
     static List<Record<Event>> toRecords(final BoardSnapshot snapshot, final Instant crawlStarted) {
-        final boolean useRequisitionIds = JobIdentity.boardHasUsableRequisitionIds(snapshot.getJobs());
-        final List<Record<Event>> records = new ArrayList<>(snapshot.getJobs().size());
-        for (final JobRecord job : snapshot.getJobs()) {
-            final Map<String, Object> doc = job.toDocument(
-                    JobIdentity.jobKey(job, useRequisitionIds), JobIdentity.contentHash(job), crawlStarted);
+        return toRecords(snapshot, crawlStarted, new IdentityResolver(new MemoryIdentityStore()));
+    }
+
+    static List<Record<Event>> toRecords(final BoardSnapshot snapshot, final Instant crawlStarted, final IdentityResolver identity) {
+        final List<JobRecord> jobs = snapshot.getJobs();
+        final boolean useRequisitionIds = JobIdentity.boardHasUsableRequisitionIds(jobs);
+        final Map<String, String> keys = jobs.isEmpty() ? Map.of()
+                : identity.resolve(jobs.get(0).getPlatform(), jobs.get(0).getBoardId(), jobs);
+        final List<Record<Event>> records = new ArrayList<>(jobs.size());
+        for (final JobRecord job : jobs) {
+            final String posting = IdentityResolver.postingId(job);
+            final String key = posting != null && keys.containsKey(posting) ? keys.get(posting)
+                    : JobIdentity.jobKey(job, useRequisitionIds);
+            final Map<String, Object> doc = job.toDocument(key, JobIdentity.contentHash(job), crawlStarted);
             records.add(new Record<>(JacksonEvent.builder()
                     .withEventType(EventType.DOCUMENT.toString())
                     .withData(doc)

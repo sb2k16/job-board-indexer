@@ -45,6 +45,13 @@ public class JobBoardSourceConfig implements CrawlerSourceConfig {
     @JsonProperty("board_state")
     private BoardStateConfig boardState;
 
+    @JsonProperty("closure")
+    private ClosureConfig closure;
+
+    public ClosureConfig getClosure() {
+        return closure;
+    }
+
     public PolitenessConfig getPoliteness() {
         return politeness;
     }
