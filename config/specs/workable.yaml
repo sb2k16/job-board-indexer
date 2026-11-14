@@ -1,0 +1,33 @@
+# Workable: the public widget API lists every published job of an account; descriptions come from
+# the per-job v2 endpoint (detail request). robots.txt on apply.workable.com does not disallow
+# /api/ (2026-11-14). 1 request a second: a large account is a few hundred detail calls.
+name: workable
+access_class: A
+format: json
+list:
+  url: "https://apply.workable.com/api/v1/widget/accounts/{board}"
+  items: jobs
+  marker: [jobs, name]
+pagination:
+  style: none
+fields:
+  platform_job_id: shortcode
+  title: title
+  location: { concat: [city, state, country], join: ", " }
+  city: city
+  region: state
+  country: country
+  employment_type: employment_type
+  remote: { path: telecommuting, type: boolean }
+  requisition_id: code
+  posted_at: { path: published_on, type: datetime }
+  url: url
+  application_url: application_url
+detail:
+  url: "https://apply.workable.com/api/v2/accounts/{board}/jobs/{shortcode}"
+  format: json
+  fields:
+    description: { concat: [description, requirements, benefits], transform: [html_to_text] }
+rate_limit:
+  requests_per_second: 1
+  max_concurrency: 1

@@ -1,0 +1,17 @@
+# iCIMS career portals: {tenant}.icims.com/jobs/search (iframe view) lists 50 jobs a page with a
+# rel=next link (pr=N); each job page carries a JobPosting. robots.txt: no rule for /jobs (2026-11-14).
+name: icims
+access_class: A
+format: html
+list:
+  url: "https://{board}.icims.com/jobs/search?ss=1&in_iframe=1"
+  items: 'href="(https://[^"/]+\.icims\.com/jobs/\d+/[^"/]+/job)'
+  marker: ['icims']
+pagination:
+  style: next_url
+  next: 'rel="next" href="([^"]+)"'
+fields:
+  url: url
+detail:
+  url: "{url}?in_iframe=1"
+  format: jsonld

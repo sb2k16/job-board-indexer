@@ -39,11 +39,11 @@ platforms = ["workday", "oracle", "eightfold", "adp"]
 [[group]]
 id = 3
 name = "ats-feeds"
-description = "ATS feeds: XML or RSS, one request per tenant"
+description = "ATS feeds: XML or RSS, one request per tenant (Taleo Business Edition included: its RSS feed lists every requisition)"
 deployment = "crawler"
 refresh = "PT3H"
 workers = 2
-platforms = ["paylocity", "personio", "teamtailor", "hirebridge"]
+platforms = ["paylocity", "personio", "teamtailor", "hirebridge", "taleo"]
 
 [[group]]
 id = 4
@@ -71,7 +71,7 @@ deployment = "crawler"
 refresh = "PT12H"
 workers = 4
 platforms = ["careerplug", "hiringthing", "jazzhr", "jobvite", "freshteam", "gohire", "join", "kula", "manatal",
-             "recooty", "trakstar", "deel", "firststage", "taleo"]
+             "recooty", "trakstar", "deel", "firststage"]
 
 [[group]]
 id = 7

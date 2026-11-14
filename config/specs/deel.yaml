@@ -1,0 +1,16 @@
+# Deel job boards: jobs.deel.com/job-boards/{tenant} lists every job (also as an ItemList
+# JSON-LD); each job's /overview page carries a JobPosting. robots.txt Allow: / (2026-11-14).
+name: deel
+access_class: A
+format: html
+list:
+  url: "https://jobs.deel.com/job-boards/{board}"
+  items: '(https://jobs\.deel\.com/{board}/job-details/[0-9a-f-]{36})'
+  marker: ['jobs\.deel\.com']
+pagination:
+  style: none
+fields:
+  url: url
+detail:
+  url: "{url}/overview"
+  format: jsonld

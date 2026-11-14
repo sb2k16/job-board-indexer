@@ -1,0 +1,16 @@
+# FirstStage career sites: {tenant}.firststage.co/jobs lists every job; each /jobs/{id}/view
+# page carries a JobPosting. No robots.txt (2026-11-14).
+name: firststage
+access_class: A
+format: html
+list:
+  url: "https://{board}.firststage.co/jobs"
+  items: 'href="((?:https://[^"/]+)?/jobs/[A-Za-z0-9]+/view)'
+  marker: ['firststage']
+pagination:
+  style: none
+fields:
+  url: url
+detail:
+  url: "{url}"
+  format: jsonld

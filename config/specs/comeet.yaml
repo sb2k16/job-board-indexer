@@ -1,0 +1,24 @@
+# Comeet: every position page of a company embeds the whole company's open positions as
+# COMPANY_POSITIONS_DATA, descriptions included. Board: "{company}/{company uid}" as in the
+# hosted URL, e.g. "silverfort/54.007". robots.txt: no rule for /jobs (2026-11-14).
+name: comeet
+access_class: A
+format: json
+list:
+  url: "https://www.comeet.com/jobs/{board_raw}"
+  extract: 'COMPANY_POSITIONS_DATA\s*=\s*(\[.*?\]);'
+  items: $
+  marker: [$]
+pagination:
+  style: none
+fields:
+  platform_job_id: uid
+  title: name
+  location: location.name
+  city: location.city
+  country: location.country
+  employment_type: employment_type
+  remote: { path: workplace_type, type: boolean, true_values: [remote] }
+  description: { concat: [custom_fields.details.*.value], transform: [html_to_text] }
+  posted_at: { path: time_updated, type: datetime }
+  url: url_comeet_hosted_page

@@ -1,0 +1,16 @@
+# GoHire job boards: jobs.gohire.io/{tenant}/ lists every job; each job page carries a
+# JobPosting with salary and validThrough. robots.txt: no rule for tenant paths (Phase 0).
+name: gohire
+access_class: A
+format: html
+list:
+  url: "https://jobs.gohire.io/{board}/"
+  items: 'href="((?:https://jobs\.gohire\.io)?/{board}/[^"/?#]+-\d+/?)"'
+  marker: ['gohire']
+pagination:
+  style: none
+fields:
+  url: url
+detail:
+  url: "{url}"
+  format: jsonld

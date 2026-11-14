@@ -1,0 +1,23 @@
+# HireHive: {tenant}.hirehive.com/api/v1/jobs, every published job with its description in one
+# response (publishedJobsCount; nextPage is null). robots.txt: none (2026-11-14).
+name: hirehive
+access_class: A
+format: json
+list:
+  url: "https://{board}.hirehive.com/api/v1/jobs"
+  items: jobs
+  marker: [jobs, publishedJobsCount]
+  total: publishedJobsCount
+pagination:
+  style: none
+fields:
+  platform_job_id: id
+  title: title
+  location: location
+  city: location
+  region: stateCode
+  country: country.code
+  employment_type: type.name
+  description: { path: description.html, transform: [html_to_text] }
+  posted_at: { path: publishedDate, type: datetime, format: epoch_seconds }
+  url: hostedUrl

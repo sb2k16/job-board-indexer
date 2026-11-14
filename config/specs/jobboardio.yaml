@@ -1,0 +1,19 @@
+# JobBoard.io job boards: /jobs.rss on each board's host. Titles read "Title at Company (Location)".
+# robots.txt on the checked boards allows the feed (2026-11-14).
+name: jobboardio
+access_class: A
+format: xml
+list:
+  url: "https://{board}/jobs.rss"
+  items: /rss/channel/item
+  marker: [/rss/channel]
+pagination:
+  style: none
+fields:
+  platform_job_id: { path: link, regex: "/jobs/(\\d+)" }
+  title: { path: title, regex: "^(.+?) at [^()]+(?:\\([^()]*\\))?\\s*$", keep_unmatched: true }
+  company: { path: title, regex: " at ([^()]+?)\\s*(?:\\([^()]*\\))?\\s*$" }
+  location: { path: title, regex: "\\(([^()]*)\\)\\s*$" }
+  description: { path: description, transform: [html_unescape, html_to_text] }
+  posted_at: { path: pubDate, type: datetime, format: rfc1123 }
+  url: link

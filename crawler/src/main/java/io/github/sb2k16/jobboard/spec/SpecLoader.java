@@ -55,7 +55,7 @@ public final class SpecLoader {
             problems.add("access_class " + spec.getAccessClass() + " is not run by the spec engine (only A)");
         }
         if (spec.getFormat() == null) {
-            problems.add("format is required (json or xml)");
+            problems.add("format is required (json, xml or html)");
         }
         final PlatformSpec.ListSpec list = spec.getList();
         if (list == null) {
@@ -68,18 +68,44 @@ public final class SpecLoader {
             }
             if (isBlank(list.getItems())) {
                 problems.add("list.items is required");
+            } else if (spec.getFormat() == PlatformSpec.Format.html) {
+                checkRegex("list.items", list.getItems(), problems);
+            }
+            if (!"GET".equalsIgnoreCase(list.getMethod()) && !"POST".equalsIgnoreCase(list.getMethod())) {
+                problems.add("list.method must be GET or POST");
+            }
+            if (list.getExtract() != null) {
+                checkRegex("list.extract", list.getExtract(), problems);
             }
             if (list.getMarker() == null || list.getMarker().isEmpty()) {
                 problems.add("list.marker needs at least one path (a response without it is a failed fetch)");
             }
         }
-        validatePagination(spec.getPagination(), problems);
+        validatePagination(spec.getPagination(), list, problems);
         if (spec.getRateLimit() == null || spec.getRateLimit().getRequestsPerSecond() <= 0
                 || spec.getRateLimit().getMaxConcurrency() < 1) {
             problems.add("rate_limit.requests_per_second must be > 0 and max_concurrency >= 1");
         }
 
-        for (final String required : List.of("title", "url")) {
+        final PlatformSpec.DetailSpec detail = spec.getDetail();
+        if (detail != null) {
+            if (!List.of("jsonld", "json", "html", "xml").contains(detail.getFormat())) {
+                problems.add("detail.format must be jsonld, json, html or xml");
+            }
+            if (detail.getFields() == null && !detail.getFormat().equals("jsonld")) {
+                problems.add("detail.fields is required unless detail.format is jsonld");
+            }
+            if (detail.getExtract() != null) {
+                checkRegex("detail.extract", detail.getExtract(), problems);
+            }
+            if (detail.getFields() != null) {
+                for (final Map.Entry<String, FieldSpec> e : detail.getFields().entrySet()) {
+                    validateField(e.getKey(), e.getValue(), problems);
+                }
+            }
+        }
+        // With a detail request the title may come from the detail page; the list must still give the URL.
+        for (final String required : detail == null ? List.of("title", "url") : List.of("url")) {
             if (!spec.getFields().containsKey(required)) {
                 problems.add("fields." + required + " is required");
             }
@@ -90,14 +116,19 @@ public final class SpecLoader {
         return problems;
     }
 
-    private static void validatePagination(final PlatformSpec.PaginationSpec pg, final List<String> problems) {
+    private static void validatePagination(final PlatformSpec.PaginationSpec pg, final PlatformSpec.ListSpec list,
+                                           final List<String> problems) {
         switch (pg.getStyle()) {
             case "none":
                 break;
             case "offset":
             case "page":
-                if (isBlank(pg.getParam())) {
-                    problems.add("pagination." + pg.getStyle() + " needs param");
+                // The position goes in a query param, or in the URL or POST body template as {offset}/{page}.
+                final String var = "{" + pg.getStyle() + "}";
+                final boolean inTemplate = list != null && ((list.getUrl() != null && list.getUrl().contains(var))
+                        || (list.getBody() != null && list.getBody().contains(var)));
+                if (isBlank(pg.getParam()) && !inTemplate) {
+                    problems.add("pagination." + pg.getStyle() + " needs param, or " + var + " in list.url or list.body");
                 }
                 if (pg.getSizeParam() != null && pg.getPageSize() == null) {
                     problems.add("pagination.size_param needs page_size");
@@ -118,6 +149,23 @@ public final class SpecLoader {
         }
         if (pg.getMaxPages() < 1) {
             problems.add("pagination.max_pages must be at least 1");
+        }
+    }
+
+    private static void checkRegex(final String where, final String regex, final List<String> problems) {
+        try {
+            java.util.regex.Pattern.compile(regex.replaceAll("\\{board(_raw|_\\d+)?\\}", "board"));
+        } catch (final java.util.regex.PatternSyntaxException e) {
+            problems.add(where + " is not a valid regex: " + e.getDescription());
+        }
+    }
+
+    /** The standard JobPosting mapping (jsonld-fields.yaml), used by detail blocks without fields. */
+    static Map<String, FieldSpec> standardJsonLdFields() {
+        try (java.io.InputStream in = SpecLoader.class.getResourceAsStream("jsonld-fields.yaml")) {
+            return YAML.readValue(in, new com.fasterxml.jackson.core.type.TypeReference<java.util.LinkedHashMap<String, FieldSpec>>() { });
+        } catch (final java.io.IOException | NullPointerException e) {
+            throw new IllegalStateException("jsonld-fields.yaml missing or invalid", e);
         }
     }
 

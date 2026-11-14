@@ -1,0 +1,34 @@
+# ADP Workforce Now career centres: the keyless job-requisitions API used by the public career
+# page, per client id (cid, from Common Crawl in Phase 0). $top/$skip paging with
+# meta.totalNumber; the description comes from the per-requisition call. No robots.txt on
+# workforcenow.adp.com (2026-11-14).
+name: adp
+access_class: A
+format: json
+list:
+  url: "https://workforcenow.adp.com/mascsr/default/careercenter/public/events/staffing/v1/job-requisitions?cid={board}&lang=en_US"
+  items: jobRequisitions
+  marker: [jobRequisitions, meta.totalNumber]
+  total: meta.totalNumber
+# $top=20 returns 19 jobs, so a short page is not the last one: step by what came back
+# ($skip counts correctly) and stop at meta.totalNumber.
+pagination:
+  style: offset
+  param: "$skip"
+fields:
+  platform_job_id: itemID
+  requisition_id: clientRequisitionID
+  title: requisitionTitle
+  location: { path: requisitionLocations.0.nameCode.shortName, transform: [trim] }
+  city: requisitionLocations.0.address.cityName
+  region: requisitionLocations.0.address.countrySubdivisionLevel1.codeValue
+  posted_at: { path: postDate, type: datetime }
+  url: { template: "https://workforcenow.adp.com/mascsr/default/mdf/recruitment/recruitment.html?cid={board}&jobId={itemID}&lang=en_US" }
+detail:
+  url: "https://workforcenow.adp.com/mascsr/default/careercenter/public/events/staffing/v1/job-requisitions/{itemID}?cid={board}&lang=en_US"
+  format: json
+  fields:
+    description: { path: requisitionDescription, transform: [html_to_text] }
+rate_limit:
+  requests_per_second: 1
+  max_concurrency: 1

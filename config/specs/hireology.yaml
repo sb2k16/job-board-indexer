@@ -1,0 +1,19 @@
+# Hireology: careers.hireology.com publishes cross-tenant job sitemaps (sitemaps/sitemap-N.xml, up
+# to 50,000 URLs each); a board is one tenant's slug, whose /{slug}/{id}/description pages carry a
+# JobPosting. Every sitemap file is read until one is missing. No robots.txt (2026-11-14).
+name: hireology
+access_class: A
+format: html
+list:
+  url: "https://careers.hireology.com/sitemaps/sitemap-{page}.xml"
+  items: '<loc>\s*(https://careers\.hireology\.com/{board}/\d+/description)\s*</loc>'
+  marker: ['<urlset']
+pagination:
+  style: page
+  until_missing: true
+  max_pages: 20
+fields:
+  url: url
+detail:
+  url: "{url}"
+  format: jsonld

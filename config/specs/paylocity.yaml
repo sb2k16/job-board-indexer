@@ -1,0 +1,26 @@
+# Paylocity: the public job feed recruiting.paylocity.com/recruiting/jobs/xml?id={company id},
+# every open job with its description (Indeed feed format). Company ids come from Common Crawl
+# (Phase 0). recruiting.paylocity.com has no robots.txt (2026-11-14).
+name: paylocity
+access_class: A
+format: xml
+list:
+  url: "https://recruiting.paylocity.com/recruiting/jobs/xml?id={board}"
+  items: /source/job
+  marker: [/source]
+pagination:
+  style: none
+fields:
+  platform_job_id: referencenumber
+  requisition_id: requisitionid
+  title: title
+  company: company
+  location: { concat: [city, state, country], join: ", " }
+  city: city
+  region: state
+  country: country
+  employment_type: jobtype
+  remote: { path: remotetype, type: boolean, true_values: [remote, fully remote, "true"] }
+  description: { path: description, transform: [html_unescape, html_to_text] }
+  posted_at: { path: date, type: datetime, format: rfc1123 }
+  url: { path: url, regex: "^([^?]+)" }

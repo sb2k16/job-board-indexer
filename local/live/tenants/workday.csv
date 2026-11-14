@@ -1,0 +1,4 @@
+board,company
+# host|tenant|site. CoStar and CVS Health are also on Eightfold and Phenom: cross-platform duplicates.
+costar.wd1.myworkdayjobs.com|costar|CoStarCareers,CoStar Group
+cvshealth.wd1.myworkdayjobs.com|cvshealth|CVS_Health_Careers,CVS Health

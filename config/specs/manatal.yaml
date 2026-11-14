@@ -1,0 +1,20 @@
+# Manatal career pages: {tenant}.careers-page.com lists every job; job pages usually carry a
+# JobPosting (2 of 3 in Phase 0: the rest are dropped as soft 404s). No robots.txt (2026-11-14).
+name: manatal
+access_class: A
+format: html
+list:
+  url: "https://{board}.careers-page.com/"
+  items: 'href="((?:https://[^"/]+)?/jobs/[0-9a-f-]{36})'
+  marker: ['careers-page']
+pagination:
+  style: none
+fields:
+  url: url
+detail:
+  url: "{url}"
+  format: jsonld
+# careers-page.com answered 429 to job pages at 2 requests a second (2026-11-14): one every 2 s.
+rate_limit:
+  requests_per_second: 0.5
+  max_concurrency: 1

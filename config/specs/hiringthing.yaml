@@ -1,0 +1,16 @@
+# HiringThing career sites: {tenant}.hiringthing.com lists every job; each /job/{id}/ page carries
+# a JobPosting. Unknown tenants answer a soft 404 (no marker). robots.txt: no rule (2026-11-14).
+name: hiringthing
+access_class: A
+format: html
+list:
+  url: "https://{board}.hiringthing.com/"
+  items: 'href="((?:https://[^"/]+)?/job/\d+/[^"#?]*)"'
+  marker: ['hiringthing']
+pagination:
+  style: none
+fields:
+  url: url
+detail:
+  url: "{url}"
+  format: jsonld

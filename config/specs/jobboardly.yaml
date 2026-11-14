@@ -1,0 +1,24 @@
+# Jobboardly job boards: /jobs.rss on each board's host, with job: location elements. Titles read
+# "Title - Company - Location". robots.txt Allow: / on the checked boards (2026-11-14).
+name: jobboardly
+access_class: A
+format: xml
+namespaces:
+  job: https://www.jobboardly.com/rss/job
+list:
+  url: "https://{board}/jobs.rss"
+  items: /rss/channel/item
+  marker: [/rss/channel]
+pagination:
+  style: none
+fields:
+  platform_job_id: { path: guid, regex: "^(\\d+)" }
+  title: { path: title, regex: "^(.+?) - ", keep_unmatched: true }
+  company: { path: title, regex: "^.+? - (.+?) - " }
+  location: { concat: [job:city, job:state, job:country], join: ", " }
+  city: job:city
+  region: job:state
+  country: job:country
+  description: { path: description, transform: [html_unescape, html_to_text] }
+  posted_at: { path: pubDate, type: datetime, format: rfc1123 }
+  url: link

@@ -1,0 +1,16 @@
+# JOIN company pages: join.com/companies/{tenant} lists the company's jobs; each job page carries a
+# JobPosting. robots.txt: no rule for /companies (2026-11-14).
+name: join
+access_class: A
+format: html
+list:
+  url: "https://join.com/companies/{board}"
+  items: 'href="((?:https://join\.com)?/companies/{board}/\d+-[^"?#]+)"'
+  marker: ['join\.com']
+pagination:
+  style: none
+fields:
+  url: url
+detail:
+  url: "{url}"
+  format: jsonld

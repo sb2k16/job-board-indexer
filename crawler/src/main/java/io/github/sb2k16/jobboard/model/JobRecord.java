@@ -170,6 +170,47 @@ public class JobRecord {
      * Builds the event body the sink upserts. {@code jobKey} and {@code contentHash} come from
      * {@link io.github.sb2k16.jobboard.JobIdentity}.
      */
+    /** Copies every field the other record has (a detail page over its list entry); identity fields stay. */
+    public JobRecord fillFrom(final JobRecord other) {
+        if (other.title != null) {
+            title = other.title;
+        }
+        if (other.company != null) {
+            company = other.company;
+        }
+        if (other.description != null) {
+            description = other.description;
+        }
+        if (other.location != null) {
+            location = other.location;
+        }
+        if (other.city != null) {
+            city = other.city;
+        }
+        if (other.region != null) {
+            region = other.region;
+        }
+        if (other.country != null) {
+            country = other.country;
+        }
+        if (other.requisitionId != null) {
+            requisitionId = other.requisitionId;
+        }
+        if (other.employmentType != null) {
+            employmentType = other.employmentType;
+        }
+        if (other.remote != null) {
+            remote = other.remote;
+        }
+        if (other.postedAt != null) {
+            postedAt = other.postedAt;
+        }
+        if (other.applicationUrl != null) {
+            applicationUrl = other.applicationUrl;
+        }
+        return this;
+    }
+
     public Map<String, Object> toDocument(final String jobKey, final String contentHash, final Instant crawlStarted) {
         final Map<String, Object> doc = new LinkedHashMap<>();
         doc.put("job_key", jobKey);

@@ -57,14 +57,25 @@ public class PoliteFetcher implements HttpFetcher {
     @Override
     public String get(final String url) {
         try {
-            return fetch(url);
+            return fetch(url, null);
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new BoardFetchException("GET " + url + " interrupted", e, true, BoardFetchException.Kind.NETWORK, 0);
         }
     }
 
-    private String fetch(final String url) throws InterruptedException {
+    @Override
+    public String post(final String url, final String jsonBody) {
+        try {
+            return fetch(url, jsonBody);
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new BoardFetchException("POST " + url + " interrupted", e, true, BoardFetchException.Kind.NETWORK, 0);
+        }
+    }
+
+    /** GET when body is null, else POST; robots.txt, limits, retries and the breaker apply to both. */
+    private String fetch(final String url, final String body) throws InterruptedException {
         final URI uri = URI.create(url);
         final String origin = uri.getScheme() + "://" + uri.getRawAuthority();
         final String pathAndQuery = (uri.getRawPath() == null || uri.getRawPath().isEmpty() ? "/" : uri.getRawPath())
@@ -93,7 +104,8 @@ public class PoliteFetcher implements HttpFetcher {
                 if (hostDelay != null) {
                     hostDelay.acquire();
                 }
-                final HttpTransport.Response response = transport.get(url, policy.getRequestTimeout());
+                final HttpTransport.Response response = body == null ? transport.get(url, policy.getRequestTimeout())
+                        : transport.post(url, body, policy.getRequestTimeout());
                 final int status = response.getStatus();
                 if (status >= 200 && status < 300) {
                     breaker.success(origin);

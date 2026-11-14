@@ -1,0 +1,39 @@
+# Workday career sites: the keyless search the career site itself calls,
+# POST https://{host}/wday/cxs/{tenant}/{site}/jobs with {"limit":20,"offset":N}, and a GET per job
+# for the description. Board: "host|tenant|site", e.g. "intel.wd1.myworkdayjobs.com|intel|External".
+# Undocumented and may change. The search reports `total` on its first page only, and serves at most
+# 2,000 results: larger sites come out incomplete. robots.txt on the checked hosts does not
+# disallow /wday/cxs/ (2026-11-14).
+name: workday
+access_class: A
+format: json
+list:
+  url: "https://{board_1}/wday/cxs/{board_2}/{board_3}/jobs"
+  method: POST
+  body: '{"appliedFacets":{},"limit":20,"offset":{offset},"searchText":""}'
+  items: jobPostings
+  marker: [jobPostings]
+  total: total
+pagination:
+  style: offset
+  page_size: 20
+fields:
+  platform_job_id: externalPath
+  title: title
+  location: locationsText
+  requisition_id: bulletFields.0
+  url: { template: "https://{board_1}/en-US/{board_3}{externalPath}" }
+detail:
+  url: "https://{board_1}/wday/cxs/{board_2}/{board_3}{externalPath}"
+  format: json
+  fields:
+    description: { path: jobPostingInfo.jobDescription, transform: [html_to_text] }
+    location: jobPostingInfo.location
+    country: jobPostingInfo.country.descriptor
+    requisition_id: jobPostingInfo.jobReqId
+    employment_type: jobPostingInfo.timeType
+    remote: { path: jobPostingInfo.remoteType, type: boolean, true_values: [Remote, Fully Remote] }
+    posted_at: { path: jobPostingInfo.startDate, type: datetime }
+rate_limit:
+  requests_per_second: 2
+  max_concurrency: 1

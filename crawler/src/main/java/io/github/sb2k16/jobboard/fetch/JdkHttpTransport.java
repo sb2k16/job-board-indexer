@@ -48,6 +48,20 @@ public class JdkHttpTransport implements HttpTransport {
                 response.headers().firstValue("Retry-After").map(JdkHttpTransport::retryAfter).orElse(null));
     }
 
+    @Override
+    public Response post(final String url, final String jsonBody, final Duration timeout) throws IOException, InterruptedException {
+        final HttpRequest request = HttpRequest.newBuilder(URI.create(url))
+                .timeout(timeout)
+                .header("User-Agent", USER_AGENT)
+                .header("Accept", "application/json")
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
+                .build();
+        final HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        return new Response(response.statusCode(), response.body(),
+                response.headers().firstValue("Retry-After").map(JdkHttpTransport::retryAfter).orElse(null));
+    }
+
     /** Only the delta-seconds form; an HTTP-date is ignored and the policy's own backoff applies. */
     static Duration retryAfter(final String value) {
         try {

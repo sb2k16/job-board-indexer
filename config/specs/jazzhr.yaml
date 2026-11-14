@@ -1,0 +1,16 @@
+# JazzHR career sites: {tenant}.applytojob.com/apply lists every job; each job page carries a
+# JobPosting. Unknown tenants answer a soft 404. robots.txt: no rule (2026-11-14).
+name: jazzhr
+access_class: A
+format: html
+list:
+  url: "https://{board}.applytojob.com/apply"
+  items: 'href="(https://[^"/]+\.applytojob\.com/apply/[A-Za-z0-9]+/[^"?#]+)"'
+  marker: ['applytojob']
+pagination:
+  style: none
+fields:
+  url: url
+detail:
+  url: "{url}"
+  format: jsonld

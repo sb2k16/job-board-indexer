@@ -1,0 +1,16 @@
+# jobBoardHQ job boards: {tenant}.jobboardhq.com/search lists jobs ("only the top 500"); each job
+# page carries a JobPosting; multi-employer. robots.txt: no rule (2026-11-14).
+name: jobboardhq
+access_class: A
+format: html
+list:
+  url: "https://{board}.jobboardhq.com/search"
+  items: 'href="((?:https://[^"/]+)?/job/[a-z0-9]+/[^"?#]*)"'
+  marker: ['jobboardhq']
+pagination:
+  style: none
+fields:
+  url: url
+detail:
+  url: "{url}"
+  format: jsonld

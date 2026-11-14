@@ -1,0 +1,25 @@
+# Jobiqo job boards: /jobs is a Next.js page whose __NEXT_DATA__ holds the search (10 jobs a page,
+# ?page=N, result_count); multi-employer. robots.txt sets a 10 s crawl delay, which the fetcher
+# honours, so a board of N jobs takes about N seconds: boards over ~1,400 jobs (miamijobs.com,
+# 20,000) cannot be re-read within the 4 h refresh and come out incomplete (2026-11-14).
+name: jobiqo
+access_class: A
+format: json
+list:
+  url: "https://{board}/jobs"
+  extract: '<script id="__NEXT_DATA__"[^>]*>(.*?)</script>'
+  items: props.pageProps.data.jobs.pages
+  marker: [props.pageProps.data.jobs.result_count]
+  total: props.pageProps.data.jobs.result_count
+pagination:
+  style: page
+  param: page
+  start: 1
+  page_size: 10
+fields:
+  platform_job_id: id
+  title: title
+  company: organization
+  location: { path: address, join: "; " }
+  posted_at: { path: published, type: datetime }
+  url: { template: "https://{board}{urlNoPrefix}" }

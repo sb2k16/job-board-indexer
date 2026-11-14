@@ -1,0 +1,32 @@
+# Breezy HR: {tenant}.breezy.hr/json lists every published position in one response (no
+# description). Each position page carries a schema.org JobPosting with the description, read by
+# the detail request. robots.txt: none on tenant hosts (2026-11-14).
+name: breezy
+access_class: A
+format: json
+list:
+  url: "https://{board}.breezy.hr/json"
+  items: $
+  marker: [$]
+pagination:
+  style: none
+fields:
+  platform_job_id: id
+  title: name
+  company: company.name
+  location: location.name
+  city: location.city
+  region: location.state.name
+  country: location.country.id
+  employment_type: type.name
+  remote: { path: location.is_remote, type: boolean }
+  posted_at: { path: published_date, type: datetime }
+  url: url
+detail:
+  url: "{url}"
+  format: jsonld
+  fields:
+    description: { path: description, transform: [html_unescape, html_to_text] }
+rate_limit:
+  requests_per_second: 2
+  max_concurrency: 2

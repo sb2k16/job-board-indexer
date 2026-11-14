@@ -1,0 +1,34 @@
+# Phenom People career sites: /us/en/search-results embeds the search (phApp.ddo) with 10 jobs a
+# page (?from=N&s=1) and totalHits. Tenants are large (O'Reilly, CVS Health, Dollar Tree: about
+# 19,000 jobs each), so this is a heavy-group platform; list fields only (descriptions would be
+# another 19,000 requests a refresh). Board: the career-site host. robots.txt: no rule for
+# /us/en/search-results (2026-11-14).
+name: phenom
+access_class: A
+format: json
+list:
+  url: "https://{board}/us/en/search-results?s=1"
+  extract: 'phApp\.ddo\s*=\s*(\{.*?\});\s*phApp\.'
+  items: eagerLoadRefineSearch.data.jobs
+  marker: [eagerLoadRefineSearch.totalHits]
+  total: eagerLoadRefineSearch.totalHits
+pagination:
+  style: offset
+  param: from
+  page_size: 10
+fields:
+  platform_job_id: jobSeqNo
+  requisition_id: reqId
+  title: title
+  location: cityStateCountry
+  city: city
+  region: state
+  country: country
+  employment_type: type
+  remote: { path: remote, type: boolean, true_values: ["true", "remote", "yes"] }
+  description: descriptionTeaser
+  posted_at: { path: postedDate, type: datetime }
+  url: { template: "https://{board}/us/en/job/{jobSeqNo}" }
+rate_limit:
+  requests_per_second: 2
+  max_concurrency: 1

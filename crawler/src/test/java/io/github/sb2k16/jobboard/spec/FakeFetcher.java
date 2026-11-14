@@ -45,9 +45,17 @@ class FakeFetcher implements HttpFetcher {
             body = responder.apply(url);
         }
         if (body == null) {
-            throw new BoardFetchException("GET " + url + " returned HTTP 404", false);
+            throw BoardFetchException.http(url, 404);
         }
         return body;
+    }
+
+    final List<String> postBodies = new ArrayList<>();
+
+    @Override
+    public String post(final String url, final String jsonBody) {
+        postBodies.add(jsonBody);
+        return get(url + "#" + jsonBody);
     }
 
     static String resource(final String name) {

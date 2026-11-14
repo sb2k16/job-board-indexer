@@ -1,0 +1,16 @@
+# Jobvite career sites: jobs.jobvite.com/{tenant}/jobs lists every job; each /job/{id} page
+# carries a JobPosting. Unknown tenants answer a soft 404. robots.txt: no rule for tenant paths (Phase 0).
+name: jobvite
+access_class: A
+format: html
+list:
+  url: "https://jobs.jobvite.com/{board}/jobs"
+  items: 'href="((?:https://jobs\.jobvite\.com)?/{board}/job/[A-Za-z0-9]+)"'
+  marker: ['jobvite']
+pagination:
+  style: none
+fields:
+  url: url
+detail:
+  url: "{url}"
+  format: jsonld

@@ -1,0 +1,17 @@
+# JBoard.io job boards: /jobs on each board's host, 50 a page with a rel=next link; each job page
+# carries a JobPosting; multi-employer. robots.txt Allow: / (2026-11-14).
+name: jboard
+access_class: A
+format: html
+list:
+  url: "https://{board}/jobs"
+  items: 'href="((?:https://[^"/]+)?/jobs/\d+-[^"?#]+)"'
+  marker: ['jobs']
+pagination:
+  style: next_url
+  next: 'rel="next" href="([^"]+)"'
+fields:
+  url: url
+detail:
+  url: "{url}"
+  format: jsonld

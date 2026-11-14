@@ -1,0 +1,14 @@
+# The standard schema.org JobPosting mapping, used by a detail block with format jsonld and no
+# fields of its own. Paths starting with _ are derived by JsonLd.normalized (several shapes allowed
+# by the vocabulary, one value here).
+title: { path: title, transform: [html_unescape, trim] }
+description: { path: description, transform: [html_unescape, html_to_text] }
+company: _company
+location: _location
+city: _city
+region: _region
+country: _country
+requisition_id: _identifier
+employment_type: { path: employmentType, join: ", " }
+posted_at: { path: datePosted, type: datetime }
+remote: { path: _remote, type: boolean }

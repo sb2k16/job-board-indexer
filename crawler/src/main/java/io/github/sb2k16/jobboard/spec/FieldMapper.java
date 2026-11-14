@@ -138,7 +138,7 @@ final class FieldMapper {
 
     /** First capturing group of the first match (whole match when the pattern has no group). */
     static String extract(final String regex, final String value, final boolean keepUnmatched) {
-        final Matcher m = REGEX_CACHE.computeIfAbsent(regex, Pattern::compile).matcher(value);
+        final Matcher m = REGEX_CACHE.computeIfAbsent(regex, r -> Pattern.compile(r, Pattern.DOTALL)).matcher(value);
         if (!m.find()) {
             return keepUnmatched ? value : null;
         }
@@ -206,7 +206,13 @@ final class FieldMapper {
         }
     }
 
-    private static Instant iso(final String raw) {
+    /** "+0000" written without its colon (Phenom). */
+    private static final Pattern BARE_OFFSET = Pattern.compile("([+-]\\d{2})(\\d{2})$");
+    /** "2026-04-08 00:00:00": a space where ISO has T (ApplicantPro, iSolvedHire, Recooty JSON-LD). */
+    private static final Pattern SPACED = Pattern.compile("^(\\d{4}-\\d{2}-\\d{2}) (\\d{2}:\\d{2})");
+
+    private static Instant iso(final String input) {
+        final String raw = BARE_OFFSET.matcher(SPACED.matcher(input.trim()).replaceFirst("$1T$2")).replaceFirst("$1:$2");
         try {
             return OffsetDateTime.parse(raw).toInstant();
         } catch (final DateTimeParseException ignored) {

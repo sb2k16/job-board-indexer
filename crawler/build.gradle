@@ -60,9 +60,11 @@ dependencies {
 test {
     useJUnitPlatform()
     // Tests run the specs that ship, not copies of them.
-    systemProperty 'jbi.specs.dir', rootProject.file('config/specs').absolutePath
+    systemProperty 'jbi.specs.dir', System.getProperty('jbi.specs.dir', rootProject.file('config/specs').absolutePath)
     inputs.dir rootProject.file('config/specs')
     // JdbcBoardStateStoreIT runs only when a database is given: -Djbi.test.jdbc.url=jdbc:postgresql://localhost:55432/jbi
     systemProperty 'jbi.test.jdbc.url', System.getProperty('jbi.test.jdbc.url', '')
     systemProperty 'jbi.db.dir', rootProject.file('db').absolutePath
+    // LiveSpecRun runs only when targets are given: -Djbi.live=workable:tiger-analytics (tests/live_spec.sh)
+    systemProperty 'jbi.live', System.getProperty('jbi.live', '')
 }

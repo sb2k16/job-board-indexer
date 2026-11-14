@@ -1,6 +1,7 @@
 # Platform specs
 
-One YAML file per class A platform (public JSON or XML). The crawler's spec engine
+One YAML file per platform with public structured data: JSON or XML APIs and feeds, JSON embedded
+in a page, or HTML lists of jobs whose pages carry schema.org JobPosting. The crawler's spec engine
 (`crawler/.../spec/SpecAdapter.java`) runs any platform described here, so adding a class A
 platform is a spec file plus a tenant list, with no Java code. The file name must be `<name>.yaml`.
 
@@ -23,28 +24,34 @@ problem it found.
 | --- | --- | --- |
 | `name` | yes | Platform name; equals the file name |
 | `access_class` | no | `A` (default). B and C are not run by the spec engine |
-| `format` | yes | `json` or `xml` |
+| `format` | yes | `json`, `xml` or `html` (list.items and paths are regexes; see below) |
 | `base_url` | when `list.url` uses it | Default host; the pipeline's `base_url` overrides it |
 | `namespaces` | xml only | Prefix to URI, for XPath (`g: http://base.google.com/ns/1.0`) |
-| `list.url` | yes | URL template. Variables: `{base_url}`, `{board}` (URL-encoded), `{company}` |
+| `list.url` | yes | URL template. Variables: `{base_url}`, `{board}` (URL-encoded), `{board_raw}`, `{board_1}`, `{board_2}`... (parts of a board written `a\|b\|c`, e.g. Workday `host\|tenant\|site`), `{company}`, `{offset}`/`{page}` (templated paging) |
+| `list.method` | no | `GET` (default) or `POST` |
+| `list.body` | for POST | JSON body template; same variables, e.g. `'{"limit":20,"offset":{offset}}'` |
+| `list.extract` | no | Regex whose first group is the document, for data embedded in a page (`COMPANY_POSITIONS_DATA = (\[.*?\]);`, Next.js `__NEXT_DATA__`) |
 | `list.items` | yes | Path to the job list. JSON: `jobs`, or `$` when the body is the array. XML: an XPath such as `/rss/channel/item` |
 | `list.marker` | yes | Paths that must exist on every page. A page without them is a **failed fetch, never zero jobs** |
 | `list.total` | no | Path to the platform's job count. The snapshot is complete only when the parsed count equals it |
 | `pagination` | no | See below; default `style: none` |
 | `rate_limit` | no | The platform's whole budget across all pods: `requests_per_second` (default 2) and `max_concurrency` (default 2). Each pod takes 1/`politeness.replicas` of it, and a host's robots.txt Crawl-delay applies on top |
-| `fields` | `title`, `url` | Job record field to source; see below |
+| `fields` | `title`, `url` (only `url` with a `detail` block) | Job record field to source; see below |
+| `detail` | no | One more request per job; see below |
 
 ## Pagination
 
 | `style` | Keys | Stops when |
 | --- | --- | --- |
 | `none` | | after one request |
-| `offset` | `param` (offset name), optional `size_param` + `page_size`, `start` (default 0) | a page is empty or shorter than `page_size`, or `total` is reached |
+| `offset` | `param` (offset name), optional `size_param` + `page_size`, `start` (default 0); or no `param` and `{offset}` in `list.url`/`list.body` | a page is empty or shorter than `page_size`, or `total` is reached |
 | `page` | `param` (page number), optional `size_param` + `page_size`, `start` (default 1) | same as offset |
 | `cursor` | `param` (query name), `next` (path to the cursor in the response) | no cursor or an empty page |
 | `next_url` | `next` (path to the next URL; relative URLs are resolved) | no next URL or an empty page |
 
-`max_pages` (default 500) is a safety stop. A board that reaches it is an **incomplete** snapshot,
+`until_missing: true` (page or offset in the URL template) reads numbered files until one returns 404,
+whatever each holds: for a fixed set of files where any one may have none of this board's jobs (Hireology's
+cross-tenant sitemaps). `max_pages` (default 500) is a safety stop. A board that reaches it is an **incomplete** snapshot,
 never a complete one. A job repeated on two pages (the list shifted while being read) is kept once.
 
 ## Fields
@@ -77,12 +84,49 @@ posted_at: { path: createdAt, type: datetime, format: epoch_millis }
 - **countries** is derived, never mapped: the crawler resolves ISO codes from `country` and
   `location` (`location/CountryResolver.java`). Map `country` when the platform has it.
 
+## HTML pages
+
+With `format: html`, `list.items`, `list.marker`, `list.total` and `pagination.next` are regexes
+(dot matches newlines). Each distinct first-group value of `list.items` is one item, usually a link
+to a job page. Item paths: `.` the value, `url` the value resolved against the page URL, `1`, `2`...
+the match's groups. `{board}`, `{board_raw}` and `{board_N}` in these regexes are replaced by the
+quoted board, so a pattern can be specific to the tenant: `'href="(/{board}/job/\d+)"'`. Other braces
+are regex quantifiers (`[0-9a-f-]{36}`). Sitemaps work the same way: `'<loc>\s*([^<\s]+)\s*</loc>'`.
+
+## Detail requests
+
+```yaml
+detail:
+  url: "{url}/overview"     # default {url}; variables as list.url plus any list item path
+  format: jsonld            # jsonld (default), json, html or xml
+  fields: { ... }           # detail fields; omitted for jsonld = the standard JobPosting mapping
+```
+
+Detail values fill and override the list's. `jsonld` reads the schema.org JobPosting in the page's
+`application/ld+json` scripts (inside `@graph` or arrays too) and maps title, description,
+hiring organisation, every job location, identifier, employment type, date posted and
+`TELECOMMUTE` (`crawler/src/main/resources/.../spec/jsonld-fields.yaml`). A job whose page is gone
+(404/410) or no longer holds a JobPosting (a soft 404) is dropped; if every page lacks it, the board
+fails rather than listing nothing. Completeness is judged on the list alone, so a job that expires
+between the list and its page does not make the snapshot partial.
+
+## Checking a spec against a live tenant
+
+```sh
+tests/live_spec.sh workable:tiger-analytics "workday:costar.wd1.myworkdayjobs.com|costar|CoStarCareers"
+```
+
+Runs the spec with the production fetcher (robots.txt, rate limits, retries) and prints the outcome,
+job count, completeness, field coverage and two sample jobs.
+
 ## Adding a platform
 
-1. Save a real response under `crawler/src/test/resources/fixtures/`, trimmed.
+1. Check robots.txt for the list and detail paths, then save a real response under
+   `crawler/src/test/resources/fixtures/`, trimmed.
 2. Write `<name>.yaml` here and check robots.txt for the list path; note the result in the file.
 3. Add a test to `ShippedSpecsTest` that runs the spec against the fixture, including a response
    without the board marker.
-4. Add `local/tenants/<name>.csv` and the platform to `local/pipelines.tmpl.yaml`.
+4. Run it live with `tests/live_spec.sh`, add `local/live/tenants/<name>.csv`, and put the platform in
+   its group in `config/groups.toml`.
 
 Schema validation in CI and ConfigMap packaging come with T2.7 and T2.9.

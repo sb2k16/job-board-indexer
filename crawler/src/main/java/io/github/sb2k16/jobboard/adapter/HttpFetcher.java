@@ -18,4 +18,9 @@ public interface HttpFetcher {
 
     /** Returns the body of a 2xx response; anything else is a {@link BoardFetchException}. */
     String get(String url);
+
+    /** POST with a JSON body (Workday-style search APIs); same contract as {@link #get}. */
+    default String post(final String url, final String jsonBody) {
+        throw new UnsupportedOperationException("POST is not supported by " + getClass().getSimpleName());
+    }
 }

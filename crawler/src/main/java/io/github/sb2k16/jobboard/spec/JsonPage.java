@@ -31,6 +31,10 @@ final class JsonPage implements Page {
         this.root = root;
     }
 
+    static JsonPage of(final JsonNode root) {
+        return new JsonPage(root);
+    }
+
     static JsonPage parse(final String body) throws JsonProcessingException {
         final JsonNode root = MAPPER.readTree(body);
         if (root == null || root.isMissingNode()) {

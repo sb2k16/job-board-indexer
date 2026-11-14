@@ -1,0 +1,32 @@
+# Eightfold AI careers: /api/apply/v2/jobs on the tenant host (robots.txt allows /api/apply,
+# checked 2026-11-14), paged by start/num with a total count. Board: "host|domain", e.g.
+# "costar.eightfold.ai|costar.com". The description comes from the per-position call.
+name: eightfold
+access_class: A
+format: json
+list:
+  url: "https://{board_1}/api/apply/v2/jobs?domain={board_2}"
+  items: positions
+  marker: [positions, count]
+  total: count
+pagination:
+  style: offset
+  param: start
+  size_param: num
+  page_size: 10
+fields:
+  platform_job_id: id
+  requisition_id: display_job_id
+  title: name
+  location: location
+  remote: { path: work_location_option, type: boolean, true_values: [remote] }
+  posted_at: { path: t_create, type: datetime, format: epoch_seconds }
+  url: canonicalPositionUrl
+detail:
+  url: "https://{board_1}/api/apply/v2/jobs/{id}?domain={board_2}"
+  format: json
+  fields:
+    description: { path: job_description, transform: [html_to_text] }
+rate_limit:
+  requests_per_second: 1
+  max_concurrency: 1

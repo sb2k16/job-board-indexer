@@ -1,0 +1,19 @@
+# SmartJobBoard job boards: /jobs/ on each board's host, 20 a page (?page=N) with "N jobs found";
+# each job page carries a JobPosting; multi-employer. robots.txt: no rule for /jobs or /job (2026-11-14).
+name: smartjobboard
+access_class: A
+format: html
+list:
+  url: "https://{board}/jobs/"
+  items: 'href="(https://[^"/]+/job/\d+/[^"?#]*)"'
+  marker: ['jobs found']
+  total: '(\d+) jobs found'
+pagination:
+  style: page
+  param: page
+  page_size: 20
+fields:
+  url: url
+detail:
+  url: "{url}"
+  format: jsonld

@@ -1,0 +1,24 @@
+# Taleo Business Edition career centres: the per-career-section RSS feed lists every open
+# requisition with its HTML description. Board: "host/path|org|cws", e.g.
+# "lde.tbe.taleo.net/lde01|ALMANSSP|39". (Taleo Enterprise careersection sites are not covered.)
+# No robots.txt on the checked hosts (2026-11-14).
+name: taleo
+access_class: A
+format: xml
+namespaces:
+  taleo: urn:TBERss
+list:
+  url: "https://{board_1}/ats/servlet/Rss?org={board_2}&cws={board_3}&WebPage=SRCHR_V2&WebVersion=0&_rss_version=2"
+  items: /rss/channel/item
+  marker: [/rss/channel]
+pagination:
+  style: none
+fields:
+  platform_job_id: taleo:reqId
+  requisition_id: taleo:reqId
+  title: title
+  location: taleo:location
+  country: taleo:locationCountry
+  description: { path: taleo:html-description, transform: [html_unescape, html_to_text] }
+  posted_at: { path: pubDate, type: datetime, format: rfc1123 }
+  url: link

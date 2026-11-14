@@ -1,0 +1,21 @@
+# Personio: {tenant}.jobs.personio.com/xml, every position in one XML feed. The feed has no URL;
+# positions live at /job/{id}. Tenants on jobs.personio.de were Disallow: / in Phase 0; the .com
+# hosts allow crawling (robots.txt Allow: /, checked 2026-11-14).
+name: personio
+access_class: A
+format: xml
+list:
+  url: "https://{board}.jobs.personio.com/xml"
+  items: /workzag-jobs/position
+  marker: [/workzag-jobs]
+pagination:
+  style: none
+fields:
+  platform_job_id: id
+  title: name
+  company: subcompany
+  location: office
+  employment_type: { concat: [schedule, employmentType], join: ", " }
+  description: { concat: [jobDescriptions/jobDescription/value], transform: [html_unescape, html_to_text] }
+  posted_at: { path: createdAt, type: datetime }
+  url: { template: "https://{board}.jobs.personio.com/job/{id}" }

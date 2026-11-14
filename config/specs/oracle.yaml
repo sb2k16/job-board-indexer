@@ -1,0 +1,33 @@
+# Oracle Recruiting Cloud (Candidate Experience): the keyless recruitingCEJobRequisitions REST
+# resource behind the public career site. Board: "host|siteNumber", e.g.
+# "edyo.fa.us2.oraclecloud.com|CX". Undocumented, so it may change; paged with limit/offset inside
+# the finder; the description comes from recruitingCEJobRequisitionDetails. No robots.txt on the
+# checked hosts (2026-11-14).
+name: oracle
+access_class: A
+format: json
+list:
+  url: "https://{board_1}/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&expand=requisitionList&finder=findReqs;siteNumber={board_2},limit=25,offset={offset},sortBy=POSTING_DATES_DESC"
+  items: items.0.requisitionList
+  marker: [items.0.TotalJobsCount]
+  total: items.0.TotalJobsCount
+pagination:
+  style: offset
+  page_size: 25
+fields:
+  platform_job_id: Id
+  title: Title
+  location: PrimaryLocation
+  country: PrimaryLocationCountry
+  posted_at: { path: PostedDate, type: datetime }
+  url: { template: "https://{board_1}/hcmUI/CandidateExperience/en/sites/{board_2}/job/{Id}" }
+detail:
+  url: "https://{board_1}/hcmRestApi/resources/latest/recruitingCEJobRequisitionDetails?expand=all&onlyData=true&finder=ById;Id=%22{Id}%22,siteNumber={board_2}"
+  format: json
+  fields:
+    description: { concat: [items.0.ExternalDescriptionStr, items.0.ExternalQualificationsStr, items.0.ExternalResponsibilitiesStr], transform: [html_to_text] }
+    employment_type: items.0.JobSchedule
+    requisition_id: items.0.RequisitionNumber
+rate_limit:
+  requests_per_second: 1
+  max_concurrency: 1

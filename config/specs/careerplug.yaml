@@ -1,0 +1,17 @@
+# CareerPlug career sites: {tenant}.careerplug.com/jobs lists jobs 30 a page (rel=next);
+# each job page carries a schema.org JobPosting. robots.txt: no rule for /jobs (2026-11-14).
+name: careerplug
+access_class: A
+format: html
+list:
+  url: "https://{board}.careerplug.com/jobs"
+  items: 'href="((?:https://[^"/]+)?/jobs/\d+)"'
+  marker: ['careerplug']
+pagination:
+  style: next_url
+  next: '<a[^>]*rel="next"[^>]*href="([^"]+)"'
+fields:
+  url: url
+detail:
+  url: "{url}"
+  format: jsonld

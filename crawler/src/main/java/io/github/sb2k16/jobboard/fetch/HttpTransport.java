@@ -18,6 +18,10 @@ public interface HttpTransport {
 
     Response get(String url, Duration timeout) throws IOException, InterruptedException;
 
+    default Response post(final String url, final String jsonBody, final Duration timeout) throws IOException, InterruptedException {
+        throw new UnsupportedOperationException("POST is not supported by " + getClass().getSimpleName());
+    }
+
     /** Status, body and the one header the policy reads. */
     final class Response {
         private final int status;

@@ -22,7 +22,8 @@ import java.util.Map;
  */
 public class PlatformSpec {
 
-    public enum Format { json, xml }
+    /** html: list.items is a regex over the page; each match is an item (links to detail pages). */
+    public enum Format { json, xml, html }
 
     @JsonProperty("name")
     private String name;
@@ -50,6 +51,14 @@ public class PlatformSpec {
     private Map<String, FieldSpec> fields = new LinkedHashMap<>();
 
     /** The platform's whole budget across all pods; each pod takes its share (T2.4). */
+    /** Optional: one more request per job, whose fields fill and override the list's. */
+    @JsonProperty("detail")
+    private DetailSpec detail;
+
+    public DetailSpec getDetail() {
+        return detail;
+    }
+
     @JsonProperty("rate_limit")
     private RateLimitSpec rateLimit = new RateLimitSpec();
 
@@ -130,6 +139,33 @@ public class PlatformSpec {
         @JsonProperty("total")
         private String total;
 
+        /** GET (default) or POST. */
+        @JsonProperty("method")
+        private String method = "GET";
+
+        /** POST body template (JSON); same variables as url, plus {offset} and {page}. */
+        @JsonProperty("body")
+        private String body;
+
+        /**
+         * Regex applied to the response before parsing; its first group is the document. For job
+         * data embedded in an HTML page (a script variable, Next.js __NEXT_DATA__).
+         */
+        @JsonProperty("extract")
+        private String extract;
+
+        public String getMethod() {
+            return method;
+        }
+
+        public String getBody() {
+            return body;
+        }
+
+        public String getExtract() {
+            return extract;
+        }
+
         public String getUrl() {
             return url;
         }
@@ -172,6 +208,18 @@ public class PlatformSpec {
         private String next;
 
         /** Safety stop; a board that hits it is an incomplete snapshot, never a complete one. */
+        /**
+         * page/offset with the position in the URL template: keep going until a page is missing
+         * (404), whatever it holds. For a fixed set of files where any one may hold none of this
+         * board's jobs (Hireology's cross-tenant sitemaps).
+         */
+        @JsonProperty("until_missing")
+        private boolean untilMissing;
+
+        public boolean isUntilMissing() {
+            return untilMissing;
+        }
+
         @JsonProperty("max_pages")
         private int maxPages = 500;
 
@@ -201,6 +249,44 @@ public class PlatformSpec {
 
         public int getMaxPages() {
             return maxPages;
+        }
+    }
+
+    /**
+     * The per-job request. format jsonld reads the schema.org JobPosting in the page's
+     * application/ld+json scripts; with no fields given, the standard JobPosting mapping applies
+     * (spec/jsonld-fields.yaml). A job whose detail page is gone (404/410, or no JobPosting) is
+     * dropped; if every detail page lacks it, the board fails rather than listing nothing.
+     */
+    public static class DetailSpec {
+        /** Template; variables as list.url plus any item path, e.g. {url} or {id}. */
+        @JsonProperty("url")
+        private String url = "{url}";
+
+        @JsonProperty("format")
+        private String format = "jsonld";
+
+        @JsonProperty("extract")
+        private String extract;
+
+        /** Detail fields; for jsonld, omitted means the standard JobPosting mapping. */
+        @JsonProperty("fields")
+        private Map<String, FieldSpec> fields;
+
+        public String getUrl() {
+            return url;
+        }
+
+        public String getFormat() {
+            return format;
+        }
+
+        public String getExtract() {
+            return extract;
+        }
+
+        public Map<String, FieldSpec> getFields() {
+            return fields;
         }
     }
 }

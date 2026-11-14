@@ -1,0 +1,26 @@
+# Rippling ATS job boards: ats.rippling.com/{board}/jobs is a Next.js page whose __NEXT_DATA__
+# holds the job-posts query (20 a page, ?page=N from 0, with totalItems). robots.txt: no rule for
+# board paths (2026-11-14). List fields only: descriptions need a per-job page (not fetched).
+# totalItems counts a job once per location, so it is not compared; the last page is the short one.
+name: rippling
+access_class: A
+format: json
+list:
+  url: "https://ats.rippling.com/{board}/jobs"
+  extract: '<script id="__NEXT_DATA__"[^>]*>(.*?)</script>'
+  items: props.pageProps.dehydratedState.queries.0.state.data.items
+  marker: [props.pageProps.dehydratedState.queries.0.state.data.totalItems]
+pagination:
+  style: page
+  param: page
+  start: 0
+  page_size: 20
+fields:
+  platform_job_id: id
+  title: name
+  location: { path: locations.*.name, join: "; " }
+  city: locations.0.city
+  region: locations.0.stateCode
+  country: locations.0.countryCode
+  remote: { path: locations.0.workplaceType, type: boolean, true_values: [REMOTE] }
+  url: url
