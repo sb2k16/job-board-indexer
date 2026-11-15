@@ -27,6 +27,7 @@ detail:
   format: json
   fields:
     description: { path: job_description, transform: [html_to_text] }
+# explore.jobs.netflix.net answered 429 at 1 request a second, 200 jobs into its list (2026-11-14).
 rate_limit:
-  requests_per_second: 1
+  requests_per_second: 0.5
   max_concurrency: 1
