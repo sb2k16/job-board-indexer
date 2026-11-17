@@ -42,7 +42,7 @@ public class JdkHttpTransport implements HttpTransport {
 
     @Override
     public Response get(final String url, final Duration timeout) throws IOException, InterruptedException {
-        final HttpRequest request = HttpRequest.newBuilder(URI.create(url))
+        final HttpRequest request = HttpRequest.newBuilder(io.github.sb2k16.jobboard.adapter.Html.uri(url))
                 .timeout(timeout)
                 .header("User-Agent", USER_AGENT)
                 .header("Accept", "application/json, application/xml;q=0.9, text/xml;q=0.9, */*;q=0.8")
@@ -55,7 +55,7 @@ public class JdkHttpTransport implements HttpTransport {
 
     @Override
     public Response post(final String url, final String jsonBody, final Duration timeout) throws IOException, InterruptedException {
-        final HttpRequest request = HttpRequest.newBuilder(URI.create(url))
+        final HttpRequest request = HttpRequest.newBuilder(io.github.sb2k16.jobboard.adapter.Html.uri(url))
                 .timeout(timeout)
                 .header("User-Agent", USER_AGENT)
                 .header("Accept", "application/json")

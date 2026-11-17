@@ -128,8 +128,8 @@ def pipeline(group, platforms, env, replicas):
         "        script:",
         "          source: |",
         *["            " + line for line in UPSERT],
-        "        max_retries: 5",
-        "        bulk_size: 5",
+        f"        max_retries: {os_.get('max_retries', 5)}",
+        f"        bulk_size: {os_.get('bulk_size', 5)}",
     ]
     return name, "\n".join(lines) + "\n"
 

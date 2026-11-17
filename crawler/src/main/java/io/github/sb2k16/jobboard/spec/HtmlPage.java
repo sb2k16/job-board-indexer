@@ -36,7 +36,7 @@ final class HtmlPage implements Page {
 
     HtmlPage(final String body, final String pageUrl) {
         this.body = body;
-        this.base = URI.create(pageUrl);
+        this.base = io.github.sb2k16.jobboard.adapter.Html.uri(pageUrl);
     }
 
     static Pattern pattern(final String regex) {
@@ -73,7 +73,7 @@ final class HtmlPage implements Page {
             return List.of(value);
         }
         if (p.equals("url")) {
-            return List.of(base.resolve(value.replace(" ", "%20")).toString());
+            return List.of(base.resolve(io.github.sb2k16.jobboard.adapter.Html.uri(value)).toString());
         }
         if (p.chars().allMatch(Character::isDigit)) {
             final int g = Integer.parseInt(p);

@@ -374,7 +374,7 @@ public class SpecAdapter implements PlatformAdapter {
                 if (next.isEmpty() || next.get(0).isBlank() || pageItems == 0) {
                     return null;
                 }
-                return URI.create(current).resolve(next.get(0).trim()).toString();
+                return Html.uri(current).resolve(Html.uri(next.get(0))).toString();
             }
             default:
                 throw new IllegalStateException("Unknown pagination style " + pg.getStyle());

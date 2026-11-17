@@ -9,7 +9,10 @@ source_coordination:
       username: "@@JBI_DB_USER@@"
       password: "@@JBI_DB_PASSWORD@@"
       ttl: "P2D"
-      # One pool per pipeline; 2 starved under a full re-crawl (docs/pipeline-groups-2026-11-13.md).
-      max_pool_size: 5
+      # One pool per pipeline. db.t4g.micro allows about 80 connections: at 5 the 13 pipeline
+      # instances (5 x 2 crawler tasks + 3 heavy) took 65, with board_state (2 per task) and the web
+      # app reaching the limit on Nov 17. 3 gives 39 in all. 2 starved under a full re-crawl locally
+      # (docs/pipeline-groups-2026-11-13.md); if 3 does, move to db.t4g.small rather than lower it.
+      max_pool_size: 3
       # The table comes from db/V1__source_coordination.sql (the jbi-tools migration task).
       skip_table_creation: true

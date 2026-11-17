@@ -120,4 +120,38 @@ public final class Html {
         }
         return true;
     }
+
+    private static final String URI_CHARS =
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~:/?#[]@!$&'()*+,;=%";
+
+    /**
+     * A URI from a link as pages write it: characters a URI may not contain (space, |, ", <, >,
+     * braces, non-ASCII...) are percent-encoded as UTF-8, existing %XX escapes are kept. Browsers
+     * do the same; java.net.URI rejects them (CareerPlug, Nov 17: ".../779498403-tpc-sawgrass-|-...").
+     */
+    public static java.net.URI uri(final String link) {
+        final String s = link.trim();
+        StringBuilder b = null;
+        for (int i = 0; i < s.length(); i++) {
+            final char c = s.charAt(i);
+            if (URI_CHARS.indexOf(c) >= 0 && c < 128) {
+                if (b != null) {
+                    b.append(c);
+                }
+                continue;
+            }
+            if (b == null) {
+                b = new StringBuilder(s.length() + 16).append(s, 0, i);
+            }
+            final int cp = s.codePointAt(i);
+            for (final byte x : new String(Character.toChars(cp)).getBytes(java.nio.charset.StandardCharsets.UTF_8)) {
+                b.append('%').append(Character.toUpperCase(Character.forDigit((x >> 4) & 0xF, 16)))
+                        .append(Character.toUpperCase(Character.forDigit(x & 0xF, 16)));
+            }
+            if (Character.charCount(cp) == 2) {
+                i++;
+            }
+        }
+        return java.net.URI.create(b == null ? s : b.toString());
+    }
 }

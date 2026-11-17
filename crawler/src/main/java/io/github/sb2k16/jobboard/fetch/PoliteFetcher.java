@@ -78,7 +78,7 @@ public class PoliteFetcher implements HttpFetcher {
 
     /** GET when body is null, else POST; robots.txt, limits, retries and the breaker apply to both. */
     private String fetch(final String url, final String body) throws InterruptedException {
-        final URI uri = URI.create(url);
+        final URI uri = io.github.sb2k16.jobboard.adapter.Html.uri(url);
         final String origin = uri.getScheme() + "://" + uri.getRawAuthority();
         final String pathAndQuery = (uri.getRawPath() == null || uri.getRawPath().isEmpty() ? "/" : uri.getRawPath())
                 + (uri.getRawQuery() == null ? "" : "?" + uri.getRawQuery());
