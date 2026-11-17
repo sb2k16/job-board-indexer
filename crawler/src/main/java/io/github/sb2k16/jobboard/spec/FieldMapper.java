@@ -44,7 +44,9 @@ final class FieldMapper {
             DateTimeFormatter.ofPattern("EEE, d MMM yyyy HH:mm:ss zzz", Locale.US),
             DateTimeFormatter.ofPattern("EEE, d MMM yyyy HH:mm:ss Z", Locale.US),
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss zzz", Locale.US),
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss Z", Locale.US));
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss Z", Locale.US),
+            // java.util.Date#toString, as SuccessFactors prints datePosted: "Tue Oct 27 00:00:00 UTC 2026"
+            DateTimeFormatter.ofPattern("EEE MMM d HH:mm:ss zzz yyyy", Locale.US));
 
     /** Field name to setter. Type conversion happens before the setter is called. */
     static final Map<String, BiConsumer<JobRecord, Object>> SETTERS = Map.ofEntries(

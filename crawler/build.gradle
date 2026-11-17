@@ -67,4 +67,7 @@ test {
     systemProperty 'jbi.db.dir', rootProject.file('db').absolutePath
     // LiveSpecRun runs only when targets are given: -Djbi.live=workable:tiger-analytics (tests/live_spec.sh)
     systemProperty 'jbi.live', System.getProperty('jbi.live', '')
+    // RecordFixtures runs only when platforms are given (tests/record_fixtures.sh)
+    systemProperty 'jbi.record', System.getProperty('jbi.record', '')
+    systemProperty 'jbi.tenants.dir', rootProject.file('local/live/tenants').absolutePath
 }

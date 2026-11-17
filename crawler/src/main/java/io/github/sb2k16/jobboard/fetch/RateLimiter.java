@@ -16,7 +16,7 @@ import java.time.Duration;
  * reserves the next slot under the lock and sleeps outside it, so waiting threads queue in order.
  */
 public class RateLimiter {
-    private final long intervalNanos;
+    private long intervalNanos;
     private final Ticker ticker;
     private long nextFree = Long.MIN_VALUE;
 
@@ -25,8 +25,13 @@ public class RateLimiter {
         this.ticker = ticker;
     }
 
-    public Duration getInterval() {
+    public synchronized Duration getInterval() {
         return Duration.ofNanos(intervalNanos);
+    }
+
+    /** Changes the spacing for slots not yet reserved (adaptive throttling after a 429). */
+    public synchronized void setInterval(final Duration interval) {
+        this.intervalNanos = interval.toNanos();
     }
 
     public void acquire() throws InterruptedException {

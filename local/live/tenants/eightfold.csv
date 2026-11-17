@@ -1,4 +1,6 @@
 board,company
 # host|domain
 costar.eightfold.ai|costar.com,CoStar Group
-explore.jobs.netflix.net|netflix.com,Netflix
+# Off: Netflix answers 429 after a burst of about five requests, then (Nov 16) stopped answering
+# this IP at all, even curl. Re-enable once it answers again, at 0.5 requests a second.
+# explore.jobs.netflix.net|netflix.com,Netflix

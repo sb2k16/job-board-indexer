@@ -203,6 +203,31 @@ class FetchLayerTest {
     }
 
     @Test
+    void throttle_a429WithoutRetryAfterSlowsTheHost_andRecoversAfterSuccesses() {
+        transport.on("https://h.test/robots.txt", status(404))
+                .on("https://h.test/a", status(429), status(429), ok("x"))
+                .on("https://h.test/b", ok("y"))
+                .on("https://other.test/robots.txt", status(404)).on("https://other.test/c", ok("z"));
+        final PoliteFetcher f = (PoliteFetcher) fetcher(policy(100, 1, 4));
+        assertThat(f.get("https://h.test/a"), equalTo("x"));
+        assertThat(f.throttleFor("https://h.test"), equalTo(Duration.ofSeconds(4)));   // 2 s, then doubled
+        assertThat(f.throttleFor("https://other.test"), equalTo(Duration.ZERO));       // per host
+
+        // The next request to the throttled host waits its spacing; another host does not.
+        ticker.sleeps.clear();
+        f.get("https://other.test/c");
+        assertThat(ticker.sleeps.stream().mapToLong(Duration::toMillis).sum() < 1000, equalTo(true));
+        ticker.sleeps.clear();
+        f.get("https://h.test/b");
+        assertThat(ticker.sleeps.stream().mapToLong(Duration::toMillis).sum() >= 3000, equalTo(true));
+
+        for (int i = 0; i < PoliteFetcher.THROTTLE_RECOVERY * 12; i++) {
+            f.get("https://h.test/b");
+        }
+        assertThat(f.throttleFor("https://h.test"), equalTo(Duration.ZERO));
+    }
+
+    @Test
     void retryAfter_isHonoured_andTooLongEndsTheFetch() {
         transport.on("https://h.test/robots.txt", status(404))
                 .on("https://h.test/a", new HttpTransport.Response(429, "", Duration.ofSeconds(20)), ok("x"));

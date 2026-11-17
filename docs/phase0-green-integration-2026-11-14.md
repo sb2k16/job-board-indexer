@@ -29,7 +29,7 @@ partial forever.
 | Breezy HR | 1 | vetsez | 68 | yes | descriptions from each job's JobPosting |
 | HireHive | 1 | irish-wheelchair-association | 30 of 30 | yes | |
 | Workable | 1 | luxasia | 170 | yes | descriptions from the v2 job call; 1 request/s |
-| Workday | 2 | CoStar | 373 of 373 | yes | POST search plus a detail call per job; the search serves at most 2,000 results |
+| Workday | 2 | CoStar | 373 of 373 | yes | POST search plus a detail call per job. (Corrected Nov 15: the search serves every result; CVS Health stopped at 9,991 of 18,528 because of the engine's own 500-page default, now 2,500 for Workday) |
 | Oracle Recruiting | 2 | edyo (CX) | 887 of 887 | yes | 15 minutes at 1 request/s |
 | Eightfold | 2 | CoStar | 379 of 379 | yes | |
 | ADP | 2 | e5360e53 | 36 of 36 | yes | `$top=20` returns 19, so paging steps by what came back |
@@ -39,7 +39,7 @@ partial forever.
 | Taleo Business Edition | 3 | AlMansoori (lde01) | 295 | yes | the RSS feed, not the HTML list (whose paging is a session-bound "next") |
 | Comeet | 4 | silverfort | 33 | yes | |
 | Rippling | 4 | nocd | 86 | yes | totalItems counts a job once per location, so it is not compared |
-| Phenom | 4 | O'Reilly | 20 (2 pages, capped) | n/a | 19,200 jobs, 10 a page: extraction checked on two pages; a full read is about 1,900 requests and runs in the heavy group |
+| Phenom | 4 | O'Reilly | 20 (2 pages, capped) | n/a | 19,200 jobs, 10 a page: extraction checked on two pages. (Nov 15: the search serves at most 10,000 results, so tenants this large stay PARTIAL; see docs/connectors-2026-11-15.md) |
 | ApplicantPro | 5 | opc | 22 | yes | job sitemap; the sitemap's bare /jobs/ entry is excluded |
 | iSolvedHire | 5 | directviz | 32 | yes | |
 | iCIMS | 5 | careers-actslife | 488 | yes | 10 list pages via rel=next |

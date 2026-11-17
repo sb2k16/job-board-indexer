@@ -48,30 +48,30 @@ platforms = ["paylocity", "personio", "teamtailor", "hirebridge", "taleo"]
 [[group]]
 id = 4
 name = "ats-embedded"
-description = "ATS with job data embedded in the HTML page; detail fetch for descriptions; large tenants"
+description = "ATS with job data embedded in the HTML page (Zoho: escaped JSON in an input; WeRecruit: window.allOffers); detail fetch for descriptions; large tenants"
 deployment = "crawler-heavy"
 refresh = "PT6H"
 workers = 3
-platforms = ["comeet", "phenom", "rippling"]
+platforms = ["comeet", "phenom", "rippling", "zohorecruit", "werecruit"]
 
 [[group]]
 id = 5
 name = "jsonld-sitemap"
-description = "JSON-LD ATS listed by sitemap: every job is a detail fetch (Hireology: 50,000 URLs per file)"
+description = "JSON-LD or fixed-template ATS listed by sitemap or search page: every job is a detail fetch (Hireology: 50,000 URLs per file; SuccessFactors: one vendor template)"
 deployment = "crawler-heavy"
 refresh = "PT12H"
 workers = 4
-platforms = ["applicantpro", "isolvedhire", "hireology", "icims"]
+platforms = ["applicantpro", "isolvedhire", "hireology", "icims", "successfactors"]
 
 [[group]]
 id = 6
 name = "jsonld-pages"
-description = "JSON-LD ATS listed by HTML page, one detail fetch per job, one shared adapter"
+description = "ATS listed by HTML page or feed, one detail fetch per job (JSON-LD, SmartRecruiters' JSON job call, TriNet and Avature templates); PageUp list-only at one request per 150 s"
 deployment = "crawler"
 refresh = "PT12H"
 workers = 4
 platforms = ["careerplug", "hiringthing", "jazzhr", "jobvite", "freshteam", "gohire", "join", "kula", "manatal",
-             "recooty", "trakstar", "deel", "firststage"]
+             "recooty", "trakstar", "deel", "firststage", "smartrecruiters", "trinet", "avature", "pageup"]
 
 [[group]]
 id = 7
@@ -85,21 +85,14 @@ platforms = ["wpjobmanager", "jobboardly", "jobboardio", "madgex", "jobiqo"]
 [[group]]
 id = 8
 name = "boards-jsonld"
-description = "Job boards with JSON-LD: HTML list plus detail fetch; multi-employer"
+description = "Job boards with JSON-LD: HTML list or RSS plus detail fetch; multi-employer. JobBoard.com is not run: its one customer board lists ~340,000 URLs, each a detail fetch"
 deployment = "crawler"
 refresh = "PT12H"
 workers = 2
-platforms = ["jboard", "smartjobboard", "jobboardhq", "jobboardcom", "jobkit"]
+platforms = ["jboard", "smartjobboard", "jobboardhq", "jobkit"]
 
-[[group]]
-id = 9
-name = "html-parser"
-description = "Server HTML without feeds or JSON-LD. Declined Nov 11; kept so enabling it is a one-line change"
-deployment = "crawler-heavy"
-active = false
-refresh = "PT12H"
-workers = 2
-platforms = ["successfactors", "smartrecruiters", "pageup", "trinet", "werecruit", "avature", "zohorecruit"]
+# Group 9 (html-parser) is gone: the Nov 11 resolution (phase0/html-tier-resolution.md) found
+# structured data or one fixed vendor template on all seven, and they now run in groups 4, 5 and 6.
 
 [[group]]
 id = 10

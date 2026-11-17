@@ -1,0 +1,26 @@
+# JobKit job boards (Rails apps; jobs.rubyonrails.org is the one board found, Phase 0): /jobs.rss lists
+# every open job with its HTML description; each job page carries a JobPosting (location, employer,
+# employment type), read for the fields the feed lacks. A multi-employer board: the company comes
+# from each job. Board: the board host. robots.txt: none (2026-11-15).
+name: jobkit
+access_class: A
+format: xml
+list:
+  url: "https://{board}/jobs.rss"
+  items: /rss/channel/item
+  marker: [/rss/channel]
+pagination:
+  style: none
+fields:
+  url: link
+  platform_job_id: { path: link, regex: '/jobs/(\d+)' }
+  title: { path: title, regex: '^(.*?)(?: at [^@]+)?$', keep_unmatched: true }
+  company: { path: title, regex: ' at ([^@]+)$' }
+  description: { path: description, transform: [html_unescape, html_to_text] }
+  posted_at: { path: pubDate, type: datetime, format: rfc1123 }
+detail:
+  url: "{url}"
+  format: jsonld
+rate_limit:
+  requests_per_second: 1
+  max_concurrency: 1

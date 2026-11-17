@@ -1,0 +1,38 @@
+# SmartRecruiters career sites. api.smartrecruiters.com is disallowed by robots.txt, so this reads
+# the career site: careers.smartrecruiters.com/{Company}/api/more?page=N returns the company's jobs
+# as an HTML fragment (about 50 on page 0, then 24 a page; the page past the last is an empty body),
+# ungrouped even where the site groups jobs by location. Each job page on jobs.smartrecruiters.com
+# answers JSON to an Accept: application/json request (jobTitle, jobAdLocation, employmentType,
+# postedDate, content.sections.*.text); browsers get the same data as schema.org microdata.
+# Board: the company identifier as in the URL, e.g. "Playtech".
+# robots.txt: none on either host (2026-11-15). Phase 0 resolution: phase0/html-tier-resolution.md.
+name: smartrecruiters
+access_class: A
+format: html
+list:
+  url: "https://careers.smartrecruiters.com/{board}/api/more?page={page}"
+  items: 'href="(https://jobs\.smartrecruiters\.com/{board}/(\d+)[^"]*)"'
+  marker: ['opening-job']
+pagination:
+  style: page
+  start: 0
+  end_on_empty: true
+  max_pages: 200
+fields:
+  url: '1'
+  platform_job_id: '2'
+detail:
+  url: "{url}"
+  format: json
+  fields:
+    title: jobTitle
+    company: company.name
+    location: jobAdLocation
+    employment_type: employmentType
+    posted_at: { path: postedDate, type: datetime }
+    description:
+      concat: [content.sections.jobDescription.text, content.sections.qualifications.text, content.sections.additionalInformation.text]
+      transform: [html_to_text]
+rate_limit:
+  requests_per_second: 1
+  max_concurrency: 1

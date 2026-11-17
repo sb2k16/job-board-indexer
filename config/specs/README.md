@@ -30,10 +30,11 @@ problem it found.
 | `list.url` | yes | URL template. Variables: `{base_url}`, `{board}` (URL-encoded), `{board_raw}`, `{board_1}`, `{board_2}`... (parts of a board written `a\|b\|c`, e.g. Workday `host\|tenant\|site`), `{company}`, `{offset}`/`{page}` (templated paging) |
 | `list.method` | no | `GET` (default) or `POST` |
 | `list.body` | for POST | JSON body template; same variables, e.g. `'{"limit":20,"offset":{offset}}'` |
-| `list.extract` | no | Regex whose first group is the document, for data embedded in a page (`COMPANY_POSITIONS_DATA = (\[.*?\]);`, Next.js `__NEXT_DATA__`) |
+| `list.extract` | no | Regex whose first group is the document, for data embedded in a page (`COMPANY_POSITIONS_DATA = (\[.*?\]);`, Next.js `__NEXT_DATA__`). Keep it to simple lazy groups: a repeated alternation such as `(?:[^']\|\\.)*` overflows Java's regex stack on megabyte pages |
+| `list.extract_decode` | no | `html` (entities, for JSON in an attribute value) or `js` (a JavaScript string literal: `\xHH`, `\uHHHH`, `\\`) applied to the extracted text before parsing |
 | `list.items` | yes | Path to the job list. JSON: `jobs`, or `$` when the body is the array. XML: an XPath such as `/rss/channel/item` |
 | `list.marker` | yes | Paths that must exist on every page. A page without them is a **failed fetch, never zero jobs** |
-| `list.total` | no | Path to the platform's job count. The snapshot is complete only when the parsed count equals it |
+| `list.total` | no | Path to the platform's job count. The snapshot is complete only when the parsed count equals it. Thousands separators are ignored (`1,037`) |
 | `pagination` | no | See below; default `style: none` |
 | `rate_limit` | no | The platform's whole budget across all pods: `requests_per_second` (default 2) and `max_concurrency` (default 2). Each pod takes 1/`politeness.replicas` of it, and a host's robots.txt Crawl-delay applies on top |
 | `fields` | `title`, `url` (only `url` with a `detail` block) | Job record field to source; see below |
@@ -51,7 +52,10 @@ problem it found.
 
 `until_missing: true` (page or offset in the URL template) reads numbered files until one returns 404,
 whatever each holds: for a fixed set of files where any one may have none of this board's jobs (Hireology's
-cross-tenant sitemaps). `max_pages` (default 500) is a safety stop. A board that reaches it is an **incomplete** snapshot,
+cross-tenant sitemaps). `end_on_empty: true` ends the list at an empty response body after the first page
+(SmartRecruiters); without it an empty body is a failed fetch. `max_results: N` is a search that serves at most
+N results however many it reports (Phenom: 10,000): paging stops there and the board is PARTIAL with that reason,
+instead of failing on the empty page past the window. `max_pages` (default 500) is a safety stop. A board that reaches it is an **incomplete** snapshot,
 never a complete one. A job repeated on two pages (the list shifted while being read) is kept once.
 
 ## Fields
@@ -76,7 +80,8 @@ posted_at: { path: createdAt, type: datetime, format: epoch_millis }
 - **XML paths** are XPath 1.0 relative to the item: `title`, `g:id`, `pubDate[last()]`.
 - **Transforms**, applied in order: `html_unescape`, `html_to_text`, `trim`, `normalize_list`
   (`,Portland,OR,97224` becomes `Portland, OR, 97224`).
-- **Datetime formats**: `auto` (default), `iso`, `epoch_millis`, `epoch_seconds`, `rfc1123`.
+- **Datetime formats**: `auto` (default), `iso`, `epoch_millis`, `epoch_seconds`, `rfc1123`. `auto` also reads
+  `YYYY-MM-DD HH:MM:SS` with a zone, `+0000` offsets and `java.util.Date` text (`Tue Oct 27 00:00:00 UTC 2026`).
   US zone abbreviations (EST, PDT, ...) are read as fixed offsets. A date that does not parse is
   dropped, never guessed.
 - **Company:** the tenant list's company name wins when it has one.
@@ -100,10 +105,12 @@ detail:
   url: "{url}/overview"     # default {url}; variables as list.url plus any list item path
   format: jsonld            # jsonld (default), json, html or xml
   fields: { ... }           # detail fields; omitted for jsonld = the standard JobPosting mapping
+  extract: '...'            # optional, as list.extract, with extract_decode
+  unless: description       # optional: skip the request when the list already gave this field
 ```
 
 Detail values fill and override the list's. `jsonld` reads the schema.org JobPosting in the page's
-`application/ld+json` scripts (inside `@graph` or arrays too) and maps title, description,
+`application/ld+json` scripts (inside `@graph` or arrays too, and with the `+` written `&#x2B;`) and maps title, description,
 hiring organisation, every job location, identifier, employment type, date posted and
 `TELECOMMUTE` (`crawler/src/main/resources/.../spec/jsonld-fields.yaml`). A job whose page is gone
 (404/410) or no longer holds a JobPosting (a soft 404) is dropped; if every page lacks it, the board
@@ -119,14 +126,26 @@ tests/live_spec.sh workable:tiger-analytics "workday:costar.wd1.myworkdayjobs.co
 Runs the spec with the production fetcher (robots.txt, rate limits, retries) and prints the outcome,
 job count, completeness, field coverage and two sample jobs.
 
+## Recorded fixtures
+
+```sh
+tests/record_fixtures.sh pageup "jobboardly:jobsindevon.uk"     # no arguments: every spec
+```
+
+Records one list page and up to three job pages from a live tenant (the first in
+`local/live/tenants/<platform>.csv` unless a board is given), with the production fetcher, into
+`crawler/src/test/resources/fixtures/recorded/<platform>.json.gz`. Requests past those are recorded
+as 404 without being sent. `RecordedSpecsTest` replays every spec against its recording: the spec
+must make only recorded requests and map at least one job with a title, absolute URL, id and
+company; a spec without a recording fails the build. Re-record when a spec changes what it asks for.
+
 ## Adding a platform
 
-1. Check robots.txt for the list and detail paths, then save a real response under
-   `crawler/src/test/resources/fixtures/`, trimmed.
-2. Write `<name>.yaml` here and check robots.txt for the list path; note the result in the file.
-3. Add a test to `ShippedSpecsTest` that runs the spec against the fixture, including a response
-   without the board marker.
-4. Run it live with `tests/live_spec.sh`, add `local/live/tenants/<name>.csv`, and put the platform in
-   its group in `config/groups.toml`.
+1. Check robots.txt for the list and detail paths.
+2. Write `<name>.yaml` here; note the robots.txt result and the date in the file.
+3. Add `local/live/tenants/<name>.csv` and run it live with `tests/live_spec.sh`.
+4. Record its fixture with `tests/record_fixtures.sh <name>`; add a hand-written test to
+   `ShippedSpecsTest` for anything the recording does not show (a response without the marker).
+5. Put the platform in its group in `config/groups.toml`.
 
 Schema validation in CI and ConfigMap packaging come with T2.7 and T2.9.

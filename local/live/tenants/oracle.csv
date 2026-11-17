@@ -1,4 +1,4 @@
 board,company
-# host|siteNumber
-edyo.fa.us2.oraclecloud.com|CX,
+# host|siteNumber. edyo is Pike (Pike Electric): its job texts name it; the API does not.
+edyo.fa.us2.oraclecloud.com|CX,Pike
 ejwl.fa.us2.oraclecloud.com|CX,

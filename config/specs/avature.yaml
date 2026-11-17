@@ -1,0 +1,38 @@
+# Avature career sites: {tenant}.avature.net/{path}/SearchJobs/?jobRecordsPerPage=12&jobOffset=N
+# lists 10 or 12 jobs a page by tenant (larger page sizes are ignored) with "1-12 of 337" in list-controls__text__legend.
+# The RSS feed (/SearchJobs/feed/) is not used: it serves the same 20 newest jobs at every jobOffset.
+# Each JobDetail page lists labelled fields (article__content__view__field__label / __value): the
+# rich ones are the description; location sits under "Location", "Location(s)" or "Country/Region"
+# by tenant and is missing on some (Siemens Energy); no posted date on most tenants. Board:
+# "host|path", e.g. "bloomberg.avature.net|careers" or "dfiretailgroup.avature.net|en_US/careers".
+# robots.txt allows /careers on checked tenants; missionpethealth disallows it (2026-11-16). Hosts
+# answer slowly (bloomberg: some responses over 30 s). phase0/html-tier-resolution.md.
+name: avature
+access_class: A
+format: html
+list:
+  url: "https://{board_1}/{board_2}/SearchJobs/?jobRecordsPerPage=12&jobOffset={offset}"
+  items: 'href="(https://[^"/]+/[^"]*/JobDetail/[^"]+/(\d+))"'
+  marker: ['list-controls__text__legend|JobDetail']
+  total: 'list-controls__text__legend"[^>]*aria-label="([\d,]+) results"'
+pagination:
+  style: offset
+  max_pages: 500          # no page_size: tenants serve 10 or 12 a page whatever is asked; the total ends it
+fields:
+  url: url
+  platform_job_id: '2'
+detail:
+  url: "{url}"
+  format: html
+  fields:
+    title: { path: '<meta property="og:title" content="([^"]+)"', transform: [html_unescape, trim] }
+    posted_at: { path: 'field__label[^>]*>\s*(?:Job Posting date|Posting Date|Date Posted)\s*</div>\s*<div class="article__content__view__field__value[^"]*"[^>]*>\s*([^<]+?)\s*<', type: datetime }
+    location:
+      path: 'field__label[^>]*>\s*(?:Location|Location\(s\)|Locations|Country/Region|Work Location)\s*</div>\s*<div class="article__content__view__field__value[^"]*"[^>]*>(.*?)</div>'
+      transform: [html_to_text]
+    description:
+      concat: ['class="article__content__view__field__value[^"]*"[^>]*>\s*(<(?:div|p|ul|font|span)[\s>].*?)(?=<div class="article__content__view__field[ "]|</article>)']
+      transform: [html_to_text]
+rate_limit:
+  requests_per_second: 1
+  max_concurrency: 1

@@ -1,0 +1,29 @@
+# PageUp career sites (custom domains, /cw/{lang}/listing/): the listing is a table of job-link rows,
+# each followed by a summary row; ?page=N&page-items=100 pages it. Read list-only: title, location
+# and the summary paragraph as the description, so the job pages are never requested.
+# Hosts throttle hard: after 2 to 4 requests in a burst they answer HTTP 202 with an empty body for
+# about 5 minutes (CloudFront, no Retry-After; phase0/html-tier-resolution.md, re-seen 2026-11-15
+# on listing pages). One request per 150 s per platform keeps under it; a 202 lacks the marker, so
+# it is a failed fetch, never an empty board. Board: "host|lang", e.g. "careers.udel.edu|en-us".
+# robots.txt on checked hosts has no rule for /cw/ (2026-11-11).
+name: pageup
+access_class: A
+format: html
+list:
+  url: "https://{board_1}/cw/{board_2}/listing/?page={page}&page-items=100"
+  items: 'class="job-link" href="([^"]+/job/(\d+)/[^"]*)">([^<]*)</a>((?:(?!job-link).)*?)<tr class="summary">\s*<td[^>]*>(.*?)</td>'
+  marker: ['search-results-content|job-link']
+pagination:
+  style: page
+  start: 1
+  page_size: 100
+  max_pages: 50
+fields:
+  url: url
+  platform_job_id: '2'
+  title: { path: '3', transform: [html_unescape, trim] }
+  location: { path: '4', regex: 'class="location">([^<]*)<', transform: [trim] }
+  description: { path: '5', transform: [html_to_text] }
+rate_limit:
+  requests_per_second: 0.0067
+  max_concurrency: 1

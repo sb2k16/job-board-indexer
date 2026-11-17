@@ -1,8 +1,12 @@
 # Phenom People career sites: /us/en/search-results embeds the search (phApp.ddo) with 10 jobs a
-# page (?from=N&s=1) and totalHits. Tenants are large (O'Reilly, CVS Health, Dollar Tree: about
-# 19,000 jobs each), so this is a heavy-group platform; list fields only (descriptions would be
-# another 19,000 requests a refresh). Board: the career-site host. robots.txt: no rule for
-# /us/en/search-results (2026-11-14).
+# page (?from=N&s=1; some tenants serve 25) and totalHits. Board: the career-site host. robots.txt:
+# no rule for /us/en/search-results (2026-11-14).
+# The search serves at most 10,000 results whatever totalHits says: past that the page holds no job
+# list (checked on CVS Health, O'Reilly and Dollar Tree, 2026-11-15). Tenants with more (all three
+# report 18,000 to 19,000) come out PARTIAL with that reason. URL parameters do not filter the
+# embedded search, the filtered call needs the page's CSRF token (not replayed), and the job
+# sitemaps list fewer jobs than the search (CVS: 13,068 of 17,999), so nothing public reads past it.
+# List fields only: descriptions would be a request per job.
 name: phenom
 access_class: A
 format: json
@@ -16,6 +20,8 @@ pagination:
   style: offset
   param: from
   page_size: 10
+  max_results: 10000
+  max_pages: 1100
 fields:
   platform_job_id: jobSeqNo
   requisition_id: reqId

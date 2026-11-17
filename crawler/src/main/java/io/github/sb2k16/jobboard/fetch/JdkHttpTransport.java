@@ -18,6 +18,7 @@ import java.time.Duration;
 
 /** java.net.http GET with the project's identity. */
 public class JdkHttpTransport implements HttpTransport {
+    static final int BODY_DEADLINE_FACTOR = 10;
     public static final String USER_AGENT = "JobBoardIndexer/0.1 (+https://github.com/sb2k16/job-board-indexer)";
     /** robots.txt product token: the User-Agent's first word. */
     public static final String PRODUCT_TOKEN = "JobBoardIndexer";
@@ -25,7 +26,11 @@ public class JdkHttpTransport implements HttpTransport {
     private final HttpClient client;
 
     public JdkHttpTransport() {
+        // HTTP/1.1: a polite crawler gains nothing from HTTP/2 multiplexing, and JDK 11's HTTP/2
+        // client stalls on long-lived connections (Netflix on Eightfold timed out on Nov 14 and 16
+        // while curl answered in half a second).
         this(HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_1_1)
                 .connectTimeout(Duration.ofSeconds(10))
                 .followRedirects(HttpClient.Redirect.NORMAL)
                 .build());
@@ -43,7 +48,7 @@ public class JdkHttpTransport implements HttpTransport {
                 .header("Accept", "application/json, application/xml;q=0.9, text/xml;q=0.9, */*;q=0.8")
                 .GET()
                 .build();
-        final HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        final HttpResponse<String> response = sendWithin(request, timeout);
         return new Response(response.statusCode(), response.body(),
                 response.headers().firstValue("Retry-After").map(JdkHttpTransport::retryAfter).orElse(null));
     }
@@ -57,7 +62,7 @@ public class JdkHttpTransport implements HttpTransport {
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
                 .build();
-        final HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        final HttpResponse<String> response = sendWithin(request, timeout);
         return new Response(response.statusCode(), response.body(),
                 response.headers().firstValue("Retry-After").map(JdkHttpTransport::retryAfter).orElse(null));
     }
@@ -68,6 +73,35 @@ public class JdkHttpTransport implements HttpTransport {
             return Duration.ofSeconds(Long.parseLong(value.trim()));
         } catch (final NumberFormatException e) {
             return null;
+        }
+    }
+
+    /**
+     * Sends and reads the whole body within ten times the request timeout (5 minutes by default).
+     * The JDK client's own timeout stops at the response headers, so a server that stalls mid-body
+     * would block the calling crawler thread forever (seen on Nov 16: 18 hours). The deadline is
+     * generous because large pages stream slowly (a 2.4 MB Zoho page takes 80 s). Past it the
+     * exchange is cancelled and the failure is a retryable network error.
+     */
+    private HttpResponse<String> sendWithin(final HttpRequest request, final Duration timeout)
+            throws IOException, InterruptedException {
+        final java.util.concurrent.CompletableFuture<HttpResponse<String>> future =
+                client.sendAsync(request, HttpResponse.BodyHandlers.ofString());
+        try {
+            return future.get(timeout.multipliedBy(BODY_DEADLINE_FACTOR).toMillis(), java.util.concurrent.TimeUnit.MILLISECONDS);
+        } catch (final java.util.concurrent.TimeoutException e) {
+            future.cancel(true);
+            throw new java.net.http.HttpTimeoutException("no complete response within " + timeout.multipliedBy(BODY_DEADLINE_FACTOR).toSeconds()
+                    + " s from " + request.uri());
+        } catch (final java.util.concurrent.ExecutionException e) {
+            final Throwable cause = e.getCause();
+            if (cause instanceof IOException) {
+                throw (IOException) cause;
+            }
+            throw new IOException(cause);
+        } catch (final InterruptedException e) {
+            future.cancel(true);
+            throw e;
         }
     }
 }

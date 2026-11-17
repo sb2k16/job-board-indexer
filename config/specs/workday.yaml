@@ -1,9 +1,9 @@
 # Workday career sites: the keyless search the career site itself calls,
 # POST https://{host}/wday/cxs/{tenant}/{site}/jobs with {"limit":20,"offset":N}, and a GET per job
 # for the description. Board: "host|tenant|site", e.g. "intel.wd1.myworkdayjobs.com|intel|External".
-# Undocumented and may change. The search reports `total` on its first page only, and serves at most
-# 2,000 results: larger sites come out incomplete. robots.txt on the checked hosts does not
-# disallow /wday/cxs/ (2026-11-14).
+# Undocumented and may change. The search reports `total` on its first page only. It serves every
+# result: CVS Health's 18,049 read to offset 18,040 (2026-11-15), so max_pages allows 50,000 jobs.
+# robots.txt on the checked hosts does not disallow /wday/cxs/ (2026-11-14).
 name: workday
 access_class: A
 format: json
@@ -17,6 +17,7 @@ list:
 pagination:
   style: offset
   page_size: 20
+  max_pages: 2500
 fields:
   platform_job_id: externalPath
   title: title

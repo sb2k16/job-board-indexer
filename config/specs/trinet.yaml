@@ -1,0 +1,33 @@
+# TriNet Hire (app.trinethire.com): /companies/{company}/jobs lists the company's open jobs as links;
+# each job page is server HTML: h3.job-name, ul.job-meta (location first, then Type), and
+# div.job-descr. No posted date on either page (optional in the model). Board: the company path
+# segment, e.g. "1071922-rocketride-inc". robots.txt: Allow / (2026-11-15).
+# phase0/html-tier-resolution.md.
+name: trinet
+access_class: A
+format: html
+list:
+  url: "https://app.trinethire.com/companies/{board}/jobs"
+  items: 'href="((?:https://app\.trinethire\.com)?/companies/{board}/jobs/(\d+)-[^"?]*)'
+  # A list with jobs, or the page's own empty state; any other page is a failed fetch.
+  marker: ['/companies/{board}/jobs/\d+|no openings available']
+pagination:
+  style: next_url
+  next: '<a[^>]*rel="next"[^>]*href="([^"]+)"'
+fields:
+  url: url
+  platform_job_id: '2'
+detail:
+  url: "{url}"
+  format: html
+  fields:
+    title: { path: '<h3 class="job-name">([^<]+)<', transform: [trim] }
+    location: { path: '<ul class="job-meta">\s*<li>(.*?)</li>', transform: [html_to_text] }
+    employment_type: '<strong>Type:</strong>\s*([^<]+)<'
+    company: '<meta property="og:title" content="([^"|]+?)\s*\|'
+    description:
+      path: 'class="job-descr content">(.*?)</article>'
+      transform: [html_to_text]
+rate_limit:
+  requests_per_second: 1
+  max_concurrency: 1

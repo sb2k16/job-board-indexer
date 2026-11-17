@@ -77,6 +77,9 @@ public final class SpecLoader {
             if (list.getExtract() != null) {
                 checkRegex("list.extract", list.getExtract(), problems);
             }
+            if (list.getExtractDecode() != null && !List.of("html", "js").contains(list.getExtractDecode())) {
+                problems.add("list.extract_decode must be html or js");
+            }
             if (list.getMarker() == null || list.getMarker().isEmpty()) {
                 problems.add("list.marker needs at least one path (a response without it is a failed fetch)");
             }
@@ -97,6 +100,12 @@ public final class SpecLoader {
             }
             if (detail.getExtract() != null) {
                 checkRegex("detail.extract", detail.getExtract(), problems);
+            }
+            if (detail.getExtractDecode() != null && !List.of("html", "js").contains(detail.getExtractDecode())) {
+                problems.add("detail.extract_decode must be html or js");
+            }
+            if (detail.getUnless() != null && !List.of("description", "title", "location", "posted_at").contains(detail.getUnless())) {
+                problems.add("detail.unless must be description, title, location or posted_at");
             }
             if (detail.getFields() != null) {
                 for (final Map.Entry<String, FieldSpec> e : detail.getFields().entrySet()) {

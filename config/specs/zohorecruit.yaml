@@ -1,0 +1,46 @@
+# Zoho Recruit career sites: {tenant}.zohorecruit.com/jobs/Careers holds every published opening as
+# HTML-escaped JSON in <input id="jobs" value="...">: id, Posting_Title, City, State, Country,
+# Job_Type, Remote_Job, and on some tenants Job_Description and Date_Opened. Each job page
+# /jobs/Careers/{id} embeds the full record as var jobs = JSON.parse('...') (a JS string literal),
+# fetched only when the list lacks the description. Board: the career-site host. robots.txt allows
+# /jobs and /jobs/* and disallows / (2026-11-15). phase0/html-tier-resolution.md.
+name: zohorecruit
+access_class: A
+format: json
+list:
+  url: "https://{board}/jobs/Careers"
+  # Quote-aware: the value may come before id and holds raw ">" from job descriptions.
+  extract: '<input\b(?=(?:[^>"]|"[^"]*")*?\sid="jobs")(?:[^>"]|"[^"]*")*?\svalue="([^"]*)"'
+  extract_decode: html
+  items: '$'
+  marker: ['$']
+pagination:
+  style: none
+fields:
+  platform_job_id: id
+  title: Posting_Title
+  city: City
+  region: State
+  country: Country
+  location:
+    concat: [City, State, Country]
+    join: ", "
+  employment_type: Job_Type
+  remote: { path: Remote_Job, type: boolean, true_values: ["true"] }
+  posted_at: { path: Date_Opened, type: datetime }
+  description: { path: Job_Description, transform: [html_to_text] }
+  url: { template: "https://{board}/jobs/Careers/{id}" }
+detail:
+  url: "{url}"
+  format: json
+  unless: description
+  # Lazy match up to an unescaped "')": a repeated alternation would overflow Java's regex stack on 1.7 MB pages.
+  extract: "var jobs\\s*=\\s*JSON\\.parse\\('(.*?)(?<!\\\\)'\\)"
+  extract_decode: js
+  fields:
+    description: { path: 0.Job_Description, transform: [html_to_text] }
+    posted_at: { path: 0.Date_Opened, type: datetime }
+    title: 0.Posting_Title
+rate_limit:
+  requests_per_second: 1
+  max_concurrency: 1

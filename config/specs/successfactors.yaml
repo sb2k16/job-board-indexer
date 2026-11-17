@@ -1,0 +1,40 @@
+# SAP SuccessFactors Recruiting Marketing (career sites on {tenant}.jobs2web.com or custom domains).
+# The search page /search/?startrow=N lists 25 jobs (jobTitle-link) with "Results 1 – 25 of <b>N</b>";
+# sorted by date so paging is stable. Every job page uses one vendor template: microdata
+# title/datePosted/hiringOrganization/address and span.jobdescription. Board: the career-site host.
+# robots.txt on checked hosts allows /search/ and /job/; jobs.sap.com disallows /*?q= (not used) and
+# answers this client 403, so it is not a tenant (2026-11-15). phase0/html-tier-resolution.md.
+name: successfactors
+access_class: A
+format: html
+list:
+  url: "https://{board}/search/?sortColumn=referencedate&sortDirection=desc&startrow={offset}"
+  items: 'class="jobTitle-link"[^>]*href="([^"]+)"'
+  marker: ['paginationLabel|jobTitle-link|searchResultsShell']
+  total: 'paginationLabel[^>]*>.*?of <b>([\d,]+)</b>'
+pagination:
+  style: offset
+  page_size: 25
+  max_pages: 800
+fields:
+  url: url
+  platform_job_id: { path: url, regex: '/(\d+)/?$' }
+detail:
+  url: "{url}"
+  format: html
+  fields:
+    title: { path: 'itemprop="title"[^>]*>([^<]+)<', transform: [trim] }
+    company: 'itemprop="hiringOrganization" content="([^"]+)"'
+    city: 'itemprop="addressLocality" content="([^"]+)"'
+    region: 'itemprop="addressRegion" content="([^"]+)"'
+    country: 'itemprop="addressCountry" content="([^"]+)"'
+    location:
+      concat: ['itemprop="addressLocality" content="([^"]+)"', 'itemprop="addressRegion" content="([^"]+)"', 'itemprop="addressCountry" content="([^"]+)"']
+      join: ", "
+    posted_at: { path: 'itemprop="datePosted" content="([^"]+)"', type: datetime }
+    description:
+      path: 'class="jobdescription">(.*?)</span>\s*</span>\s*</div>'
+      transform: [html_to_text]
+rate_limit:
+  requests_per_second: 1
+  max_concurrency: 1

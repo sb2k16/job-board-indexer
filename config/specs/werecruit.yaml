@@ -1,0 +1,33 @@
+# WeRecruit career sites: careers.werecruit.io/fr/{tenant} embeds every offer as
+# window.allOffers = [...] (Url, TitleTranslated, Address_*, Company_Name, PublicationStartDate,
+# Id). Each offer page carries a JobPosting in JSON-LD, whose script type is written
+# "application/ld&#x2B;json". Board: the tenant slug. robots.txt: Allow / (2026-11-15).
+# phase0/html-tier-resolution.md.
+name: werecruit
+access_class: A
+format: json
+list:
+  url: "https://careers.werecruit.io/fr/{board}"
+  extract: 'window\.allOffers\s*=\s*(\[.*?\]);'
+  items: '$'
+  marker: ['$']
+pagination:
+  style: none
+fields:
+  platform_job_id: Id
+  title: TitleTranslated
+  url: Url
+  company: Company_Name
+  city: Address_City
+  region: Address_Region
+  location:
+    concat: [Address_City, Address_Region]
+    join: ", "
+  employment_type: TypeTranslated
+  posted_at: { path: PublicationStartDate, type: datetime }
+detail:
+  url: "{url}"
+  format: jsonld
+rate_limit:
+  requests_per_second: 1
+  max_concurrency: 1

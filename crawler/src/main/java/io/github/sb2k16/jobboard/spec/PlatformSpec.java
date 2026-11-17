@@ -154,6 +154,14 @@ public class PlatformSpec {
         @JsonProperty("extract")
         private String extract;
 
+        /** Decoding applied to the extracted text before parsing: html (entities) or js (a JS string literal). */
+        @JsonProperty("extract_decode")
+        private String extractDecode;
+
+        public String getExtractDecode() {
+            return extractDecode;
+        }
+
         public String getMethod() {
             return method;
         }
@@ -223,6 +231,30 @@ public class PlatformSpec {
         @JsonProperty("max_pages")
         private int maxPages = 500;
 
+        /**
+         * The most results the platform's search serves, however many it reports (Phenom's
+         * search window is 10,000). Paging stops there and the snapshot is partial, with that
+         * reason, rather than reading an empty page past the window as a broken board.
+         */
+        /**
+         * An empty response body after the first page ends the list (SmartRecruiters answers
+         * the page past the last with 0 bytes). Off by default: elsewhere an empty body is a
+         * failed fetch, never "no more jobs".
+         */
+        @JsonProperty("end_on_empty")
+        private boolean endOnEmpty;
+
+        public boolean isEndOnEmpty() {
+            return endOnEmpty;
+        }
+
+        @JsonProperty("max_results")
+        private Integer maxResults;
+
+        public Integer getMaxResults() {
+            return maxResults;
+        }
+
         public String getStyle() {
             return style;
         }
@@ -268,6 +300,25 @@ public class PlatformSpec {
 
         @JsonProperty("extract")
         private String extract;
+
+        /** Decoding applied to the extracted text before parsing: html (entities) or js (a JS string literal). */
+        @JsonProperty("extract_decode")
+        private String extractDecode;
+
+        public String getExtractDecode() {
+            return extractDecode;
+        }
+
+        /**
+         * Skip the detail request for a job whose list item already gave this field (description,
+         * title, location or posted_at): Zoho lists carry descriptions on some tenants only.
+         */
+        @JsonProperty("unless")
+        private String unless;
+
+        public String getUnless() {
+            return unless;
+        }
 
         /** Detail fields; for jsonld, omitted means the standard JobPosting mapping. */
         @JsonProperty("fields")

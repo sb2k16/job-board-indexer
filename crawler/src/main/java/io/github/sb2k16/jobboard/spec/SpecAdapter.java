@@ -12,6 +12,7 @@ package io.github.sb2k16.jobboard.spec;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.github.sb2k16.jobboard.PlatformConfig;
 import io.github.sb2k16.jobboard.adapter.BoardFetchException;
+import io.github.sb2k16.jobboard.adapter.Html;
 import io.github.sb2k16.jobboard.adapter.HttpFetcher;
 import io.github.sb2k16.jobboard.adapter.PlatformAdapter;
 import io.github.sb2k16.jobboard.model.BoardSnapshot;
@@ -91,8 +92,17 @@ public class SpecAdapter implements PlatformAdapter {
         boolean naturalEnd = false;
         int position = pg.getStart() != null ? pg.getStart() : (style.equals("page") ? 1 : 0);
         String url = templated ? renderAt(list.getUrl(), vars, position) : pagedUrl(firstUrl, position);
+        final Integer maxResults = pg.getMaxResults();
+        int read = 0;
+        int lastItems = pg.getPageSize() != null ? pg.getPageSize() : 0;
+        boolean windowEnd = false;
+        boolean repeated = false;
 
         for (int pageNo = 0; pageNo < pg.getMaxPages(); pageNo++) {
+            if (maxResults != null && pageNo > 0 && read + lastItems > maxResults) {
+                windowEnd = true; // the next page would end past the platform's result window
+                break;
+            }
             final String where = spec.getName() + "/" + tenant.getBoard() + " page " + (pageNo + 1);
             final String body;
             try {
@@ -106,19 +116,33 @@ public class SpecAdapter implements PlatformAdapter {
                 }
                 throw e;
             }
-            final Page page = parse(body, url, spec.getFormat().name(), list.getExtract(), where);
+            if (pg.isEndOnEmpty() && pageNo > 0 && body.isBlank()) {
+                naturalEnd = true;
+                break;
+            }
+            final Page page = parse(body, url, spec.getFormat().name(), list.getExtract(), list.getExtractDecode(), where);
             for (final String marker : list.getMarker()) {
                 if (!page.exists(regexVars(marker, vars))) {
                     throw new BoardFetchException(where + ": board marker '" + marker + "' missing", false);
                 }
             }
             final List<Page.Node> items = page.items(regexVars(list.getItems(), vars));
+            if (maxResults != null && pageNo > 0 && (items == null || items.isEmpty())
+                    && read + lastItems >= maxResults) {
+                windowEnd = true; // at the window's edge the platform answers with no list
+                break;
+            }
             if (items == null) {
                 throw new BoardFetchException(where + ": items '" + list.getItems() + "' is not a list", false);
             }
             if (list.getTotal() != null && total == null) {
                 total = readTotal(page, where);
             }
+            read += items.size();
+            if (!items.isEmpty()) {
+                lastItems = items.size();
+            }
+            final int before = jobs.size();
             for (final Page.Node item : items) {
                 final JobRecord job = FieldMapper.map(spec.getFields(), item, vars)
                         .setPlatform(platformName)
@@ -136,6 +160,13 @@ public class SpecAdapter implements PlatformAdapter {
                 }
             }
 
+            if (pageNo > 0 && !items.isEmpty() && jobs.size() == before && !pg.isUntilMissing()) {
+                // A full page of jobs already seen: the platform ignores the offset or repeats its last
+                // page (Avature's feed serves the same 20 at every jobOffset). Stop, and never call
+                // that complete: the list was not read to a real end.
+                repeated = true;
+                break;
+            }
             if (templated) {
                 if (pg.isUntilMissing()) {
                     position += 1;
@@ -167,7 +198,7 @@ public class SpecAdapter implements PlatformAdapter {
         if (spec.getDetail() != null) {
             listed.removeIf(j -> j.getTitle() == null || j.getTitle().isBlank()); // a detail page without a title
         }
-        return new BoardSnapshot(listed, total, complete);
+        return new BoardSnapshot(listed, total, complete && !windowEnd && !repeated, windowEnd ? maxResults : null);
     }
 
     private List<JobRecord> withDetails(final Map<String, JobRecord> jobs, final Map<String, Page.Node> nodes,
@@ -181,6 +212,10 @@ public class SpecAdapter implements PlatformAdapter {
             final Map<String, String> v = new HashMap<>(vars);
             v.put("url", job.getUrl() == null ? "" : job.getUrl());
             v.put("platform_job_id", e.getKey());
+            if (detail.getUnless() != null && has(job, detail.getUnless())) {
+                out.add(job); // the list already gave what the detail page is fetched for
+                continue;
+            }
             final String url = FieldMapper.render(detail.getUrl(), v, nodes.get(e.getKey()));
             if (url == null) {
                 noPosting++;
@@ -205,7 +240,7 @@ public class SpecAdapter implements PlatformAdapter {
                 }
                 page = JsonPage.of(posting);
             } else {
-                page = parse(body, url, detail.getFormat(), detail.getExtract(), where);
+                page = parse(body, url, detail.getFormat(), detail.getExtract(), detail.getExtractDecode(), where);
             }
             job.fillFrom(FieldMapper.map(fields, page::values, v));
             if (tenant.getCompany() != null) {
@@ -250,7 +285,29 @@ public class SpecAdapter implements PlatformAdapter {
         return out;
     }
 
-    private Page parse(final String body, final String url, final String format, final String extract, final String where) {
+    static boolean has(final JobRecord job, final String field) {
+        final Object v;
+        switch (field) {
+            case "description":
+                v = job.getDescription();
+                break;
+            case "title":
+                v = job.getTitle();
+                break;
+            case "location":
+                v = job.getLocation();
+                break;
+            case "posted_at":
+                v = job.getPostedAt();
+                break;
+            default:
+                throw new IllegalArgumentException("detail.unless: unsupported field " + field);
+        }
+        return v != null && !v.toString().isBlank();
+    }
+
+    private Page parse(final String body, final String url, final String format, final String extract,
+                       final String decode, final String where) {
         try {
             String text = body;
             if (extract != null) {
@@ -258,6 +315,11 @@ public class SpecAdapter implements PlatformAdapter {
                 if (text == null) {
                     throw new BoardFetchException(where + ": embedded data not found", false);
                 }
+            }
+            if ("html".equals(decode)) {
+                text = Html.unescape(text);
+            } else if ("js".equals(decode)) {
+                text = Html.jsString(text);
             }
             switch (format) {
                 case "xml":
@@ -277,7 +339,8 @@ public class SpecAdapter implements PlatformAdapter {
     private Integer readTotal(final Page page, final String where) {
         final List<String> values = page.values(spec.getList().getTotal());
         try {
-            return values.isEmpty() ? null : (int) Double.parseDouble(values.get(0).trim());
+            // "1,037" and "1 037" are counts too (HTML result labels).
+            return values.isEmpty() ? null : (int) Double.parseDouble(values.get(0).trim().replaceAll("[,\\s\u00a0]", ""));
         } catch (final NumberFormatException e) {
             throw new BoardFetchException(where + ": total '" + values.get(0) + "' is not a number", false);
         }

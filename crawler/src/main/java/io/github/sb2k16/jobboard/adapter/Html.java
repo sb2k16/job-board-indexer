@@ -60,4 +60,64 @@ public final class Html {
         text = BLANK_LINES.matcher(text).replaceAll("\n\n");
         return text.trim();
     }
+
+    /**
+     * Decodes the body of a JavaScript string literal (without its quotes) in one pass: \xHH,
+     * backslash-u plus four hex digits, \n \r \t \b \f \v \0, and a backslash before any other character stands for that
+     * character (so \\ is one backslash and \/ \- \' are /, -, '). Zoho Recruit embeds job
+     * records as JSON.parse('...').
+     */
+    public static String jsString(final String s) {
+        if (s == null || s.indexOf('\\') < 0) {
+            return s;
+        }
+        final StringBuilder b = new StringBuilder(s.length());
+        for (int i = 0; i < s.length(); i++) {
+            final char c = s.charAt(i);
+            if (c != '\\' || i + 1 >= s.length()) {
+                b.append(c);
+                continue;
+            }
+            final char n = s.charAt(++i);
+            switch (n) {
+                case 'x':
+                    if (isHex(s, i + 1, 2)) {
+                        b.append((char) Integer.parseInt(s.substring(i + 1, i + 3), 16));
+                        i += 2;
+                    } else {
+                        b.append(n);
+                    }
+                    break;
+                case 'u':
+                    if (isHex(s, i + 1, 4)) {
+                        b.append((char) Integer.parseInt(s.substring(i + 1, i + 5), 16));
+                        i += 4;
+                    } else {
+                        b.append(n);
+                    }
+                    break;
+                case 'n': b.append('\n'); break;
+                case 'r': b.append('\r'); break;
+                case 't': b.append('\t'); break;
+                case 'b': b.append('\b'); break;
+                case 'f': b.append('\f'); break;
+                case 'v': b.append((char) 0x0B); break;
+                case '0': b.append('\0'); break;
+                default: b.append(n);
+            }
+        }
+        return b.toString();
+    }
+
+    private static boolean isHex(final String s, final int from, final int len) {
+        if (from + len > s.length()) {
+            return false;
+        }
+        for (int i = from; i < from + len; i++) {
+            if (Character.digit(s.charAt(i), 16) < 0) {
+                return false;
+            }
+        }
+        return true;
+    }
 }

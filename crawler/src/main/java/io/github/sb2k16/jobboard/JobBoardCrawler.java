@@ -250,7 +250,8 @@ public class JobBoardCrawler implements Crawler<PaginationCrawlerWorkerProgressS
             count(outcome);
             store.recordAttempt(platformName, board, crawlStarted, attemptedAt, outcome, snapshot.getJobs().size(),
                     outcome == Outcome.PARTIAL ? "parsed " + snapshot.getJobs().size() + " jobs, platform reports "
-                            + snapshot.getReportedTotal() : null);
+                            + snapshot.getReportedTotal() + (snapshot.getResultLimit() == null ? ""
+                            : "; its search serves at most " + snapshot.getResultLimit() + " results") : null);
             if (outcome == Outcome.PARTIAL) {
                 LOG.warn("{}/{}: parsed {} jobs but platform reports {}; not a snapshot", platformName, board,
                         snapshot.getJobs().size(), snapshot.getReportedTotal());

@@ -11,8 +11,10 @@ pagination:
   style: none
 fields:
   platform_job_id: { path: link, regex: "/jobs/(\\d+)" }
-  title: { path: title, regex: "^(.+?) at [^()]+(?:\\([^()]*\\))?\\s*$", keep_unmatched: true }
-  company: { path: title, regex: " at ([^()]+?)\\s*(?:\\([^()]*\\))?\\s*$" }
+  # The employer is what follows the last " at ", less the final "(Location)"; it may hold its own
+  # parentheses ("Texas Tech University Health Sciences Center (Faculty)").
+  title: { path: title, regex: "^(.+) at .+?\\s*(?:\\([^()]*\\))?\\s*$", keep_unmatched: true }
+  company: { path: title, regex: "^.+ at (.+?)\\s*(?:\\([^()]*\\))?\\s*$" }
   location: { path: title, regex: "\\(([^()]*)\\)\\s*$" }
   description: { path: description, transform: [html_unescape, html_to_text] }
   posted_at: { path: pubDate, type: datetime, format: rfc1123 }

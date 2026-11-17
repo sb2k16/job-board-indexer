@@ -1,3 +1,4 @@
 board,company
 # Job boards; 10 s crawl delay, so only boards of about 1,400 jobs or fewer complete within a refresh.
 www.mediajobcenter.com,
+www.miamijobs.com,

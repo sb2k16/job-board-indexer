@@ -26,11 +26,16 @@ import java.util.regex.Pattern;
 /** The schema.org JobPosting in a page's {@code <script type="application/ld+json">} blocks. */
 final class JsonLd {
     private static final Pattern SCRIPT = Pattern.compile(
-            "<script[^>]*type\\s*=\\s*[\"']?application/ld\\+json[\"']?[^>]*>(.*?)</script>",
+            // The + is sometimes HTML-encoded in the attribute (WeRecruit: ld&#x2B;json); browsers decode it.
+            "<script[^>]*type\\s*=\\s*[\"']?application/ld(?:\\+|&#x2B;|&#43;|%2B)json[\"']?[^>]*>(.*?)</script>",
             Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
-    /** Pages put raw newlines and tabs inside strings; browsers accept that, so do we. */
+    /**
+     * Pages put raw newlines and tabs inside strings, and escape characters JSON does not need
+     * escaped (Jobvite writes "Pilgrim\\'s"); browsers accept both, so do we.
+     */
     private static final ObjectMapper LENIENT = JsonMapper.builder()
             .enable(JsonReadFeature.ALLOW_UNESCAPED_CONTROL_CHARS)
+            .enable(JsonReadFeature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER)
             .enable(JsonReadFeature.ALLOW_TRAILING_COMMA)
             .build();
 
