@@ -4,9 +4,12 @@ import "server-only";
 
 import { groupEmployment, type EmploymentBucket } from "./employment";
 import { buildSearch, type Filters } from "./query";
+import { sigV4 } from "./sigv4";
 
 const URL_BASE = (process.env.OPENSEARCH_URL ?? "http://localhost:9200").replace(/\/$/, "");
 const INDEX = process.env.JOBS_INDEX ?? "jobs";
+// Amazon OpenSearch Service: every request signed with the task role (SigV4). Locally: none.
+const SIGN = process.env.AWS_REGION ? sigV4(process.env.AWS_REGION) : null;
 
 export interface SourceLink {
   url?: string;
@@ -60,10 +63,19 @@ export class SearchUnavailable extends Error {}
 async function os<T>(path: string, body?: unknown): Promise<T> {
   let res: Response;
   try {
-    res = await fetch(`${URL_BASE}/${path}`, {
-      method: body === undefined ? "GET" : "POST",
-      headers: { "content-type": "application/json" },
-      body: body === undefined ? undefined : JSON.stringify(body),
+    const method = body === undefined ? "GET" : "POST";
+    const text = body === undefined ? undefined : JSON.stringify(body);
+    const url = `${URL_BASE}/${path}`;
+    let headers: Record<string, string> = { "content-type": "application/json" };
+    if (SIGN) {
+      // fetch sets Host itself, from the same URL the signature covers.
+      const { host: _host, ...signed } = await SIGN(method, new URL(url), headers, text);
+      headers = signed;
+    }
+    res = await fetch(url, {
+      method,
+      headers,
+      body: text,
       cache: "no-store",
       signal: AbortSignal.timeout(8_000),
     });

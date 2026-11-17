@@ -11,6 +11,9 @@
     "test": "node --test --experimental-strip-types lib/*.test.ts"
   },
   "dependencies": {
+    "@aws-crypto/sha256-js": "5.2.0",
+    "@aws-sdk/credential-provider-node": "3.972.92",
+    "@smithy/signature-v4": "5.7.5",
     "next": "15.5.29",
     "pg": "8.16.3",
     "react": "19.2.0",

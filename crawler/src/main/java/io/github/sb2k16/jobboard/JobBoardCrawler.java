@@ -170,8 +170,9 @@ public class JobBoardCrawler implements Crawler<PaginationCrawlerWorkerProgressS
             LOG.warn("Closure needs board_state (snapshot history); jobs are never closed");
             return null;
         }
+        final HttpIndexClient.Signer signer = c.getAwsRegion() == null ? null : HttpIndexClient.sigV4(c.getAwsRegion());
         return new ClosureSweeper(c, new HttpIndexClient(c.getOpensearchUrl(), c.getIndex(), c.getUsername(), c.getPassword(),
-                c.getRequestTimeout()), store);
+                c.getRequestTimeout(), signer), store);
     }
 
     private static BoardStateStore openStore(final JobBoardSourceConfig config) {

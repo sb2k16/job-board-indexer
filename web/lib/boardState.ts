@@ -1,5 +1,6 @@
 // Crawl health per board, read from the crawler's board_state table. Optional: without
-// DATABASE_URL the boards page shows job counts only.
+// DATABASE_URL or PGHOST the boards page shows job counts only. On AWS the standard PG* variables
+// (PGHOST, PGUSER, PGPASSWORD from Secrets Manager, PGSSLMODE) configure the connection.
 import "server-only";
 
 import { Pool } from "pg";
@@ -24,8 +25,9 @@ let pool: Pool | null = null;
 
 function db(): Pool | null {
   const url = process.env.DATABASE_URL;
-  if (!url) return null;
-  pool ??= new Pool({ connectionString: url, max: 3, idleTimeoutMillis: 30_000, connectionTimeoutMillis: 3_000 });
+  if (!url && !process.env.PGHOST) return null;
+  // Without a URL, node-postgres reads PGHOST, PGPORT, PGDATABASE, PGUSER, PGPASSWORD and PGSSLMODE.
+  pool ??= new Pool({ ...(url ? { connectionString: url } : {}), max: 3, idleTimeoutMillis: 30_000, connectionTimeoutMillis: 3_000 });
   return pool;
 }
 

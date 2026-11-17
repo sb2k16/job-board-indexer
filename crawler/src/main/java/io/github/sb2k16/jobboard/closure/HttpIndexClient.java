@@ -23,8 +23,17 @@ import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/** OpenSearch REST over the JDK client. Basic auth when configured; AWS SigV4 comes with T1.5. */
+/**
+ * OpenSearch REST over the JDK client, for the closure sweeper. Plain, basic auth, or AWS SigV4
+ * (Amazon OpenSearch Service: {@link #sigV4}, with the default credential chain, which on ECS is
+ * the task role; the SDK classes come from Data Prepper's own lib/).
+ */
 public class HttpIndexClient implements IndexClient {
+    /** Adds authentication headers to a request about to be sent. */
+    public interface Signer {
+        Map<String, String> headers(String method, URI uri, Map<String, String> headers, String body);
+    }
+
     private static final ObjectMapper JSON = new ObjectMapper();
 
     private final HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
@@ -32,12 +41,19 @@ public class HttpIndexClient implements IndexClient {
     private final String index;
     private final String authorization;
     private final Duration timeout;
+    private final Signer signer;
 
     public HttpIndexClient(final String baseUrl, final String index, final String username, final String password,
                            final Duration timeout) {
+        this(baseUrl, index, username, password, timeout, null);
+    }
+
+    public HttpIndexClient(final String baseUrl, final String index, final String username, final String password,
+                           final Duration timeout, final Signer signer) {
         this.base = baseUrl.replaceAll("/+$", "");
         this.index = index;
         this.timeout = timeout;
+        this.signer = signer;
         this.authorization = username == null ? null
                 : "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes(StandardCharsets.UTF_8));
     }
@@ -66,13 +82,23 @@ public class HttpIndexClient implements IndexClient {
 
     private JsonNode call(final String method, final String path, final Object body) {
         try {
-            final HttpRequest.Builder b = HttpRequest.newBuilder(URI.create(base + path))
+            final URI uri = URI.create(base + path);
+            final String text = body == null ? "" : JSON.writeValueAsString(body);
+            final HttpRequest.Builder b = HttpRequest.newBuilder(uri)
                     .timeout(timeout)
                     .header("Content-Type", "application/json")
                     .method(method, body == null ? HttpRequest.BodyPublishers.noBody()
-                            : HttpRequest.BodyPublishers.ofString(JSON.writeValueAsString(body)));
+                            : HttpRequest.BodyPublishers.ofString(text));
             if (authorization != null) {
                 b.header("Authorization", authorization);
+            }
+            if (signer != null) {
+                signer.headers(method, uri, Map.of("Content-Type", "application/json"), text).forEach((k, v) -> {
+                    // The JDK client sets Host itself, from the same URI the signature covers.
+                    if (!k.equalsIgnoreCase("host") && !k.equalsIgnoreCase("content-type")) {
+                        b.header(k, v);
+                    }
+                });
             }
             final HttpResponse<String> res = http.send(b.build(), HttpResponse.BodyHandlers.ofString());
             if (res.statusCode() >= 300) {
@@ -86,5 +112,30 @@ public class HttpIndexClient implements IndexClient {
             Thread.currentThread().interrupt();
             throw new IllegalStateException(method + " " + path + " interrupted", e);
         }
+    }
+
+    /** SigV4 for Amazon OpenSearch Service (signing name "es"), credentials from the default chain. */
+    public static Signer sigV4(final String region) {
+        return sigV4(region, software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider.builder().build());
+    }
+
+    static Signer sigV4(final String region, final software.amazon.awssdk.auth.credentials.AwsCredentialsProvider credentials) {
+        final software.amazon.awssdk.http.auth.aws.signer.AwsV4HttpSigner v4 =
+                software.amazon.awssdk.http.auth.aws.signer.AwsV4HttpSigner.create();
+        return (method, uri, headers, body) -> {
+            final software.amazon.awssdk.http.SdkHttpRequest.Builder req = software.amazon.awssdk.http.SdkHttpRequest.builder()
+                    .method(software.amazon.awssdk.http.SdkHttpMethod.fromValue(method))
+                    .uri(uri);
+            headers.forEach(req::putHeader);
+            final software.amazon.awssdk.http.auth.spi.signer.SignedRequest signed = v4.sign(r -> r
+                    .identity(credentials.resolveCredentials())
+                    .request(req.build())
+                    .payload(software.amazon.awssdk.http.ContentStreamProvider.fromUtf8String(body))
+                    .putProperty(software.amazon.awssdk.http.auth.aws.signer.AwsV4HttpSigner.SERVICE_SIGNING_NAME, "es")
+                    .putProperty(software.amazon.awssdk.http.auth.aws.signer.AwsV4HttpSigner.REGION_NAME, region));
+            final Map<String, String> out = new LinkedHashMap<>();
+            signed.request().headers().forEach((k, v) -> out.put(k, String.join(",", v)));
+            return out;
+        };
     }
 }

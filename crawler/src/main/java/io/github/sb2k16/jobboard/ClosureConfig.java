@@ -29,6 +29,17 @@ public class ClosureConfig {
     @JsonProperty("index")
     private String index = "jobs";
 
+    /**
+     * Set on Amazon OpenSearch Service: every request is signed with AWS SigV4 (service "es") using
+     * the default credential chain, which on ECS is the task role. Unset: plain or basic auth.
+     */
+    @JsonProperty("aws_region")
+    private String awsRegion;
+
+    public String getAwsRegion() {
+        return awsRegion;
+    }
+
     /** A link goes after this many complete snapshots of its board without it. */
     @JsonProperty("snapshots")
     private int snapshots = 3;
