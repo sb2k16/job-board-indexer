@@ -68,6 +68,8 @@ export class DataStack extends Stack {
     ecsRole.applyRemovalPolicy(RemovalPolicy.RETAIN);
 
     // Postgres 16 (as locally). RDS enforces SSL on 16 (rds.force_ssl=1): clients use sslmode=require.
+    // db.t4g.micro: about 80 connections less 7 reserved. The free account plan refuses larger
+    // classes (Nov 17), so crawler deploys scale the services to 0 first (infra/README.md).
     this.db = new rds.DatabaseInstance(this, "Db", {
       engine: rds.DatabaseInstanceEngine.postgres({ version: rds.PostgresEngineVersion.VER_16 }),
       instanceType: ec2.InstanceType.of(ec2.InstanceClass.T4G, ec2.InstanceSize.MICRO),

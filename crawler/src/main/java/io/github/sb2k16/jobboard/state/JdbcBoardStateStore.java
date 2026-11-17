@@ -149,6 +149,13 @@ public class JdbcBoardStateStore implements BoardStateStore {
             hc.setPassword(password);
             hc.setMaximumPoolSize(maxPoolSize);
             hc.setPoolName("jbi-board-state");
+            // Do not connect while the pipeline starts. Hikari's default fails the constructor when the
+            // first connection is refused, which kills Data Prepper; on Nov 17 a deploy whose new tasks
+            // met a full Postgres ("remaining connection slots are reserved") crash-looped that way.
+            // Unset, the pool opens connections when first asked and keeps retrying in the background;
+            // a store call made while Postgres refuses waits up to the connection timeout, then fails
+            // that one call, which the crawler already treats as a failed attempt (the lease retries).
+            hc.setInitializationFailTimeout(-1);
             pool = new SharedPool(new HikariDataSource(hc));
             POOLS.put(key, pool);
         }

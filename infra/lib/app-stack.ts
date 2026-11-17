@@ -102,11 +102,13 @@ export class AppStack extends Stack {
         assignPublicIp: true, // no NAT gateway: each task reaches job boards from its own address
         vpcSubnets: { subnetType: ec2.SubnetType.PUBLIC },
         securityGroups: [data.crawlerSg],
-        // Stop before start: two generations of crawler tasks cannot both hold their Postgres pools
-        // on db.t4g.micro (about 80 connections; Nov 17 the new tasks failed to start). A gap is
-        // what a Spot interruption is anyway: leases hand the boards over.
+        // Two generations of crawler tasks do not fit db.t4g.micro's connections, and ECS starts a
+        // replacement before the old task has exited, so deploys scale the crawlers to 0 first
+        // (infra/scripts/deploy-app.sh). maximumPercent stays at 200: ECS refuses 100 while
+        // Availability Zone rebalancing is on (Nov 17). minimumHealthyPercent 0 lets a Spot-only
+        // service replace tasks without waiting for capacity it may not get.
         minHealthyPercent: 0,
-        maxHealthyPercent: 100,
+        maxHealthyPercent: 200,
         circuitBreaker: { rollback: true },
       });
     };

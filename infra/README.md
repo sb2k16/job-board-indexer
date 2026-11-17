@@ -23,7 +23,7 @@ npx cdk deploy JbiData --profile jbi       # OpenSearch takes 15 to 20 minutes
 TAG=$(git rev-parse --short HEAD)
 ../docker/build-aws.sh "$TAG"              # jbi-crawler, jbi-web, jbi-tools for linux/amd64 (clean tree only)
 scripts/push-images.sh "$TAG"              # to the stack's ECR repositories
-npx cdk deploy JbiApp --profile jbi -c imageTag="$TAG"
+scripts/deploy-app.sh "$TAG"               # crawlers to 0, cdk deploy JbiApp, crawlers back
 scripts/migrate.sh                         # one-off jbi-tools task: db/V*.sql (idempotent)
 ```
 
@@ -31,6 +31,10 @@ The crawler image carries the pipelines rendered from `config/aws/env.toml` (one
 Deployment) with `@@NAME@@` placeholders; `docker/entrypoint.sh` fills them at start from the
 environment ECS injects (the database password from Secrets Manager), so nothing secret is in the
 image. Locally the entrypoint does nothing.
+
+Crawler deploys go through `scripts/deploy-app.sh`: on db.t4g.micro (the free account plan refuses
+larger classes) old and new crawler tasks do not fit the database's connections at once, and ECS
+starts a replacement before the old task has exited. Crawling pauses for a few minutes.
 
 Context (`cdk.json`, override with `-c`): `imageTag`, `crawlerCpu` (1024), `crawlerMemoryMiB`
 (4096), `crawlerTasks` (2), `crawlerHeavyTasks` (1). Task counts must match `[replicas]` in the AWS

@@ -71,3 +71,25 @@ lower it further. To be replaced by the measured bill.
 Earlier recommendation: B for the verification and the demo, since it fits the budget and exercises every
 part of the pipeline the challenge asks about; the design doc's EKS shape stays the documented
 production option. The choice is yours to make; nothing is created in AWS until it is made.
+
+## First deploys: connection exhaustion (2026-11-17)
+
+- **Symptom.** The second image (e36f2b4) never started: every new crawler task died in the
+  `job_board_crawler` constructor with `FATAL: remaining connection slots are reserved for roles
+  with privileges of the rds_reserved role`. The circuit breaker rolled the stack back twice; the
+  first rollback stuck in `UPDATE_ROLLBACK_FAILED` and was finished with
+  `continue-update-rollback --resources-to-skip CrawlerHeavyService6384560E`. The web app's
+  crawl-health page failed with the same error all along.
+- **Measured.** RDS `DatabaseConnections` held flat at 70. On db.t4g.micro `max_connections` is
+  about 80, less 4 `rds_reserved` and 3 superuser slots: the three running crawler tasks (Data
+  Prepper's coordination pool of 5 per pipeline group, plus the board_state pool) used them all.
+- **Why stop-before-start did not help.** ECS signals the old task and starts its replacement at
+  once; the old Data Prepper takes up to its 110 s stop timeout to exit and keeps its connections
+  meanwhile. Any rolling deploy overlaps on the database.
+- **Fixes.** (1) Moving RDS to db.t4g.small (about 180 connections, +$12 a month) was refused:
+  "This instance size isn't available with free plan accounts". Decided to stay on micro; crawler
+  deploys scale both crawler services to 0, wait for the connections to drain, deploy, then scale
+  back (infra/README.md). (2) The coordination pool is 3 per pipeline (e36f2b4). (3) The board_state
+  pool no longer connects while the pipeline starts (`initializationFailTimeout = -1`): a full
+  database now fails individual store calls, which the crawler already retries through its leases,
+  instead of killing the process and crash-looping.

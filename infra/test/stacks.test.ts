@@ -128,12 +128,12 @@ test("task counts match the replicas the pipelines divide rate limits by (config
   assert.equal(replicas("crawler-heavy"), ctx.crawlerHeavyTasks);
 });
 
-test("crawler deploys stop the old task first: two generations do not fit the database's connections", () => {
+test("crawler deployment limits: ECS accepts them with zone rebalancing on", () => {
   const services = Object.values(svc.findResources("AWS::ECS::Service")).map((r) => r.Properties);
   for (const name of ["jbi-crawler", "jbi-crawler-heavy"]) {
     const d = services.find((p) => p.ServiceName === name)!.DeploymentConfiguration;
     assert.equal(d.MinimumHealthyPercent, 0);
-    assert.equal(d.MaximumPercent, 100);
+    assert.equal(d.MaximumPercent, 200); // 100 is refused while zone rebalancing is on
   }
   const web = services.find((p) => p.ServiceName === "jbi-web")!.DeploymentConfiguration;
   assert.equal(web.MinimumHealthyPercent, 100); // the site stays up during a deploy

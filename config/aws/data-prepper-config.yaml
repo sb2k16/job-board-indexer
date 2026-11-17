@@ -12,7 +12,7 @@ source_coordination:
       # One pool per pipeline. db.t4g.micro allows about 80 connections: at 5 the 13 pipeline
       # instances (5 x 2 crawler tasks + 3 heavy) took 65, with board_state (2 per task) and the web
       # app reaching the limit on Nov 17. 3 gives 39 in all. 2 starved under a full re-crawl locally
-      # (docs/pipeline-groups-2026-11-13.md); if 3 does, move to db.t4g.small rather than lower it.
+      # (docs/pipeline-groups-2026-11-13.md). A larger class is refused on the free account plan.
       max_pool_size: 3
       # The table comes from db/V1__source_coordination.sql (the jbi-tools migration task).
       skip_table_creation: true
