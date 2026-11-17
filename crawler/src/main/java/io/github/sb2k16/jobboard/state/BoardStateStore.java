@@ -53,6 +53,31 @@ public interface BoardStateStore extends AutoCloseable {
     default void retire(final String platform, final String boardId, final Instant at) {
     }
 
+    /** Retries scheduled since the board's last success or non-retryable outcome. */
+    default int retryCount(final String platform, final String boardId) {
+        return 0;
+    }
+
+    /** Schedules a sooner crawl of a board whose crawl failed for a reason that may pass. */
+    default void scheduleRetry(final String platform, final String boardId, final Instant at) {
+    }
+
+    /** Drops the board's pending retry and resets its retry count. */
+    default void clearRetry(final String platform, final String boardId) {
+    }
+
+    /**
+     * Atomically takes the platform's boards whose retry is due: their retry_at is cleared, so each
+     * is returned once even with two leaders racing.
+     */
+    default java.util.List<String> claimDueRetries(final String platform, final Instant now) {
+        return java.util.List.of();
+    }
+
+    /** A full refresh is starting: every pending retry of the platform is dropped (the refresh covers it). */
+    default void clearRetries(final String platform) {
+    }
+
     @Override
     default void close() {
     }

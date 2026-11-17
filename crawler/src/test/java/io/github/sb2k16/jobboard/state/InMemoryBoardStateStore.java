@@ -37,6 +37,8 @@ public class InMemoryBoardStateStore implements BoardStateStore {
         int failures;
         Instant firstFailureAt;
         Integer lastJobCount;
+        Instant retryAt;
+        int retryCount;
     }
 
     private Row row(final String p, final String b) {
@@ -102,5 +104,55 @@ public class InMemoryBoardStateStore implements BoardStateStore {
 
     public synchronized List<Instant> history(final String p, final String b) {
         return get(p, b).map(BoardState::getSnapshotHistory).orElse(List.of());
+    }
+
+    @Override
+    public synchronized int retryCount(final String p, final String b) {
+        final Row r = rows.get(p + "|" + b);
+        return r == null ? 0 : r.retryCount;
+    }
+
+    @Override
+    public synchronized void scheduleRetry(final String p, final String b, final Instant at) {
+        final Row r = row(p, b);
+        r.retryAt = at;
+        r.retryCount++;
+    }
+
+    @Override
+    public synchronized void clearRetry(final String p, final String b) {
+        final Row r = rows.get(p + "|" + b);
+        if (r != null) {
+            r.retryAt = null;
+            r.retryCount = 0;
+        }
+    }
+
+    @Override
+    public synchronized List<String> claimDueRetries(final String p, final Instant now) {
+        final List<String> due = new ArrayList<>();
+        for (final Map.Entry<String, Row> e : rows.entrySet()) {
+            final Row r = e.getValue();
+            if (e.getKey().startsWith(p + "|") && r.retryAt != null && !r.retryAt.isAfter(now)) {
+                due.add(e.getKey().substring(p.length() + 1));
+                r.retryAt = null;
+            }
+        }
+        java.util.Collections.sort(due);
+        return due;
+    }
+
+    @Override
+    public synchronized void clearRetries(final String p) {
+        rows.forEach((k, r) -> {
+            if (k.startsWith(p + "|")) {
+                r.retryAt = null;
+            }
+        });
+    }
+
+    public synchronized Instant retryAt(final String p, final String b) {
+        final Row r = rows.get(p + "|" + b);
+        return r == null ? null : r.retryAt;
     }
 }

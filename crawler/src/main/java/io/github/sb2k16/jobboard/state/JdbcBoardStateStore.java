@@ -34,6 +34,15 @@ import java.util.Optional;
  */
 public class JdbcBoardStateStore implements BoardStateStore {
 
+    private static final String RETRY_COUNT = "SELECT retry_count FROM board_state WHERE platform = ? AND board_id = ?";
+    private static final String SCHEDULE_RETRY = "UPDATE board_state SET retry_at = ?, retry_count = retry_count + 1, "
+            + "updated_at = now() WHERE platform = ? AND board_id = ?";
+    private static final String CLEAR_RETRY = "UPDATE board_state SET retry_at = NULL, retry_count = 0, updated_at = now() "
+            + "WHERE platform = ? AND board_id = ? AND (retry_at IS NOT NULL OR retry_count <> 0)";
+    private static final String CLAIM_RETRIES = "UPDATE board_state SET retry_at = NULL, updated_at = now() "
+            + "WHERE platform = ? AND retry_at <= ? RETURNING board_id";
+    private static final String CLEAR_RETRIES = "UPDATE board_state SET retry_at = NULL, updated_at = now() "
+            + "WHERE platform = ? AND retry_at IS NOT NULL";
     private static final String RECORD_ATTEMPT =
             "INSERT INTO board_state (platform, board_id, last_attempt, last_crawl_started, last_outcome, last_error,"
             + " consecutive_failures, first_failure_at, last_job_count, updated_at)"
@@ -192,6 +201,58 @@ public class JdbcBoardStateStore implements BoardStateStore {
         } catch (final SQLException e) {
             throw new BoardStateException("board_state write failed for " + platform + "/" + boardId, e);
         }
+    }
+
+    @Override
+    public int retryCount(final String platform, final String boardId) {
+        try (Connection c = dataSource.getConnection(); PreparedStatement ps = c.prepareStatement(RETRY_COUNT)) {
+            ps.setString(1, platform);
+            ps.setString(2, boardId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+        } catch (final SQLException e) {
+            throw new BoardStateException("board_state read failed for " + platform + "/" + boardId, e);
+        }
+    }
+
+    @Override
+    public void scheduleRetry(final String platform, final String boardId, final Instant at) {
+        update(SCHEDULE_RETRY, platform, boardId, ps -> {
+            ps.setTimestamp(1, Timestamp.from(at));
+            ps.setString(2, platform);
+            ps.setString(3, boardId);
+        });
+    }
+
+    @Override
+    public void clearRetry(final String platform, final String boardId) {
+        update(CLEAR_RETRY, platform, boardId, ps -> {
+            ps.setString(1, platform);
+            ps.setString(2, boardId);
+        });
+    }
+
+    @Override
+    public List<String> claimDueRetries(final String platform, final Instant now) {
+        try (Connection c = dataSource.getConnection(); PreparedStatement ps = c.prepareStatement(CLAIM_RETRIES)) {
+            ps.setString(1, platform);
+            ps.setTimestamp(2, Timestamp.from(now));
+            final List<String> boards = new ArrayList<>();
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    boards.add(rs.getString(1));
+                }
+            }
+            return boards;
+        } catch (final SQLException e) {
+            throw new BoardStateException("board_state retry claim failed for " + platform, e);
+        }
+    }
+
+    @Override
+    public void clearRetries(final String platform) {
+        update(CLEAR_RETRIES, platform, "*", ps -> ps.setString(1, platform));
     }
 
     @Override

@@ -62,6 +62,9 @@ class JdbcBoardStateStoreIT {
             s.execute(ddl);
             s.execute(ddl); // idempotent
             s.execute(Files.readString(Path.of(System.getProperty("jbi.db.dir", "../db"), "V3__identity_and_closure.sql")));
+            final String retry = Files.readString(Path.of(System.getProperty("jbi.db.dir", "../db"), "V4__board_retry.sql"));
+            s.execute(retry);
+            s.execute(retry); // idempotent
         }
         store = new JdbcBoardStateStore(ds, 3);
     }
@@ -169,5 +172,35 @@ class JdbcBoardStateStoreIT {
         assertThat(b.get("gh", "shared").orElseThrow().getConsecutiveFailures(), equalTo(1));
         b.close();
         assertThat(JdbcBoardStateStore.openPools(), equalTo(before));
+    }
+
+    @Test
+    void retry_scheduleClaimOnceAndClear() throws Exception {
+        store.recordAttempt("r", "a", T0, T0, Outcome.FAILED, null, "429");
+        store.recordAttempt("r", "b", T0, T0, Outcome.FAILED, null, "503");
+        store.recordAttempt("other", "a", T0, T0, Outcome.FAILED, null, "503");
+        store.scheduleRetry("r", "a", T0.plusSeconds(900));
+        store.scheduleRetry("r", "b", T0.plusSeconds(3600));
+        store.scheduleRetry("other", "a", T0.plusSeconds(60));
+        org.junit.jupiter.api.Assertions.assertEquals(1, store.retryCount("r", "a"));
+
+        // Due at T0 + 20 min: only r/a, and only once, even with two claimants racing.
+        final java.util.concurrent.ExecutorService pool = java.util.concurrent.Executors.newFixedThreadPool(2);
+        final java.util.concurrent.Callable<List<String>> claim = () -> store.claimDueRetries("r", T0.plusSeconds(1200));
+        final List<String> one = pool.submit(claim).get();
+        final List<String> two = pool.submit(claim).get();
+        pool.shutdown();
+        final List<String> both = new java.util.ArrayList<>(one);
+        both.addAll(two);
+        org.junit.jupiter.api.Assertions.assertEquals(List.of("a"), both);
+
+        store.scheduleRetry("r", "a", T0.plusSeconds(1800));
+        org.junit.jupiter.api.Assertions.assertEquals(2, store.retryCount("r", "a"));
+        store.clearRetry("r", "a");
+        org.junit.jupiter.api.Assertions.assertEquals(0, store.retryCount("r", "a"));
+        org.junit.jupiter.api.Assertions.assertEquals(List.of("b"), store.claimDueRetries("r", T0.plusSeconds(7200)));
+
+        store.clearRetries("other");
+        org.junit.jupiter.api.Assertions.assertEquals(List.of(), store.claimDueRetries("other", T0.plusSeconds(7200)));
     }
 }

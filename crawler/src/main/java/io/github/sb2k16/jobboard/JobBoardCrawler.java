@@ -85,6 +85,14 @@ public class JobBoardCrawler implements Crawler<PaginationCrawlerWorkerProgressS
     static final String BOARD = "board";
     static final String COMPANY = "company";
     static final String CRAWL_STARTED = "crawl_started";
+    /** The refresh a crawl belongs to; a retry carries its refresh's time, so it never runs past the next one. */
+    static final String REFRESH_STARTED = "refresh_started";
+    /**
+     * Sooner retry of a crawl that failed for a reason that may pass (429, 5xx, timeout, network, an
+     * open circuit, robots.txt unavailable): 15, 30, then 60 minutes after the failure, but never at or
+     * after the group's next refresh, which retries the board anyway.
+     */
+    static final List<Duration> RETRY_DELAYS = List.of(Duration.ofMinutes(15), Duration.ofMinutes(30), Duration.ofMinutes(60));
     static final int WRITE_BATCH = 100;
     /** Below the framework's own 2 h acknowledgement timeout, so ours always resolves first. */
     static final Duration SNAPSHOT_ACK_TIMEOUT = Duration.ofHours(1);
@@ -109,6 +117,8 @@ public class JobBoardCrawler implements Crawler<PaginationCrawlerWorkerProgressS
     private final Counter snapshotsCommitted;
     private final Counter snapshotsRejected;
     private final Counter jobsEmitted;
+    private final Counter retriesScheduled;
+    private final Counter retriesQueued;
 
     @Inject
     public JobBoardCrawler(final JobBoardSourceConfig config, final PluginMetrics pluginMetrics) {
@@ -133,6 +143,8 @@ public class JobBoardCrawler implements Crawler<PaginationCrawlerWorkerProgressS
         this.snapshotsCommitted = pluginMetrics.counter("snapshotsCommitted");
         this.snapshotsRejected = pluginMetrics.counter("snapshotsRejected");
         this.jobsEmitted = pluginMetrics.counter("jobsEmitted");
+        this.retriesScheduled = pluginMetrics.counter("boardRetriesScheduled");
+        this.retriesQueued = pluginMetrics.counter("boardRetriesQueued");
         final PolitenessConfig p = config.getPoliteness();
         final FetcherFactory factory = fetcher != null ? null : new FetcherFactory(new JdkHttpTransport(), Ticker.SYSTEM,
                 p.getRobotsTtl(), p.getRequestTimeout(), p.getBreakerThreshold(), p.getBreakerCooldown());
@@ -184,10 +196,16 @@ public class JobBoardCrawler implements Crawler<PaginationCrawlerWorkerProgressS
         final Instant last = state.getLastPollTime();
         final Instant now = Instant.now();
         if (last != null && Duration.between(last, now).compareTo(config.getRefreshInterval()) < 0) {
+            queueDueRetries(coordinator, last, now);
             return last;
         }
         int created = 0;
         for (final PlatformConfig platform : config.getPlatforms()) {
+            try {
+                store.clearRetries(platform.getName()); // this refresh crawls every board anyway
+            } catch (final BoardStateException e) {
+                LOG.warn("{}: could not drop pending retries before the refresh ({})", platform.getName(), e.getMessage());
+            }
             for (final Tenant tenant : tenantLoader.load(platform)) {
                 final PaginationCrawlerWorkerProgressState work = new PaginationCrawlerWorkerProgressState();
                 final Map<String, Object> keys = new HashMap<>();
@@ -195,6 +213,7 @@ public class JobBoardCrawler implements Crawler<PaginationCrawlerWorkerProgressS
                 keys.put(BOARD, tenant.getBoard());
                 keys.put(COMPANY, tenant.getCompany());
                 keys.put(CRAWL_STARTED, now.toString());
+                keys.put(REFRESH_STARTED, now.toString());
                 work.setKeyAttributes(keys);
                 work.setItemIds(List.of(tenant.getBoard()));
                 work.setExportStartTime(now);
@@ -208,6 +227,73 @@ public class JobBoardCrawler implements Crawler<PaginationCrawlerWorkerProgressS
         return now;
     }
 
+    /**
+     * Between refreshes: queues a crawl of every board whose retry is due. Claiming clears the
+     * board's retry_at in the same statement, so a board is queued once however many leaders ask.
+     */
+    private void queueDueRetries(final EnhancedSourceCoordinator coordinator, final Instant refreshStarted, final Instant now) {
+        for (final PlatformConfig platform : config.getPlatforms()) {
+            final List<String> due;
+            try {
+                due = store.claimDueRetries(platform.getName(), now);
+            } catch (final BoardStateException e) {
+                LOG.warn("{}: could not read due retries ({}); the next refresh covers them", platform.getName(), e.getMessage());
+                continue;
+            }
+            if (due.isEmpty()) {
+                continue;
+            }
+            final Map<String, Tenant> tenants = new HashMap<>();
+            for (final Tenant t : tenantLoader.load(platform)) {
+                tenants.put(t.getBoard(), t);
+            }
+            for (final String board : due) {
+                final Tenant tenant = tenants.get(board);
+                if (tenant == null) {
+                    continue; // no longer in the tenant list
+                }
+                final PaginationCrawlerWorkerProgressState work = new PaginationCrawlerWorkerProgressState();
+                final Map<String, Object> keys = new HashMap<>();
+                keys.put(PLATFORM, platform.getName());
+                keys.put(BOARD, board);
+                keys.put(COMPANY, tenant.getCompany());
+                keys.put(CRAWL_STARTED, now.toString());
+                keys.put(REFRESH_STARTED, refreshStarted.toString());
+                work.setKeyAttributes(keys);
+                work.setItemIds(List.of(board));
+                work.setExportStartTime(now);
+                coordinator.createPartition(new SaasSourcePartition(work, platform.getName() + "|" + board + "|" + now + "|retry"));
+                retriesQueued.increment();
+                LOG.info("{}/{}: retrying after a failed crawl", platform.getName(), board);
+            }
+        }
+    }
+
+    /**
+     * After a failed crawl: a failure that may pass gets a sooner retry; anything else, and any
+     * failure whose retry would fall at or after the next refresh, clears the board's retry.
+     */
+    void scheduleOrClearRetry(final String platform, final String board, final boolean retryable, final Instant failedAt,
+                              final Instant refreshStarted) {
+        try {
+            if (!retryable) {
+                store.clearRetry(platform, board);
+                return;
+            }
+            final int n = store.retryCount(platform, board);
+            final Instant at = failedAt.plus(RETRY_DELAYS.get(Math.min(n, RETRY_DELAYS.size() - 1)));
+            if (!at.isBefore(refreshStarted.plus(config.getRefreshInterval()))) {
+                store.clearRetry(platform, board);
+                return;
+            }
+            store.scheduleRetry(platform, board, at);
+            retriesScheduled.increment();
+            LOG.info("{}/{}: retry {} scheduled for {}", platform, board, n + 1, at);
+        } catch (final BoardStateException e) {
+            LOG.warn("{}/{}: could not schedule a retry ({}); the next refresh covers it", platform, board, e.getMessage());
+        }
+    }
+
     @Override
     public void executePartition(final PaginationCrawlerWorkerProgressState state, final Buffer<Record<Event>> buffer,
                                  final AcknowledgementSet acknowledgementSet) {
@@ -215,6 +301,9 @@ public class JobBoardCrawler implements Crawler<PaginationCrawlerWorkerProgressS
         final String platformName = (String) keys.get(PLATFORM);
         final Tenant tenant = new Tenant((String) keys.get(BOARD), (String) keys.get(COMPANY));
         final Instant crawlStarted = Instant.parse((String) keys.get(CRAWL_STARTED));
+        // Partitions queued before retries existed carry no refresh time: their crawl start is it.
+        final Instant refreshStarted = keys.get(REFRESH_STARTED) == null ? crawlStarted
+                : Instant.parse((String) keys.get(REFRESH_STARTED));
         final PlatformConfig platform = config.getPlatforms().stream()
                 .filter(p -> p.getName().equals(platformName))
                 .findFirst()
@@ -239,6 +328,7 @@ public class JobBoardCrawler implements Crawler<PaginationCrawlerWorkerProgressS
                 count(outcome);
                 store.recordAttempt(platformName, board, crawlStarted, attemptedAt, outcome, null, e.getMessage());
                 LOG.warn("{}/{}: {} ({})", platformName, board, outcome, e.getMessage());
+                scheduleOrClearRetry(platformName, board, outcome == Outcome.FAILED && e.isRetryable(), attemptedAt, refreshStarted);
                 if (outcome == Outcome.GONE && sweeper != null) {
                     sweepSafely(() -> sweeper.afterGone(platformName, board, Instant.now()), platformName, board);
                 }
@@ -252,6 +342,8 @@ public class JobBoardCrawler implements Crawler<PaginationCrawlerWorkerProgressS
                     outcome == Outcome.PARTIAL ? "parsed " + snapshot.getJobs().size() + " jobs, platform reports "
                             + snapshot.getReportedTotal() + (snapshot.getResultLimit() == null ? ""
                             : "; its search serves at most " + snapshot.getResultLimit() + " results") : null);
+            // The board was read: a partial read is the platform's limit, not a failure that may pass.
+            scheduleOrClearRetry(platformName, board, false, attemptedAt, refreshStarted);
             if (outcome == Outcome.PARTIAL) {
                 LOG.warn("{}/{}: parsed {} jobs but platform reports {}; not a snapshot", platformName, board,
                         snapshot.getJobs().size(), snapshot.getReportedTotal());

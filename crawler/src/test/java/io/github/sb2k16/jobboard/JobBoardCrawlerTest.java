@@ -224,6 +224,93 @@ class JobBoardCrawlerTest {
         }
     }
 
+    // ---- sooner retry ---------------------------------------------------------------------------
+
+    private static PaginationCrawlerWorkerProgressState work(final Instant crawlStarted, final Instant refreshStarted) {
+        final PaginationCrawlerWorkerProgressState work = new PaginationCrawlerWorkerProgressState();
+        work.setKeyAttributes(Map.of("platform", "fake", "board", "a", "company", "A",
+                "crawl_started", crawlStarted.toString(), "refresh_started", refreshStarted.toString()));
+        return work;
+    }
+
+    @Test
+    void retry_aFailureThatMayPass_isScheduled15Then30Then60MinutesLater() throws Exception {
+        final Instant refresh = Instant.now();
+        when(adapter.fetchBoard(any(), any(Tenant.class), any())).thenThrow(BoardFetchException.http("u", 429));
+        final List<Duration> gaps = new ArrayList<>();
+        for (int i = 0; i < 4; i++) {
+            final Instant before = Instant.now();
+            crawler().executePartition(work(refresh.plusSeconds(i), refresh), buffer(), mock(AcknowledgementSet.class));
+            gaps.add(Duration.between(before, store.retryAt("fake", "a")));
+        }
+        assertThat(gaps.get(0).toMinutes(), equalTo(15L));
+        assertThat(gaps.get(1).toMinutes(), equalTo(30L));
+        assertThat(gaps.get(2).toMinutes(), equalTo(60L));
+        assertThat(gaps.get(3).toMinutes(), equalTo(60L));                  // capped
+        assertThat(store.retryCount("fake", "a"), equalTo(4));
+    }
+
+    @Test
+    void retry_notForFailuresThatWillNotPass_norAfterTheNextRefresh() throws Exception {
+        final Instant refresh = Instant.now();
+        for (final BoardFetchException e : List.of(new BoardFetchException("board marker missing", false),
+                BoardFetchException.http("u", 403), BoardFetchException.http("u", 404),
+                new BoardFetchException("robots", null, false, BoardFetchException.Kind.ROBOTS, 0))) {
+            org.mockito.Mockito.doThrow(e).when(adapter).fetchBoard(any(), any(Tenant.class), any());
+            crawler().executePartition(work(refresh, refresh), buffer(), mock(AcknowledgementSet.class));
+            assertThat(e.getMessage(), store.retryAt("fake", "a"), org.hamcrest.Matchers.nullValue());
+        }
+        // A 503 ten minutes before the next refresh (PT6H): the refresh retries it, so no retry.
+        org.mockito.Mockito.doThrow(BoardFetchException.http("u", 503)).when(adapter).fetchBoard(any(), any(Tenant.class), any());
+        final Instant oldRefresh = Instant.now().minus(Duration.ofHours(6)).plus(Duration.ofMinutes(10));
+        crawler().executePartition(work(Instant.now(), oldRefresh), buffer(), mock(AcknowledgementSet.class));
+        assertThat(store.retryAt("fake", "a"), org.hamcrest.Matchers.nullValue());
+    }
+
+    @Test
+    void retry_aSuccessfulReadClearsThePendingRetryAndItsCount() throws Exception {
+        final Instant refresh = Instant.now();
+        when(adapter.fetchBoard(any(), any(Tenant.class), any())).thenThrow(BoardFetchException.http("u", 500));
+        crawler().executePartition(work(refresh, refresh), buffer(), mock(AcknowledgementSet.class));
+        assertThat(store.retryCount("fake", "a"), equalTo(1));
+        org.mockito.Mockito.reset(adapter);
+        when(adapter.name()).thenReturn("fake");
+        when(adapter.fetchBoard(any(), any(Tenant.class), any())).thenReturn(new BoardSnapshot(jobs(2), 3, false));
+        crawler().executePartition(work(refresh.plusSeconds(60), refresh), buffer(), mock(AcknowledgementSet.class));
+        assertThat(store.retryAt("fake", "a"), org.hamcrest.Matchers.nullValue());
+        assertThat(store.retryCount("fake", "a"), equalTo(0));
+    }
+
+    @Test
+    void retry_theLeaderQueuesDueRetriesOnceBetweenRefreshes() {
+        final Instant refresh = Instant.now().minus(Duration.ofMinutes(20));
+        store.recordAttempt("fake", "a", refresh, refresh, Outcome.FAILED, null, "429");
+        store.scheduleRetry("fake", "a", Instant.now().minus(Duration.ofMinutes(1)));     // due
+        store.recordAttempt("fake", "b", refresh, refresh, Outcome.FAILED, null, "503");
+        store.scheduleRetry("fake", "b", Instant.now().plus(Duration.ofMinutes(10)));     // not yet
+        final JobBoardCrawler crawler = crawler();
+        assertThat(crawler.crawl(leader(refresh), coordinator), equalTo(refresh));      // no refresh due
+        final ArgumentCaptor<SaasSourcePartition> captor = ArgumentCaptor.forClass(SaasSourcePartition.class);
+        verify(coordinator, times(1)).createPartition(captor.capture());
+        final Map<String, Object> keys =
+                ((PaginationCrawlerWorkerProgressState) captor.getValue().getProgressState().get()).getKeyAttributes();
+        assertThat(keys.get("board"), equalTo("a"));
+        assertThat(keys.get("company"), equalTo("A"));
+        assertThat(keys.get("refresh_started"), equalTo(refresh.toString()));
+        assertThat(captor.getValue().getPartitionKey().endsWith("|retry"), equalTo(true));
+        crawler.crawl(leader(refresh), coordinator);                                     // claimed: not queued again
+        verify(coordinator, times(1)).createPartition(any());
+    }
+
+    @Test
+    void retry_aFullRefreshDropsPendingRetries() {
+        store.recordAttempt("fake", "a", CRAWL, CRAWL, Outcome.FAILED, null, "429");
+        store.scheduleRetry("fake", "a", Instant.now().plus(Duration.ofMinutes(10)));
+        crawler().crawl(leader(Instant.EPOCH), coordinator);
+        verify(coordinator, times(2)).createPartition(any());                            // the refresh: both boards
+        assertThat(store.retryAt("fake", "a"), org.hamcrest.Matchers.nullValue());
+    }
+
     @Test
     void executePartition_partialSnapshot_emitsJobsButNoSnapshot() throws Exception {
         when(adapter.fetchBoard(any(), any(Tenant.class), any())).thenReturn(new BoardSnapshot(jobs(3), 5, false));
