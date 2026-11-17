@@ -102,8 +102,11 @@ export class AppStack extends Stack {
         assignPublicIp: true, // no NAT gateway: each task reaches job boards from its own address
         vpcSubnets: { subnetType: ec2.SubnetType.PUBLIC },
         securityGroups: [data.crawlerSg],
-        minHealthyPercent: 100, // a rolling deploy starts the new task before stopping the old
-        maxHealthyPercent: 200,
+        // Stop before start: two generations of crawler tasks cannot both hold their Postgres pools
+        // on db.t4g.micro (about 80 connections; Nov 17 the new tasks failed to start). A gap is
+        // what a Spot interruption is anyway: leases hand the boards over.
+        minHealthyPercent: 0,
+        maxHealthyPercent: 100,
         circuitBreaker: { rollback: true },
       });
     };
