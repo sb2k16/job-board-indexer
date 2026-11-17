@@ -1,0 +1,15 @@
+# Data Prepper server config for AWS; @@NAME@@ values are filled in by docker/entrypoint.sh.
+ssl: false
+serverPort: 4900
+source_coordination:
+  partition_prefix: "jbi-aws-"
+  store:
+    jdbc:
+      url: "@@JBI_DB_URL@@"
+      username: "@@JBI_DB_USER@@"
+      password: "@@JBI_DB_PASSWORD@@"
+      ttl: "P2D"
+      # One pool per pipeline; 2 starved under a full re-crawl (docs/pipeline-groups-2026-11-13.md).
+      max_pool_size: 5
+      # The table comes from db/V1__source_coordination.sql (the jbi-tools migration task).
+      skip_table_creation: true

@@ -92,6 +92,8 @@ def pipeline(group, platforms, env, replicas):
         for k in ("snapshots", "mass_closure_ratio", "mass_closure_min_jobs", "retire_after"):
             if k in cl:
                 lines.append(f"        {k}: {cl[k]}")
+        if "aws_region" in cl:  # Amazon OpenSearch Service: the sweeper signs with SigV4
+            lines.append(f"        aws_region: {q(cl['aws_region'])}")
     lines.append("      platforms:")
     for p in platforms:
         extra = p if isinstance(p, dict) else {}

@@ -20,9 +20,17 @@ npm test                                   # assertion tests of the decisions ab
 npx cdk synth --profile jbi                # templates in cdk.out/
 npx cdk bootstrap --profile jbi            # once per account and region
 npx cdk deploy JbiData --profile jbi       # OpenSearch takes 15 to 20 minutes
-# build and push the three images tagged with the commit, then:
-npx cdk deploy JbiApp --profile jbi -c imageTag=<commit>
+TAG=$(git rev-parse --short HEAD)
+../docker/build-aws.sh "$TAG"              # jbi-crawler, jbi-web, jbi-tools for linux/amd64 (clean tree only)
+scripts/push-images.sh "$TAG"              # to the stack's ECR repositories
+npx cdk deploy JbiApp --profile jbi -c imageTag="$TAG"
+scripts/migrate.sh                         # one-off jbi-tools task: db/V*.sql (idempotent)
 ```
+
+The crawler image carries the pipelines rendered from `config/aws/env.toml` (one file per
+Deployment) with `@@NAME@@` placeholders; `docker/entrypoint.sh` fills them at start from the
+environment ECS injects (the database password from Secrets Manager), so nothing secret is in the
+image. Locally the entrypoint does nothing.
 
 Context (`cdk.json`, override with `-c`): `imageTag`, `crawlerCpu` (1024), `crawlerMemoryMiB`
 (4096), `crawlerTasks` (2), `crawlerHeavyTasks` (1). Task counts must match `[replicas]` in the AWS

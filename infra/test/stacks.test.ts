@@ -117,3 +117,13 @@ test("the data stack never depends on the app stack", () => {
   assert.equal(dataStack.dependencies.length, 0);
   assert.deepEqual(appStack.dependencies.map((s) => s.stackName), ["JbiData"]);
 });
+
+test("task counts match the replicas the pipelines divide rate limits by (config/aws/env.toml)", async () => {
+  const { readFileSync } = await import("node:fs");
+  const toml = readFileSync(new URL("../../config/aws/env.toml", `file://${__filename}`), "utf8");
+  const section = toml.split("[replicas]")[1].split("\n[")[0];
+  const replicas = (key: string) => Number(new RegExp(`^${key}\\s*=\\s*(\\d+)`, "m").exec(section)![1]);
+  const ctx = JSON.parse(readFileSync(new URL("../cdk.json", `file://${__filename}`), "utf8")).context;
+  assert.equal(replicas("crawler"), ctx.crawlerTasks);
+  assert.equal(replicas("crawler-heavy"), ctx.crawlerHeavyTasks);
+});
