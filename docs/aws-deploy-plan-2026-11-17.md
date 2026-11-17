@@ -53,6 +53,21 @@ manifests become ECS task definitions), no fixed single egress IP (each task has
 IP, so platforms see two or three addresses instead of one), Spot interruptions (leases make a
 lost task harmless: its boards return to the pool), and no multi-AZ database or domain.
 
-Recommendation: B for the verification and the demo, since it fits the budget and exercises every
+**Decided 2026-11-17: option B, with every crawler task on Fargate Spot, built with AWS CDK
+(TypeScript) instead of Terraform.** CDK because the stack is all AWS and mostly ECS: its constructs
+cover Spot capacity providers, the load-balanced web service, RDS and OpenSearch in a VPC, security
+group wiring and least-privilege IAM grants in about a third of the code, CloudFormation holds the
+state (no state bucket), and assertion tests pin the decisions. Terraform's portability does not
+apply to an AWS-only entry. Two stacks (`JbiData`, `JbiApp`) keep a failed app deploy away from the
+database and the index. Code: `infra/`.
+
+Corrected estimate for B (the $90 to $110 above omitted public IPv4 charges, $3.65 per address a
+month, and undersized the crawler tasks): with a regular-Fargate crawler as a base about $160 a
+month; with every crawler on Spot, as decided, about $135 (3 Spot crawler tasks at 1 vCPU
+and 4 GB about $39, web task $9, RDS $14, OpenSearch $27, load balancer $18, public IPv4 for 4 tasks
+and the load balancer about $22, logs and ECR about $5). Smaller crawler tasks, if measured to fit,
+lower it further. To be replaced by the measured bill.
+
+Earlier recommendation: B for the verification and the demo, since it fits the budget and exercises every
 part of the pipeline the challenge asks about; the design doc's EKS shape stays the documented
 production option. The choice is yours to make; nothing is created in AWS until it is made.

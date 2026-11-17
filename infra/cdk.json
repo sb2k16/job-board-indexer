@@ -1,0 +1,11 @@
+{
+  "app": "npx tsx bin/jbi.ts",
+  "context": {
+    "imageTag": "unset",
+    "crawlerCpu": 1024,
+    "crawlerMemoryMiB": 4096,
+    "crawlerTasks": 2,
+    "crawlerHeavyTasks": 1,
+    "@aws-cdk/core:defaultCrossStackReferences": "strong"
+  }
+}
