@@ -25,7 +25,7 @@ services:
     environment: { PGPASSWORD: jbi }
     command: ["psql", "-h", "postgres", "-U", "jbi", "-d", "jbi", "-v", "ON_ERROR_STOP=1",
               "-f", "/db/V1__source_coordination.sql", "-f", "/db/V2__board_state.sql",
-              "-f", "/db/V3__identity_and_closure.sql", "-f", "/db/V4__board_retry.sql"]
+              "-f", "/db/V3__identity_and_closure.sql", "-f", "/db/V4__board_retry.sql", "-f", "/db/V5__group_refresh.sql"]
     volumes: ["../db:/db:ro"]
     depends_on:
       postgres: { condition: service_healthy }

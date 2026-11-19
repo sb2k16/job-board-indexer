@@ -6,6 +6,11 @@
 # compatible open source license.
 """Renders config/groups.toml into one Data Prepper pipelines file per Deployment.
 
+Each Deployment runs ONE pipeline (named after it) whose job_board_crawler source holds all of its
+groups, each with its own platforms and refresh cadence, so each pod has one OpenSearch sink: the
+domain refuses more than a few bulk requests in flight (docs/aws-deploy-plan-2026-11-17.md,
+"OpenSearch write rejections"). The source's workers are the sum of its groups' workers.
+
     python3 config/render_groups.py ENV.toml OUT_DIR [--groups config/groups.toml]
 
 ENV.toml holds what differs between environments (local compose, EKS staging/production):
@@ -59,23 +64,22 @@ def q(s):
     return json.dumps(s)  # a JSON string is a valid YAML double-quoted scalar
 
 
-def pipeline(group, platforms, env, replicas):
+def pipeline(deployment, groups, env, replicas):
+    """groups: [(group, runnable platforms)] of one Deployment, rendered as one pipeline."""
     crawl = env.get("crawl", {})
     paths = env["paths"]
     os_ = env["opensearch"]
     bs = env["board_state"]
-    name = f"g{group['id']}-{group['name']}"
-    refresh = group["refresh"] if group.get("keep_refresh") else crawl.get("refresh_override", group["refresh"])
+    workers = sum(g["workers"] for g, _ in groups)
     lines = [
-        f"# Group {group['id']}: {group['description']}" if group.get("description") else f"# Group {group['id']}",
-        f"{name}:",
+        f"# Deployment {deployment}: groups " + ", ".join(f"g{g['id']}-{g['name']}" for g, _ in groups),
+        f"{deployment}:",
         f"  workers: {crawl.get('pipeline_workers', 2)}",
         "  delay: 100",
         "  source:",
         "    job_board_crawler:",
-        f"      refresh_interval: {q(refresh)}",
         f"      leader_interval: {q(crawl.get('leader_interval', 'PT1M'))}",
-        f"      workers: {group['workers']}",
+        f"      workers: {workers}                     # the groups' workers, summed",
         "      acknowledgments: true",
         "      politeness:",
         f"        replicas: {replicas}                 # pods in this Deployment; each takes 1/{replicas} of a platform's budget",
@@ -94,21 +98,29 @@ def pipeline(group, platforms, env, replicas):
                 lines.append(f"        {k}: {cl[k]}")
         if "aws_region" in cl:  # Amazon OpenSearch Service: the sweeper signs with SigV4
             lines.append(f"        aws_region: {q(cl['aws_region'])}")
-    lines.append("      platforms:")
-    for p in platforms:
-        extra = p if isinstance(p, dict) else {}
-        name = extra.get("name", p)
+    lines.append("      groups:")
+    for group, platforms in groups:
+        refresh = group["refresh"] if group.get("keep_refresh") else crawl.get("refresh_override", group["refresh"])
+        desc = f"   # {group['description']}" if group.get("description") else ""
         lines += [
-            f"        - name: {name}",
-            f"          spec: {q(paths['specs'] + '/' + extra.get('spec', name) + '.yaml')}",
-            f"          tenants_file: {q(paths['tenants'] + '/' + name + '.csv')}",
+            f"        - name: {q('g' + str(group['id']) + '-' + group['name'])}{desc}",
+            f"          refresh_interval: {q(refresh)}",
+            "          platforms:",
         ]
-        if extra.get("base_url"):
-            lines.append(f"          base_url: {q(extra['base_url'])}")
+        for p in platforms:
+            extra = p if isinstance(p, dict) else {}
+            name = extra.get("name", p)
+            lines += [
+                f"            - name: {name}",
+                f"              spec: {q(paths['specs'] + '/' + extra.get('spec', name) + '.yaml')}",
+                f"              tenants_file: {q(paths['tenants'] + '/' + name + '.csv')}",
+            ]
+            if extra.get("base_url"):
+                lines.append(f"              base_url: {q(extra['base_url'])}")
     lines += [
         "  buffer:",
         "    bounded_blocking:",
-        "      buffer_size: 4096",
+        f"      buffer_size: {4096 * len(groups)}                # 4096 per group, as when each group had its own pipeline",
         "      batch_size: 256",
         "  sink:",
         "    - opensearch:",
@@ -128,10 +140,11 @@ def pipeline(group, platforms, env, replicas):
         "        script:",
         "          source: |",
         *["            " + line for line in UPSERT],
-        f"        max_retries: {os_.get('max_retries', 5)}",
-        f"        bulk_size: {os_.get('bulk_size', 5)}",
     ]
-    return name, "\n".join(lines) + "\n"
+    if "max_retries" in os_:  # unset: the sink retries with backoff until the document is written
+        lines.append(f"        max_retries: {os_['max_retries']}")
+    lines.append(f"        bulk_size: {os_.get('bulk_size', 5)}")
+    return "\n".join(lines) + "\n"
 
 
 def main():
@@ -174,8 +187,7 @@ def main():
         if not runnable:
             report.append(f"  {label:22} skipped: no platform built yet")
             continue
-        name, text = pipeline(g, runnable, env, replicas[g["deployment"]])
-        files.setdefault(g["deployment"], []).append(text)
+        files.setdefault(g["deployment"], []).append((g, runnable))
         note = f"; not built yet: {', '.join(missing)}" if missing else ""
         names = [p["name"] if isinstance(p, dict) else p for p in runnable]
         report.append(f"  {label:22} -> {g['deployment']}: {', '.join(names)}{note}")
@@ -185,14 +197,15 @@ def main():
         if d in files:
             header = (f"# Generated by config/render_groups.py from config/groups.toml for Deployment '{d}'.\n"
                       f"# Do not edit; change groups.toml or {env_path.name} and re-render.\n")
-            target.write_text(header + "\n".join(files[d]))
+            target.write_text(header + pipeline(d, files[d], env, replicas[d]))
         elif target.exists():
             target.unlink()  # a stale file would keep running groups that moved away
     print("groups:")
     print("\n".join(report))
     for d in groups_cfg["deployments"]:
         n = len(files.get(d, []))
-        print(f"deployment {d}: {n} pipeline(s), replicas {replicas[d]}" + ("" if n else " (nothing to run; do not deploy)"))
+        print(f"deployment {d}: 1 pipeline, {n} group(s), replicas {replicas[d]}" if n
+              else f"deployment {d}: nothing to run; do not deploy")
 
 
 if __name__ == "__main__":

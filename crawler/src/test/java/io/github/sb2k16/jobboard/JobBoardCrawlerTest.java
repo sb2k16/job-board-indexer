@@ -119,6 +119,78 @@ class JobBoardCrawlerTest {
         verify(coordinator, never()).createPartition(any());
     }
 
+    /** Two groups in one pipeline: "fast" (fake, every 2 h) and "slow" (fake2, every 12 h). */
+    private JobBoardCrawler groupedCrawler() throws Exception {
+        config = new ObjectMapper().findAndRegisterModules().readValue(
+                "{\"groups\":["
+                        + "{\"name\":\"fast\",\"refresh_interval\":\"PT2H\",\"platforms\":[{\"name\":\"fake\",\"tenants\":"
+                        + "[{\"board\":\"a\",\"company\":\"A\"},{\"board\":\"b\",\"company\":\"B\"}]}]},"
+                        + "{\"name\":\"slow\",\"refresh_interval\":\"PT12H\",\"platforms\":[{\"name\":\"fake2\",\"adapter\":\"fake\","
+                        + "\"tenants\":[{\"board\":\"c\",\"company\":\"C\"}]}]}]}",
+                JobBoardSourceConfig.class);
+        return crawler();
+    }
+
+    private List<String> createdBoards() {
+        final ArgumentCaptor<SaasSourcePartition> captor = ArgumentCaptor.forClass(SaasSourcePartition.class);
+        verify(coordinator, org.mockito.Mockito.atLeast(0)).createPartition(captor.capture());
+        final List<String> boards = new ArrayList<>();
+        for (final SaasSourcePartition partition : captor.getAllValues()) {
+            boards.add((String) ((PaginationCrawlerWorkerProgressState) partition.getProgressState().get())
+                    .getKeyAttributes().get("board"));
+        }
+        return boards;
+    }
+
+    @Test
+    void groups_eachRefreshesOnItsOwnCadence() throws Exception {
+        final JobBoardCrawler crawler = groupedCrawler();
+        crawler.crawl(leader(Instant.EPOCH), coordinator);
+        assertThat(createdBoards(), equalTo(List.of("a", "b", "c")));                    // first round: every group
+        assertThat(store.groupRefreshedAt("fast").isPresent(), equalTo(true));
+        assertThat(store.groupRefreshedAt("slow").isPresent(), equalTo(true));
+
+        org.mockito.Mockito.clearInvocations(coordinator);
+        crawler.crawl(leader(Instant.now()), coordinator);
+        assertThat(createdBoards(), equalTo(List.of()));                                 // nothing due
+
+        org.mockito.Mockito.clearInvocations(coordinator);
+        store.recordGroupRefresh("fast", Instant.now().minus(Duration.ofHours(3)));     // past its 2 h
+        store.recordGroupRefresh("slow", Instant.now().minus(Duration.ofHours(3)));     // within its 12 h
+        final JobBoardCrawler newLeader = groupedCrawler();                              // e.g. after a deploy
+        newLeader.crawl(leader(Instant.EPOCH), coordinator);
+        assertThat(createdBoards(), equalTo(List.of("a", "b")));
+    }
+
+    @Test
+    void groups_aRetryNeverRunsPastItsOwnGroupsNextRefresh() throws Exception {
+        final JobBoardCrawler crawler = groupedCrawler();
+        final Instant failedAt = Instant.now();
+        // 15 minutes after a failure: before the 12 h group's next refresh, after the 2 h group's.
+        final Instant refresh = failedAt.minus(Duration.ofHours(2)).plus(Duration.ofMinutes(10));
+        store.recordAttempt("fake2", "c", refresh, refresh, Outcome.FAILED, null, "503");
+        crawler.scheduleOrClearRetry("fake2", "c", true, failedAt, refresh);
+        assertThat(store.retryAt("fake2", "c"), equalTo(failedAt.plus(Duration.ofMinutes(15))));
+        store.recordAttempt("fake", "a", refresh, refresh, Outcome.FAILED, null, "503");
+        crawler.scheduleOrClearRetry("fake", "a", true, failedAt, refresh);
+        assertThat(store.retryAt("fake", "a"), org.hamcrest.Matchers.nullValue());
+    }
+
+    @Test
+    void groups_badConfigurationFailsAtStartUp() throws Exception {
+        final ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
+        final String platform = "{\"name\":\"fake\",\"tenants\":[]}";
+        for (final String bad : List.of(
+                "{}",                                                                               // neither
+                "{\"platforms\":[" + platform + "],\"groups\":[{\"name\":\"g\",\"platforms\":[" + platform + "]}]}", // both
+                "{\"groups\":[{\"name\":\"g\",\"platforms\":[" + platform + "]},{\"name\":\"h\",\"platforms\":[" + platform + "]}]}",
+                "{\"groups\":[{\"name\":\"g\",\"platforms\":[" + platform + "]},{\"name\":\"g\",\"platforms\":[]}]}",
+                "{\"groups\":[{\"platforms\":[" + platform + "]}]}")) {
+            final JobBoardSourceConfig c = mapper.readValue(bad, JobBoardSourceConfig.class);
+            assertThrows(IllegalArgumentException.class, c::getGroups, bad);
+        }
+    }
+
     @Test
     void constructor_unknownAdapter_fails() {
         final AdapterRegistry empty = new AdapterRegistry(List.of());

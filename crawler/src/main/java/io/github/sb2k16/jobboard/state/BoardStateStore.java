@@ -78,6 +78,15 @@ public interface BoardStateStore extends AutoCloseable {
     default void clearRetries(final String platform) {
     }
 
+    /** When the refresh group last started a full refresh; empty if it never has. */
+    default Optional<Instant> groupRefreshedAt(final String group) {
+        return Optional.empty();
+    }
+
+    /** The refresh group started a full refresh at {@code at}. */
+    default void recordGroupRefresh(final String group, final Instant at) {
+    }
+
     @Override
     default void close() {
     }

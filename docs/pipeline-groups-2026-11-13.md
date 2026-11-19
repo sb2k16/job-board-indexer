@@ -77,3 +77,27 @@ Considered and rejected:
   file from a ConfigMap; a rolling restart applies a groups change.
 - Phase 0 regrades (SmartRecruiters and others found structured on Nov 11) are not reflected in the
   group assignment yet; Personio sits in group 3 although Phase 0 found it robots-blocked.
+
+## Update (2026-11-19): one pipeline per Deployment
+
+The ten group pipelines became one pipeline per Deployment. On AWS, the jobs domain (one t3.small
+node) refuses more than about four bulk requests in flight with HTTP 429. Eight group pipelines on
+3 tasks meant 13 sinks writing at once (measured in docs/aws-deploy-plan-2026-11-17.md, "OpenSearch
+write rejections"). Data Prepper cannot fan several pipelines into one (a downstream pipeline's
+source names exactly one upstream pipeline), so the groups moved into the source instead:
+
+- `job_board_crawler` takes `groups:` (name, refresh_interval, platforms) in place of `platforms`.
+  A pipeline with only `platforms` still works and is one unnamed group, as before.
+- The leader checks each group's cadence on every round. A named group's last refresh is kept in
+  Postgres (`db/V5__group_refresh.sql`), not in the leader partition, which holds only one time; a
+  new leader (a deploy, a reclaimed Spot task) therefore keeps each group's cadence. If that read
+  fails, the group waits for the next round rather than refreshing.
+- A sooner retry is still bounded by the next refresh of the board's own group.
+- `render_groups.py` writes one pipeline per Deployment; the source's workers are the sum of its
+  groups' workers and the buffer is 4096 records per group, so a pod's totals are unchanged.
+
+What changed from the design above: groups no longer have their own workers or buffer. A long
+refresh of one group can keep another group's boards waiting for a worker, though not move its
+refresh time; heavy groups still run in their own Deployment. The pipeline count per pod also falls
+from 5 or 3 to 1, and with it the coordination-store connection pools (one per pipeline).
+

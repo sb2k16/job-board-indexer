@@ -1,10 +1,12 @@
 # Pipeline groups: which platforms run together, how often, and in which Deployment.
 #
-# Each active group becomes one Data Prepper pipeline (named g<id>-<name>) running the
-# job_board_crawler source over its platforms. Groups share nothing but the coordination store
-# and the index, so a slow group never delays another one's refresh. Each Deployment runs every
-# pipeline assigned to it; work inside a pipeline is spread over that Deployment's pods by board
-# leases. Render with config/render_groups.py (one pipelines file per Deployment).
+# Each Deployment runs ONE Data Prepper pipeline (named after it) whose job_board_crawler source
+# holds all of its active groups; each group keeps its own platforms and refresh cadence (its last
+# refresh is in Postgres, group_refresh, keyed g<id>-<name>). One pipeline means one OpenSearch sink
+# per pod: the domain refuses more than a few bulk requests in flight (Nov 18). The groups of a
+# Deployment share its workers (the sum of theirs) and buffer, so a long refresh of one group can
+# delay another's boards, though not its refresh time. Work is spread over the Deployment's pods by
+# board leases. Render with config/render_groups.py (one pipelines file per Deployment).
 #
 # A platform is rendered only when config/specs/<platform>.yaml and its tenant list exist, so the
 # full Phase 0 assignment can stay here while connectors are built. Moving a platform between

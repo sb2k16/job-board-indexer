@@ -93,3 +93,60 @@ production option. The choice is yours to make; nothing is created in AWS until 
   pool no longer connects while the pipeline starts (`initializationFailTimeout = -1`): a full
   database now fails individual store calls, which the crawler already retries through its leases,
   instead of killing the process and crash-looping.
+
+## OpenSearch write rejections (2026-11-18)
+
+- **Symptom.** The sink logged ~280,000 "Document failed to write to OpenSearch ... Number of
+  retries reached the limit ... server returned 429" in 24 h: 264,679 under the first image
+  (max_retries 5), 14,640 after the 17:04 deploy (max_retries 16), 1,000 to 4,500 an hour
+  overnight. Data Prepper sends failed documents nowhere (no DLQ), so per its docs they stay
+  unacknowledged and the board's crawl is not confirmed; the next crawl writes them again. The
+  index caught up (51,210 documents against 49,933 jobs in the boards' latest crawls), so the cost
+  is repeated work, not lost jobs.
+- **Not OpenSearch.** Node stats over the node's 18.4 h uptime (the whole failure window): 200,556
+  documents indexed, 0 failed; write thread pool rejected 0; no circuit breaker tripped (heap 40%
+  of 1 GiB); indexing-pressure rejections 0. CloudWatch at a failure peak: CPU about 10%, JVM
+  50 to 70%, 3 requests a minute reaching the node.
+- **Reproduced.** From a task in the VPC, 1 MiB `_bulk` requests to a scratch index: 4 at once all
+  succeeded; 8 at once gave 13 x 429 and 1 x 502; 16 gave 28 x 429 and 7 x 502; 32 gave 44 x 429
+  and 20 x 502. The 429 body is the plain text "Too Many Requests" (Content-Type `text`), not an
+  OpenSearch JSON error: the managed service's front end in front of the t3.small.search node
+  rejects concurrent bulk requests above about four.
+- **Why we exceed it.** Every pipeline group has its own opensearch sink: 5 groups x 2 crawler
+  tasks + 3 heavy = 13 sinks, each sending its own bulk requests, so bursts at refresh times put
+  well over four in flight.
+- **Fix options.** (1) One writer per task. Not through a pipeline connector: Data Prepper has no
+  fan-in (`PipelineConfigurationValidator.validateSourceMapping` requires a downstream pipeline's
+  `pipeline` source to name its one upstream pipeline), so the crawler source itself takes several
+  groups and each Deployment renders one pipeline with one sink: 3 writers in all. (2) Larger,
+  fewer bulks. (3) A DLQ (S3), which the sink docs recommend with acknowledgements; a document parked
+  there is acknowledged but missing from the index until the next refresh, so it is a backstop.
+  (4) A larger instance, if the free plan allows it.
+- **Sustained test (2026-11-18, crawlers paused).** 0.93 MiB bulks of plain index requests sent back
+  to back from a task in the VPC to a scratch index (deleted afterwards):
+
+  | Writers | Time | Requests | Rejected | Accepted MiB/s | Latency p50 / max |
+  | --- | --- | --- | --- | --- | --- |
+  | 1 | 120 s | 1,176 | 0 | 9.1 | 0.08 s / 4.3 s |
+  | 3 | 120 s | 1,554 | 0 | 12.0 | 0.18 s / 4.1 s |
+  | 4 | 90 s | 678 | 0 | 7.0 | 0.33 s / 14.2 s |
+  | 6 | 90 s | 3,535 | 2,229 × 429, 237 × 502 | 11.0 | 0.03 s / 3.3 s |
+
+  The limit is requests in flight, not bytes per second: one writer ran flat out for two minutes
+  without a rejection, and the node accepts about 12 MiB/s however many writers there are. Beyond
+  that, extra writers wait (4) or are refused at once (6, 429s in 30 ms). The crawl's own volume is
+  far below this (200,556 documents in 18.4 hours). So option (1), 3 writers, is enough on its own,
+  with one writer of headroom; scripted upserts hold a request longer than these plain index
+  requests, which is why 3 rather than 4.
+- **Fix (2026-11-19).** Option (1): each Deployment renders one pipeline holding all its groups
+  (docs/pipeline-groups-2026-11-13.md, update of Nov 19), so 3 tasks keep 3 bulk requests in flight;
+  `max_retries` removed from config/aws/env.toml, so a refused request is retried with backoff until
+  written. Checked locally with two groups (1 and 10 minutes) in one pipeline: each refreshed on its
+  own cadence, and after the leader was stopped the new leader kept both cadences.
+
+- **Result on AWS (deployed 2026-11-19 07:16 UTC, image 81478a7-groups, migration V5 at 07:20).**
+  Every group ran a full refresh at once (group_refresh started empty), the worst burst the sink
+  sees. In the four hours after: 0 "Document failed", 0 sink 429s, 0 "sink did not confirm"
+  (before: about 14,640 failures in the previous day); the only 429s were job sites answering the
+  crawler (Workable, Manatal), which the politeness layer handles. Postgres connections fell from
+  45 to 15, since each pod now has one coordination-store pool instead of one per pipeline.

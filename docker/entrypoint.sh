@@ -33,6 +33,6 @@ if [ -n "${JBI_DEPLOYMENT:-}" ]; then
   rm -f /usr/share/data-prepper/pipelines/*.yaml
   fill "$src" /usr/share/data-prepper/pipelines/pipelines.yaml
   fill /etc/jbi/aws/data-prepper-config.yaml /usr/share/data-prepper/config/data-prepper-config.yaml
-  echo "entrypoint: deployment ${JBI_DEPLOYMENT}: $(grep -c '^g[0-9]*-' /usr/share/data-prepper/pipelines/pipelines.yaml) pipeline(s)"
+  echo "entrypoint: deployment ${JBI_DEPLOYMENT}: 1 pipeline, $(grep -c '^        - name: "g' /usr/share/data-prepper/pipelines/pipelines.yaml) group(s)"
 fi
 exec "$@"

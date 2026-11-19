@@ -43,6 +43,9 @@ public class JdbcBoardStateStore implements BoardStateStore {
             + "WHERE platform = ? AND retry_at <= ? RETURNING board_id";
     private static final String CLEAR_RETRIES = "UPDATE board_state SET retry_at = NULL, updated_at = now() "
             + "WHERE platform = ? AND retry_at IS NOT NULL";
+    private static final String GROUP_REFRESHED = "SELECT refreshed_at FROM group_refresh WHERE group_name = ?";
+    private static final String RECORD_GROUP_REFRESH = "INSERT INTO group_refresh (group_name, refreshed_at) VALUES (?, ?) "
+            + "ON CONFLICT (group_name) DO UPDATE SET refreshed_at = EXCLUDED.refreshed_at, updated_at = now()";
     private static final String RECORD_ATTEMPT =
             "INSERT INTO board_state (platform, board_id, last_attempt, last_crawl_started, last_outcome, last_error,"
             + " consecutive_failures, first_failure_at, last_job_count, updated_at)"
@@ -310,6 +313,26 @@ public class JdbcBoardStateStore implements BoardStateStore {
 
     private interface Binder {
         void bind(PreparedStatement ps) throws SQLException;
+    }
+
+    @Override
+    public Optional<Instant> groupRefreshedAt(final String group) {
+        try (Connection c = dataSource.getConnection(); PreparedStatement ps = c.prepareStatement(GROUP_REFRESHED)) {
+            ps.setString(1, group);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? Optional.of(rs.getTimestamp(1).toInstant()) : Optional.empty();
+            }
+        } catch (final SQLException e) {
+            throw new BoardStateException("group_refresh read failed for " + group, e);
+        }
+    }
+
+    @Override
+    public void recordGroupRefresh(final String group, final Instant at) {
+        update(RECORD_GROUP_REFRESH, "group", group, ps -> {
+            ps.setString(1, group);
+            ps.setTimestamp(2, Timestamp.from(at));
+        });
     }
 
     private void update(final String sql, final String platform, final String boardId, final Binder binder) {

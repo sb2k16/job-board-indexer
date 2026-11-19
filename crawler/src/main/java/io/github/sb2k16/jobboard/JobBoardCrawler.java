@@ -65,7 +65,9 @@ import java.util.Map;
 import static org.opensearch.dataprepper.plugins.source.source_crawler.coordination.scheduler.LeaderScheduler.DEFAULT_EXTEND_LEASE_MINUTES;
 
 /**
- * Leader: once per refresh interval, creates one worker partition per board.
+ * Leader: once per refresh interval of each refresh group, creates one worker partition per board
+ * of the group. A pipeline may hold several groups (one OpenSearch sink for all of them); each
+ * group's last refresh is kept in {@code group_refresh}, so a new leader keeps the cadence.
  * Worker: fetches one board through its platform adapter and politeness layer, writes one event
  * per job, and records the outcome in {@code board_state}.
  *
@@ -100,6 +102,11 @@ public class JobBoardCrawler implements Crawler<PaginationCrawlerWorkerProgressS
     private static final Logger LOG = LoggerFactory.getLogger(JobBoardCrawler.class);
 
     private final JobBoardSourceConfig config;
+    private final List<GroupConfig> groups;
+    private final Map<String, GroupConfig> groupOfPlatform = new HashMap<>();
+    private final Map<String, PlatformConfig> platforms = new HashMap<>();
+    /** Refreshes this leader started, by group: the cadence without a database, or when a write to it failed. */
+    private final Map<String, Instant> refreshedHere = new HashMap<>();
     private final Map<String, PlatformAdapter> adapters = new HashMap<>();
     private final Map<String, HttpFetcher> fetchers = new HashMap<>();
     private final TenantLoader tenantLoader;
@@ -129,6 +136,13 @@ public class JobBoardCrawler implements Crawler<PaginationCrawlerWorkerProgressS
     JobBoardCrawler(final JobBoardSourceConfig config, final PluginMetrics pluginMetrics, final AdapterRegistry registry,
                     final HttpFetcher fetcher, final TenantLoader tenantLoader, final BoardStateStore store) {
         this.config = config;
+        this.groups = config.getGroups();
+        for (final GroupConfig group : groups) {
+            for (final PlatformConfig platform : group.getPlatforms()) {
+                groupOfPlatform.put(platform.getName(), group);
+                platforms.put(platform.getName(), platform);
+            }
+        }
         this.tenantLoader = tenantLoader;
         this.store = store;
         this.identity = new IdentityResolver(store instanceof JdbcBoardStateStore
@@ -194,14 +208,34 @@ public class JobBoardCrawler implements Crawler<PaginationCrawlerWorkerProgressS
     @Override
     public Instant crawl(final LeaderPartition leaderPartition, final EnhancedSourceCoordinator coordinator) {
         final LeaderProgressState state = leaderPartition.getProgressState().get();
-        final Instant last = state.getLastPollTime();
         final Instant now = Instant.now();
-        if (last != null && Duration.between(last, now).compareTo(config.getRefreshInterval()) < 0) {
-            queueDueRetries(coordinator, last, now);
-            return last;
+        boolean refreshed = false;
+        for (final GroupConfig group : groups) {
+            final Instant last;
+            try {
+                last = lastRefresh(group, state);
+            } catch (final BoardStateException e) {
+                // Not knowing when the group last ran is no reason to crawl all of it again: wait.
+                LOG.warn("{}: could not read its last refresh ({}); checking again next round", label(group), e.getMessage());
+                continue;
+            }
+            if (last != null && Duration.between(last, now).compareTo(group.getRefreshInterval()) < 0) {
+                queueDueRetries(coordinator, group, last, now);
+                continue;
+            }
+            refresh(group, coordinator, now);
+            markRefreshed(group, state, now);
+            refreshed = true;
         }
+        if (refreshed) {
+            coordinator.saveProgressStateForPartition(leaderPartition, DEFAULT_EXTEND_LEASE_MINUTES);
+        }
+        return state.getLastPollTime();
+    }
+
+    private void refresh(final GroupConfig group, final EnhancedSourceCoordinator coordinator, final Instant now) {
         int created = 0;
-        for (final PlatformConfig platform : config.getPlatforms()) {
+        for (final PlatformConfig platform : group.getPlatforms()) {
             try {
                 store.clearRetries(platform.getName()); // this refresh crawls every board anyway
             } catch (final BoardStateException e) {
@@ -222,18 +256,50 @@ public class JobBoardCrawler implements Crawler<PaginationCrawlerWorkerProgressS
                 created++;
             }
         }
+        LOG.info("Refresh {} of {}: created {} board partitions", now, label(group), created);
+    }
+
+    /**
+     * The group's last refresh: for the one unnamed group of a {@code platforms} pipeline, the leader
+     * partition's poll time (as before groups existed); for a named group, the later of its
+     * {@code group_refresh} row and any refresh this leader started.
+     */
+    private Instant lastRefresh(final GroupConfig group, final LeaderProgressState state) {
+        if (group.getName() == null) {
+            return state.getLastPollTime();
+        }
+        final Instant stored = store.groupRefreshedAt(group.getName()).orElse(null);
+        final Instant here = refreshedHere.get(group.getName());
+        if (stored == null || here == null) {
+            return stored != null ? stored : here;
+        }
+        return stored.isAfter(here) ? stored : here;
+    }
+
+    private void markRefreshed(final GroupConfig group, final LeaderProgressState state, final Instant now) {
         state.setLastPollTime(now);
-        coordinator.saveProgressStateForPartition(leaderPartition, DEFAULT_EXTEND_LEASE_MINUTES);
-        LOG.info("Refresh {}: created {} board partitions", now, created);
-        return now;
+        if (group.getName() == null) {
+            return;
+        }
+        refreshedHere.put(group.getName(), now);
+        try {
+            store.recordGroupRefresh(group.getName(), now);
+        } catch (final BoardStateException e) {
+            LOG.warn("{}: could not record its refresh ({}); a new leader may refresh it early", label(group), e.getMessage());
+        }
+    }
+
+    private static String label(final GroupConfig group) {
+        return group.getName() == null ? "the pipeline" : "group " + group.getName();
     }
 
     /**
      * Between refreshes: queues a crawl of every board whose retry is due. Claiming clears the
      * board's retry_at in the same statement, so a board is queued once however many leaders ask.
      */
-    private void queueDueRetries(final EnhancedSourceCoordinator coordinator, final Instant refreshStarted, final Instant now) {
-        for (final PlatformConfig platform : config.getPlatforms()) {
+    private void queueDueRetries(final EnhancedSourceCoordinator coordinator, final GroupConfig group, final Instant refreshStarted,
+                                 final Instant now) {
+        for (final PlatformConfig platform : group.getPlatforms()) {
             final List<String> due;
             try {
                 due = store.claimDueRetries(platform.getName(), now);
@@ -281,9 +347,14 @@ public class JobBoardCrawler implements Crawler<PaginationCrawlerWorkerProgressS
                 store.clearRetry(platform, board);
                 return;
             }
+            final GroupConfig group = groupOfPlatform.get(platform);
+            if (group == null) {
+                store.clearRetry(platform, board); // no longer configured here
+                return;
+            }
             final int n = store.retryCount(platform, board);
             final Instant at = failedAt.plus(RETRY_DELAYS.get(Math.min(n, RETRY_DELAYS.size() - 1)));
-            if (!at.isBefore(refreshStarted.plus(config.getRefreshInterval()))) {
+            if (!at.isBefore(refreshStarted.plus(group.getRefreshInterval()))) {
                 store.clearRetry(platform, board);
                 return;
             }
@@ -305,10 +376,10 @@ public class JobBoardCrawler implements Crawler<PaginationCrawlerWorkerProgressS
         // Partitions queued before retries existed carry no refresh time: their crawl start is it.
         final Instant refreshStarted = keys.get(REFRESH_STARTED) == null ? crawlStarted
                 : Instant.parse((String) keys.get(REFRESH_STARTED));
-        final PlatformConfig platform = config.getPlatforms().stream()
-                .filter(p -> p.getName().equals(platformName))
-                .findFirst()
-                .orElseThrow(() -> new SaaSCrawlerException("Platform " + platformName + " is no longer configured", false));
+        final PlatformConfig platform = platforms.get(platformName);
+        if (platform == null) {
+            throw new SaaSCrawlerException("Platform " + platformName + " is no longer configured", false);
+        }
         final String board = tenant.getBoard();
 
         try {

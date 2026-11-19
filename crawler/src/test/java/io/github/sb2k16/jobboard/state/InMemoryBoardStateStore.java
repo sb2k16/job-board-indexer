@@ -22,6 +22,7 @@ import java.util.TreeSet;
 public class InMemoryBoardStateStore implements BoardStateStore {
     private final Map<String, Row> rows = new HashMap<>();
     private final int historySize;
+    private final Map<String, Instant> groupRefresh = new HashMap<>();
 
     public InMemoryBoardStateStore(final int historySize) {
         this.historySize = historySize;
@@ -140,6 +141,16 @@ public class InMemoryBoardStateStore implements BoardStateStore {
         }
         java.util.Collections.sort(due);
         return due;
+    }
+
+    @Override
+    public synchronized Optional<Instant> groupRefreshedAt(final String group) {
+        return Optional.ofNullable(groupRefresh.get(group));
+    }
+
+    @Override
+    public synchronized void recordGroupRefresh(final String group, final Instant at) {
+        groupRefresh.put(group, at);
     }
 
     @Override
