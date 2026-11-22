@@ -1,11 +1,15 @@
-# Workable: the public widget API lists every published job of an account; descriptions come from
-# the per-job v2 endpoint (detail request). robots.txt on apply.workable.com does not disallow
-# /api/ (2026-11-14). 1 request a second: a large account is a few hundred detail calls.
+# Workable: the public widget API lists every published job of an account, and with details=true
+# each job carries its full description (description, requirements and benefits as one HTML body):
+# one request per board. robots.txt on apply.workable.com disallows nothing (2026-11-22).
+# Until Nov 22 descriptions came from the per-job v2 endpoint (/api/v2/accounts/{board}/jobs/{code}).
+# From AWS, Cloudflare answered that endpoint 429 on the first call of every crawl, even at one
+# request a minute, while the laptop got 200: it refused per-job calls from our addresses, which no
+# slower rate could fix. The list call was never refused.
 name: workable
 access_class: A
 format: json
 list:
-  url: "https://apply.workable.com/api/v1/widget/accounts/{board}"
+  url: "https://apply.workable.com/api/v1/widget/accounts/{board}?details=true"
   items: jobs
   marker: [jobs, name]
 pagination:
@@ -23,11 +27,7 @@ fields:
   posted_at: { path: published_on, type: datetime }
   url: url
   application_url: application_url
-detail:
-  url: "https://apply.workable.com/api/v2/accounts/{board}/jobs/{shortcode}"
-  format: json
-  fields:
-    description: { concat: [description, requirements, benefits], transform: [html_to_text] }
+  description: { path: description, transform: [html_to_text] }
 rate_limit:
   requests_per_second: 1
   max_concurrency: 1
