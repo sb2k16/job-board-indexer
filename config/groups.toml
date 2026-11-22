@@ -91,7 +91,7 @@ description = "Job boards with JSON-LD: HTML list or RSS plus detail fetch; mult
 deployment = "crawler"
 refresh = "PT12H"
 workers = 2
-platforms = ["jboard", "smartjobboard", "jobboardhq", "jobkit"]
+platforms = ["jboard", "smartjobboard", "jobboardhq", "jobkit", "niceboard"]
 
 # Group 9 (html-parser) is gone: the Nov 11 resolution (phase0/html-tier-resolution.md) found
 # structured data or one fixed vendor template on all seven, and they now run in groups 4, 5 and 6.

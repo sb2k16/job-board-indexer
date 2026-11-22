@@ -16,7 +16,7 @@ const LABELS: Record<string, string> = {
   hirehive: "HireHive", hireology: "Hireology", hiringthing: "HiringThing", icims: "iCIMS", isolvedhire: "isolved Hire",
   jazzhr: "JazzHR", jboard: "JBoard", jobboardhq: "JobBoardHQ", jobboardio: "Jobboard.io", jobboardly: "Jobboardly",
   jobiqo: "Jobiqo", jobkit: "JobKit", jobvite: "Jobvite", join: "JOIN", kula: "Kula", lever: "Lever",
-  madgex: "Madgex", manatal: "Manatal", oracle: "Oracle Recruiting", pageup: "PageUp", paylocity: "Paylocity",
+  madgex: "Madgex", manatal: "Manatal", niceboard: "Niceboard", oracle: "Oracle Recruiting", pageup: "PageUp", paylocity: "Paylocity",
   personio: "Personio", phenom: "Phenom", pinpoint: "Pinpoint", recooty: "Recooty", recruitee: "Recruitee",
   rippling: "Rippling", smartjobboard: "SmartJobBoard", smartrecruiters: "SmartRecruiters",
   successfactors: "SuccessFactors", taleo: "Taleo", teamtailor: "Teamtailor", trakstar: "Trakstar Hire",
@@ -25,7 +25,7 @@ const LABELS: Record<string, string> = {
 };
 
 /** Multi-employer job boards (groups 7 and 8 in config/groups.toml); everything else is an employer's ATS. */
-const JOB_BOARDS = new Set(["wpjobmanager", "jobboardly", "jobboardio", "madgex", "jobiqo", "jboard", "smartjobboard", "jobboardhq", "jobkit"]);
+const JOB_BOARDS = new Set(["wpjobmanager", "jobboardly", "jobboardio", "madgex", "jobiqo", "jboard", "smartjobboard", "jobboardhq", "jobkit", "niceboard"]);
 
 export function platformInfo(name: string): PlatformInfo {
   return { label: LABELS[name] ?? name, kind: JOB_BOARDS.has(name) ? "Job board" : "ATS" };
