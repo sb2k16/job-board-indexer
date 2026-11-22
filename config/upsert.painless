@@ -5,81 +5,137 @@ boolean liveLink(def links, def url) {
 }
 def d = params.doc;
 def s = ctx._source;
-def link = d.source_link;
-def now = d.last_checked;
-def src = link.url;
-if (s.first_seen == null) {
-  // First insert: the sink starts ctx._source as a copy of the incoming document. Rebuild it.
-  for (def k : new ArrayList(s.keySet())) { s.remove(k); }
-  s.first_seen = now;
-  s.last_changed = now;
-}
-if (s.source_links == null) { s.source_links = new ArrayList(); }
-if (s.field_sources == null) { s.field_sources = new HashMap(); }
-def fs = s.field_sources;
-link.countries = d.countries;
-if (link.content_hash == null) { link.content_hash = d.content_hash; }
-
-// The link: one per source URL. Its own content hash detects a change at that source.
-def cur = null;
-for (def l : s.source_links) { if (l.url == src) { cur = l; } }
-boolean changed = false;
-if (cur == null) {
-  // The job turning up in another place is not a change to the listing; reopening a closed one is.
-  link.first_seen = link.last_seen;
-  link.last_changed = now;
-  s.source_links.add(link);
-  if (s.status == 'closed') { changed = true; }
-} else {
-  if (cur.content_hash != link.content_hash) { cur.last_changed = now; changed = true; }
-  if (cur.state != 'live') { changed = true; }
-  for (def k : link.keySet()) { cur[k] = link[k]; }
-  cur.remove('gone_at');
-}
-
-// Merged fields. A source keeps the fields it supplied (field_sources) and may update them; another
-// source fills a field that is empty or whose supplier is no longer live. No source blanks a field
-// another source supplied.
-for (def k : ['title', 'company', 'location', 'employment_type', 'requisition_id']) {
-  def v = d[k];
-  if (v != null && v != '') {
-    if (s[k] == null || s[k] == '' || fs[k] == src || !liveLink(s.source_links, fs[k])) { s[k] = v; fs[k] = src; }
-  } else if (fs[k] == src) { s[k] = null; fs.remove(k); }
-}
-// Description: the longest one wins; its supplier may still edit it.
-def dv = d.description;
-if (dv != null && dv != '') {
-  if (s.description == null || fs.description == src || !liveLink(s.source_links, fs.description)
-      || dv.length() > s.description.length()) { s.description = dv; fs.description = src; }
-} else if (fs.description == src) { s.description = null; fs.remove('description'); }
-// Posted date: the earliest one wins.
-def pv = d.posted_at;
-if (pv != null) {
-  if (s.posted_at == null || fs.posted_at == src || !liveLink(s.source_links, fs.posted_at)
-      || Instant.parse(pv).isBefore(Instant.parse(s.posted_at))) { s.posted_at = pv; fs.posted_at = src; }
-} else if (fs.posted_at == src) { s.posted_at = null; fs.remove('posted_at'); }
-// Remote and countries come from the live links: remote if any says so; countries are the union.
-boolean anyRemote = false;
-boolean knownRemote = false;
-def countries = new ArrayList();
-for (def l : s.source_links) {
-  if (l.state == 'live') {
-    if (l.remote != null) { knownRemote = true; if (l.remote == true) { anyRemote = true; } }
-    if (l.countries != null) { for (def c : l.countries) { if (!countries.contains(c)) { countries.add(c); } } }
+// Commands from the crawler come through the sink like jobs do, so every write to the index takes
+// the same path (buffer, sink, retries, back-pressure). d._op is
+//   'close'  (closure/ClosureSweeper): live links of d.platform/d.board_id last seen before d.cutoff
+//            go; with no cutoff (a retired board), all of them;
+//   'verify' (closure/JobVerifier): the links in d.urls go (d.verdict 'gone') or are seen at d.now
+//            ('alive').
+// A command for a job that is not in the index creates nothing.
+if (d._op != null) {
+  if (s.first_seen == null) {
+    ctx.op = 'noop';
+  } else {
+    boolean alive = d._op == 'verify' && d.verdict == 'alive';
+    boolean touched = false;
+    boolean anyLive = false;
+    for (def l : s.source_links) {
+      if (l.state == 'live' && l.platform == d.platform && l.board_id == d.board_id) {
+        boolean hit = false;
+        if (d._op == 'close') {
+          hit = d.cutoff == null || (l.last_seen != null && Instant.parse(l.last_seen).isBefore(Instant.parse(d.cutoff)));
+        } else if (d._op == 'verify') {
+          hit = d.urls != null && d.urls.contains(l.url);
+        }
+        if (hit) {
+          if (alive) { l.last_seen = d.now; } else { l.state = 'gone'; l.gone_at = d.now; }
+          touched = true;
+        }
+      }
+      if (l.state == 'live') { anyLive = true; }
+    }
+    if (!touched) {
+      ctx.op = 'noop';
+    } else if (alive) {
+      s.last_checked = d.now;
+    } else {
+      // Remote and countries follow the links still live (the same rule as for a job below).
+      boolean anyRemote = false;
+      boolean knownRemote = false;
+      def countries = new ArrayList();
+      for (def l : s.source_links) {
+        if (l.state == 'live') {
+          if (l.remote != null) { knownRemote = true; if (l.remote == true) { anyRemote = true; } }
+          if (l.countries != null) { for (def c : l.countries) { if (!countries.contains(c)) { countries.add(c); } } }
+        }
+      }
+      if (anyLive) {
+        if (knownRemote) { s.remote = anyRemote; } else { s.remote = null; }
+        s.countries = countries;
+      } else {
+        s.status = 'closed';
+        s.closed_at = d.now;
+      }
+      s.last_changed = d.now;
+    }
   }
-}
-if (knownRemote) { s.remote = anyRemote; } else { s.remote = null; }
-s.countries = countries;
+} else {
+  def link = d.source_link;
+  def now = d.last_checked;
+  def src = link.url;
+  if (s.first_seen == null) {
+    // First insert: the sink starts ctx._source as a copy of the incoming document. Rebuild it.
+    for (def k : new ArrayList(s.keySet())) { s.remove(k); }
+    s.first_seen = now;
+    s.last_changed = now;
+  }
+  if (s.source_links == null) { s.source_links = new ArrayList(); }
+  if (s.field_sources == null) { s.field_sources = new HashMap(); }
+  def fs = s.field_sources;
+  link.countries = d.countries;
+  if (link.content_hash == null) { link.content_hash = d.content_hash; }
 
-// Any field this script does not handle is copied as is, so the index's strict mapping rejects an
-// unexpected one (the event goes to the dead-letter path) instead of it being silently dropped.
-def handled = ['job_key', 'title', 'company', 'description', 'location', 'countries', 'remote', 'employment_type',
-               'requisition_id', 'posted_at', 'content_hash', 'crawl_started', 'last_checked', 'source_link'];
-for (def k : d.keySet()) { if (!handled.contains(k)) { s[k] = d[k]; } }
-s.job_key = d.job_key;
-s.content_hash = d.content_hash;
-s.crawl_started = d.crawl_started;
-s.last_checked = now;
-if (changed) { s.last_changed = now; }
-s.status = 'open';
-s.closed_at = null;
+  // The link: one per source URL. Its own content hash detects a change at that source.
+  def cur = null;
+  for (def l : s.source_links) { if (l.url == src) { cur = l; } }
+  boolean changed = false;
+  if (cur == null) {
+    // The job turning up in another place is not a change to the listing; reopening a closed one is.
+    link.first_seen = link.last_seen;
+    link.last_changed = now;
+    s.source_links.add(link);
+    if (s.status == 'closed') { changed = true; }
+  } else {
+    if (cur.content_hash != link.content_hash) { cur.last_changed = now; changed = true; }
+    if (cur.state != 'live') { changed = true; }
+    for (def k : link.keySet()) { cur[k] = link[k]; }
+    cur.remove('gone_at');
+  }
+
+  // Merged fields. A source keeps the fields it supplied (field_sources) and may update them; another
+  // source fills a field that is empty or whose supplier is no longer live. No source blanks a field
+  // another source supplied.
+  for (def k : ['title', 'company', 'location', 'employment_type', 'requisition_id']) {
+    def v = d[k];
+    if (v != null && v != '') {
+      if (s[k] == null || s[k] == '' || fs[k] == src || !liveLink(s.source_links, fs[k])) { s[k] = v; fs[k] = src; }
+    } else if (fs[k] == src) { s[k] = null; fs.remove(k); }
+  }
+  // Description: the longest one wins; its supplier may still edit it.
+  def dv = d.description;
+  if (dv != null && dv != '') {
+    if (s.description == null || fs.description == src || !liveLink(s.source_links, fs.description)
+        || dv.length() > s.description.length()) { s.description = dv; fs.description = src; }
+  } else if (fs.description == src) { s.description = null; fs.remove('description'); }
+  // Posted date: the earliest one wins.
+  def pv = d.posted_at;
+  if (pv != null) {
+    if (s.posted_at == null || fs.posted_at == src || !liveLink(s.source_links, fs.posted_at)
+        || Instant.parse(pv).isBefore(Instant.parse(s.posted_at))) { s.posted_at = pv; fs.posted_at = src; }
+  } else if (fs.posted_at == src) { s.posted_at = null; fs.remove('posted_at'); }
+  // Remote and countries come from the live links: remote if any says so; countries are the union.
+  boolean anyRemote = false;
+  boolean knownRemote = false;
+  def countries = new ArrayList();
+  for (def l : s.source_links) {
+    if (l.state == 'live') {
+      if (l.remote != null) { knownRemote = true; if (l.remote == true) { anyRemote = true; } }
+      if (l.countries != null) { for (def c : l.countries) { if (!countries.contains(c)) { countries.add(c); } } }
+    }
+  }
+  if (knownRemote) { s.remote = anyRemote; } else { s.remote = null; }
+  s.countries = countries;
+
+  // Any field this script does not handle is copied as is, so the index's strict mapping rejects an
+  // unexpected one (the event goes to the dead-letter path) instead of it being silently dropped.
+  def handled = ['job_key', 'title', 'company', 'description', 'location', 'countries', 'remote', 'employment_type',
+                 'requisition_id', 'posted_at', 'content_hash', 'crawl_started', 'last_checked', 'source_link'];
+  for (def k : d.keySet()) { if (!handled.contains(k)) { s[k] = d[k]; } }
+  s.job_key = d.job_key;
+  s.content_hash = d.content_hash;
+  s.crawl_started = d.crawl_started;
+  s.last_checked = now;
+  if (changed) { s.last_changed = now; }
+  s.status = 'open';
+  s.closed_at = null;
+}

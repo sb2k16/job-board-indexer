@@ -93,9 +93,12 @@ def pipeline(deployment, groups, env, replicas):
     if cl:
         lines += ["      closure:", f"        opensearch_url: {q(cl.get('opensearch_url', os_['hosts'][0]))}",
                   f"        index: {q(cl.get('index', os_.get('index', 'jobs-v1')))}"]
-        for k in ("snapshots", "mass_closure_ratio", "mass_closure_min_jobs", "retire_after"):
+        for k in ("snapshots", "mass_closure_ratio", "mass_closure_min_jobs", "retire_after",
+                  "verify_max_per_crawl", "verify_gone_ratio"):
             if k in cl:
                 lines.append(f"        {k}: {cl[k]}")
+        if "verify_after" in cl:  # job page verification (closure/JobVerifier.java), an ISO duration
+            lines.append(f"        verify_after: {q(cl['verify_after'])}")
         if "aws_region" in cl:  # Amazon OpenSearch Service: the sweeper signs with SigV4
             lines.append(f"        aws_region: {q(cl['aws_region'])}")
     lines.append("      groups:")

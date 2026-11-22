@@ -452,7 +452,8 @@ class JobBoardCrawlerTest {
         acks.callback.get().accept(true);                           // the sink confirms every job
         assertThat(store.history("fake", "a"), equalTo(List.of(CRAWL)));
         assertThat(store.get("fake", "a").orElseThrow().getLastJobCount(), equalTo(4));
-        verify(partitionAck).complete();
+        // After the sweep, on the closure thread: its commands join the partition's set first.
+        verify(partitionAck, org.mockito.Mockito.timeout(5000)).complete();
     }
 
     @Test

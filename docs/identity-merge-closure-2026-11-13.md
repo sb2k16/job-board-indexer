@@ -57,7 +57,10 @@ by the sink, before the board's partition completes, so it runs under that board
 - **Retirement:** after `retire_after` (3) consecutive crawls confirm the board is gone (404/410),
   every live link of the board goes, with no guard, and the board is marked retired. A later
   successful crawl un-retires it.
-- The script is `closure.painless` in the crawler jar, run with `_update_by_query`
+- Since Nov 22 the sweeper does not write to the index itself: it sends `close` command events
+  through the buffer, and the sink applies them with `config/upsert.painless`
+  ([closures through the sink](closure-via-sink-and-job-verification-2026-11-22.md)). Until then
+  the script was `closure.painless` in the crawler jar, run with `_update_by_query`
   (`conflicts=proceed`). Links are plain objects, not nested, so the query can match on fields of two
   different links; the script re-checks each link, so such a match is a no-op and the guard's count
   errs high, never low. A failed sweep closes nothing and runs again after the next snapshot.

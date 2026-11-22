@@ -59,6 +59,31 @@ public class ClosureConfig {
     @JsonProperty("request_timeout")
     private Duration requestTimeout = Duration.ofSeconds(60);
 
+    /** Job page verification: a live link unseen for this long is checked on its own page. */
+    @JsonProperty("verify_after")
+    private Duration verifyAfter = Duration.ofDays(2);
+
+    /** At most this many job pages per crawl of a board (0 turns verification off). */
+    @JsonProperty("verify_max_per_crawl")
+    private int verifyMaxPerCrawl = 100;
+
+    /** A run whose pages say gone for more than this share of those checked (and at least
+     *  mass_closure_min_jobs) closes nothing: more likely a page template we misread than a purge. */
+    @JsonProperty("verify_gone_ratio")
+    private double verifyGoneRatio = 0.5;
+
+    public Duration getVerifyAfter() {
+        return verifyAfter;
+    }
+
+    public int getVerifyMaxPerCrawl() {
+        return verifyMaxPerCrawl;
+    }
+
+    public double getVerifyGoneRatio() {
+        return verifyGoneRatio;
+    }
+
     public String getOpensearchUrl() {
         return opensearchUrl;
     }

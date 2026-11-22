@@ -38,6 +38,7 @@ import io.github.sb2k16.jobboard.model.BoardSnapshot;
 import io.github.sb2k16.jobboard.model.JobRecord;
 import io.github.sb2k16.jobboard.model.Tenant;
 import io.github.sb2k16.jobboard.closure.ClosureSweeper;
+import io.github.sb2k16.jobboard.closure.Commands;
 import io.github.sb2k16.jobboard.closure.HttpIndexClient;
 import io.github.sb2k16.jobboard.identity.IdentityResolver;
 import io.github.sb2k16.jobboard.identity.JdbcIdentityStore;
@@ -121,6 +122,13 @@ public class JobBoardCrawler implements Crawler<PaginationCrawlerWorkerProgressS
     private final IdentityResolver identity;
     /** Null when no closure block is configured: jobs are never closed. */
     private final ClosureSweeper sweeper;
+    private final io.github.sb2k16.jobboard.closure.JobVerifier verifier;
+    /** Runs sweeps that start on the acknowledgement executor; one thread, so sweeps never pile up there. */
+    private final java.util.concurrent.ExecutorService closureThread = java.util.concurrent.Executors.newSingleThreadExecutor(r -> {
+        final Thread t = new Thread(r, "jbi-closure");
+        t.setDaemon(true);
+        return t;
+    });
     private volatile AcknowledgementSetManager acknowledgementSetManager;
     private final Counter boardsComplete;
     private final Counter boardsIncomplete;
@@ -155,6 +163,7 @@ public class JobBoardCrawler implements Crawler<PaginationCrawlerWorkerProgressS
         this.identity = new IdentityResolver(store instanceof JdbcBoardStateStore
                 ? new JdbcIdentityStore(((JdbcBoardStateStore) store).dataSource()) : new MemoryIdentityStore());
         this.sweeper = openSweeper(config, store);
+        this.verifier = sweeper == null ? null : openVerifier(config);
         this.boardsComplete = pluginMetrics.counter("boardsComplete");
         this.boardsIncomplete = pluginMetrics.counter("boardsIncomplete");
         this.boardsFailed = pluginMetrics.counter("boardsFailed");
@@ -194,6 +203,13 @@ public class JobBoardCrawler implements Crawler<PaginationCrawlerWorkerProgressS
         final HttpIndexClient.Signer signer = c.getAwsRegion() == null ? null : HttpIndexClient.sigV4(c.getAwsRegion());
         return new ClosureSweeper(c, new HttpIndexClient(c.getOpensearchUrl(), c.getIndex(), c.getUsername(), c.getPassword(),
                 c.getRequestTimeout(), signer), store);
+    }
+
+    private static io.github.sb2k16.jobboard.closure.JobVerifier openVerifier(final JobBoardSourceConfig config) {
+        final ClosureConfig c = config.getClosure();
+        final HttpIndexClient.Signer signer = c.getAwsRegion() == null ? null : HttpIndexClient.sigV4(c.getAwsRegion());
+        return new io.github.sb2k16.jobboard.closure.JobVerifier(c, new HttpIndexClient(c.getOpensearchUrl(), c.getIndex(),
+                c.getUsername(), c.getPassword(), c.getRequestTimeout(), signer));
     }
 
     private static BoardStateStore openStore(final JobBoardSourceConfig config) {
@@ -409,7 +425,8 @@ public class JobBoardCrawler implements Crawler<PaginationCrawlerWorkerProgressS
                 LOG.warn("{}/{}: {} ({})", platformName, board, outcome, e.getMessage());
                 scheduleOrClearRetry(platformName, board, outcome == Outcome.FAILED && e.isRetryable(), attemptedAt, refreshStarted);
                 if (outcome == Outcome.GONE && sweeper != null) {
-                    sweepSafely(() -> sweeper.afterGone(platformName, board, Instant.now()), platformName, board);
+                    final Commands out = commandsTo(buffer, acknowledgementSet, platformName, board);
+                    sweepSafely(() -> sweeper.afterGone(platformName, board, Instant.now(), out), platformName, board);
                 }
                 completeEmpty(acknowledgementSet);
                 return;
@@ -433,20 +450,25 @@ public class JobBoardCrawler implements Crawler<PaginationCrawlerWorkerProgressS
             if (outcome == Outcome.COMPLETE && acknowledgementSet != null && manager != null) {
                 final int jobCount = records.size();
                 final AcknowledgementSet snapshotAck = manager.create(
-                        result -> onSnapshotAcknowledged(result, platformName, board, crawlStarted, jobCount, acknowledgementSet),
+                        result -> onSnapshotAcknowledged(result, platformName, board, crawlStarted, jobCount, acknowledgementSet, buffer),
                         SNAPSHOT_ACK_TIMEOUT);
                 write(records, buffer, snapshotAck, platformName, board);
                 snapshotAck.complete();
             } else {
                 write(records, buffer, acknowledgementSet, platformName, board);
-                if (acknowledgementSet != null) {
-                    acknowledgementSet.complete();
+                final Commands out = commandsTo(buffer, acknowledgementSet, platformName, board);
+                if (outcome == Outcome.PARTIAL && verifier != null) {
+                    // A partial read can never close a job: check the oldest unseen ones on their own pages.
+                    verifySafely(platformName, board, out);
                 }
                 if (outcome == Outcome.COMPLETE) {
                     // Acknowledgments off: the buffer write is the strongest confirmation available.
                     store.commitSnapshot(platformName, board, crawlStarted, Instant.now(), records.size());
                     snapshotsCommitted.increment();
-                    sweep(platformName, board);
+                    sweep(platformName, board, out);
+                }
+                if (acknowledgementSet != null) {
+                    acknowledgementSet.complete(); // after any commands, which join the same set
                 }
             }
             jobsEmitted.increment(records.size());
@@ -458,15 +480,23 @@ public class JobBoardCrawler implements Crawler<PaginationCrawlerWorkerProgressS
     }
 
     private void onSnapshotAcknowledged(final boolean result, final String platform, final String board, final Instant crawlStarted,
-                                        final int jobCount, final AcknowledgementSet partitionAck) {
+                                        final int jobCount, final AcknowledgementSet partitionAck,
+                                        final Buffer<Record<Event>> buffer) {
         // Runs on the acknowledgement executor, which discards exceptions: log everything here.
         try {
             if (result) {
                 store.commitSnapshot(platform, board, crawlStarted, Instant.now(), jobCount);
                 snapshotsCommitted.increment();
-                // Still under the board's lease: the partition completes only after the sweep.
-                sweep(platform, board);
-                partitionAck.complete();
+                // Still under the board's lease: the partition completes only after the sink confirms the
+                // sweep's closures too. The sweep writes to the buffer, which may wait for the sink, so it
+                // runs on its own thread, never on the acknowledgement executor.
+                closureThread.execute(() -> {
+                    try {
+                        sweep(platform, board, commandsTo(buffer, partitionAck, platform, board));
+                    } finally {
+                        partitionAck.complete();
+                    }
+                });
             } else {
                 snapshotsRejected.increment();
                 store.recordAttempt(platform, board, crawlStarted, Instant.now(), Outcome.FAILED, jobCount,
@@ -480,10 +510,38 @@ public class JobBoardCrawler implements Crawler<PaginationCrawlerWorkerProgressS
         }
     }
 
-    private void sweep(final String platform, final String board) {
-        if (sweeper != null) {
-            sweepSafely(() -> sweeper.afterSnapshot(platform, board, Instant.now()), platform, board);
+    /** Verification failing never fails the crawl; it runs again after the next partial read. */
+    private void verifySafely(final String platform, final String board, final Commands out) {
+        try {
+            verifier.verify(platform, board, fetchers.get(platform), Instant.now(), out);
+        } catch (final RuntimeException e) {
+            LOG.error("{}/{}: job page verification failed; it runs again after the next partial crawl", platform, board, e);
         }
+    }
+
+    private void sweep(final String platform, final String board, final Commands out) {
+        if (sweeper != null) {
+            sweepSafely(() -> sweeper.afterSnapshot(platform, board, Instant.now(), out), platform, board);
+        }
+    }
+
+    /**
+     * The sweeper's and verifier's decisions go to the index the way jobs do: as events in the buffer,
+     * applied by the sink (config/upsert.painless, the _op branch), joining the board's acknowledgement
+     * set so its partition completes only once they are written.
+     */
+    private static Commands commandsTo(final Buffer<Record<Event>> buffer, final AcknowledgementSet ack, final String platform,
+                                       final String board) {
+        return commands -> {
+            if (commands.isEmpty()) {
+                return;
+            }
+            final List<Record<Event>> records = new ArrayList<>(commands.size());
+            for (final Map<String, Object> c : commands) {
+                records.add(new Record<>(JacksonEvent.builder().withEventType(EventType.DOCUMENT.toString()).withData(c).build()));
+            }
+            write(records, buffer, ack, platform, board);
+        };
     }
 
     /** A failed sweep closes nothing and is retried after the next snapshot; it never fails the crawl. */

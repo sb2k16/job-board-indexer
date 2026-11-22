@@ -19,6 +19,19 @@ public interface IndexClient {
 
     long count(Map<String, Object> query);
 
-    /** Runs the closure script on every match; returns how many documents it changed. */
-    long updateByQuery(Map<String, Object> query, String script, Map<String, Object> params);
+    /** The _source of up to {@code size} matches, in {@code sort} order, limited to {@code fields}. */
+    java.util.List<Map<String, Object>> search(Map<String, Object> query, int size, java.util.List<String> fields,
+                                               java.util.List<Map<String, Object>> sort);
+
+    /** The job keys of up to {@code size} matches. */
+    default java.util.List<String> jobKeys(final Map<String, Object> query, final int size) {
+        final java.util.List<String> keys = new java.util.ArrayList<>();
+        for (final Map<String, Object> doc : search(query, size, java.util.List.of("job_key"),
+                java.util.List.of(Map.of("job_key", Map.of("order", "asc"))))) {
+            if (doc.get("job_key") != null) {
+                keys.add(String.valueOf(doc.get("job_key")));
+            }
+        }
+        return keys;
+    }
 }

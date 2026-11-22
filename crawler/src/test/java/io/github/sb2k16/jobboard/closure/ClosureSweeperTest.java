@@ -82,7 +82,6 @@ class ClosureSweeperTest {
 
     static class Index implements IndexClient {
         long candidates;
-        final List<Map<String, Object>> updates = new ArrayList<>();
         final List<Map<String, Object>> counted = new ArrayList<>();
 
         @Override
@@ -96,14 +95,21 @@ class ClosureSweeperTest {
         }
 
         @Override
-        public long updateByQuery(final Map<String, Object> query, final String script, final Map<String, Object> params) {
-            updates.add(params);
-            return candidates;
+        public List<Map<String, Object>> search(final Map<String, Object> query, final int size, final List<String> fields,
+                                                final List<Map<String, Object>> sort) {
+            final List<Map<String, Object>> docs = new ArrayList<>();
+            for (int i = 0; i < Math.min(size, candidates); i++) {
+                docs.add(Map.of("job_key", "k" + i));
+            }
+            return docs;
         }
     }
 
     private final Store store = new Store();
     private final Index index = new Index();
+    /** What the sweeper sends to the buffer; it never writes to the index. */
+    private final List<Map<String, Object>> commands = new ArrayList<>();
+    private final Commands out = commands::addAll;
 
     private ClosureSweeper sweeper(final String yaml) throws Exception {
         final ClosureConfig c = new com.fasterxml.jackson.dataformat.yaml.YAMLMapper()
@@ -121,16 +127,20 @@ class ClosureSweeperTest {
     void nothingClosesBeforeNCompleteSnapshots() throws Exception {
         history(2);
         index.candidates = 5;
-        assertThat(sweeper("snapshots: 3").afterSnapshot("lever", "a", T0), equalTo(ClosureSweeper.Result.NOT_ENOUGH_SNAPSHOTS));
-        assertThat(index.updates, hasSize(0));
+        assertThat(sweeper("snapshots: 3").afterSnapshot("lever", "a", T0, out), equalTo(ClosureSweeper.Result.NOT_ENOUGH_SNAPSHOTS));
+        assertThat(commands, hasSize(0));
     }
 
     @Test
     void cutoffIsTheOldestOfTheLastNSnapshots() throws Exception {
         history(5);
         index.candidates = 3;
-        assertThat(sweeper("snapshots: 3").afterSnapshot("lever", "a", T0), equalTo(ClosureSweeper.Result.CLOSED));
-        assertThat(index.updates.get(0).get("cutoff"), equalTo(T0.minus(Duration.ofHours(2)).toString()));
+        assertThat(sweeper("snapshots: 3").afterSnapshot("lever", "a", T0, out), equalTo(ClosureSweeper.Result.CLOSED));
+        assertThat(commands, hasSize(3));
+        assertThat(commands.get(0).get("_op"), equalTo("close"));
+        assertThat(commands.get(0).get("job_key"), equalTo("k0"));
+        assertThat(commands.get(0).get("board_id"), equalTo("a"));
+        assertThat(commands.get(0).get("cutoff"), equalTo(T0.minus(Duration.ofHours(2)).toString()));
         assertThat(new ObjectMapper().writeValueAsString(index.counted.get(0)),
                 containsString("\"lt\":\"" + T0.minus(Duration.ofHours(2)) + "\""));
         assertThat(store.writes, equalTo(List.of("closed 3")));
@@ -141,8 +151,8 @@ class ClosureSweeperTest {
         history(3);
         store.jobCount = 20;      // the board now lists 20; 60 more would close: 75% of 80
         index.candidates = 60;
-        assertThat(sweeper("snapshots: 3").afterSnapshot("lever", "a", T0), equalTo(ClosureSweeper.Result.PAUSED));
-        assertThat(index.updates, hasSize(0));
+        assertThat(sweeper("snapshots: 3").afterSnapshot("lever", "a", T0, out), equalTo(ClosureSweeper.Result.PAUSED));
+        assertThat(commands, hasSize(0));
         assertThat(store.writes.get(0), containsString("would close 60 of 80"));
     }
 
@@ -151,7 +161,7 @@ class ClosureSweeperTest {
         history(3);
         store.jobCount = 1;
         index.candidates = 4;     // 80%, but only 4 jobs
-        assertThat(sweeper("snapshots: 3").afterSnapshot("lever", "a", T0), equalTo(ClosureSweeper.Result.CLOSED));
+        assertThat(sweeper("snapshots: 3").afterSnapshot("lever", "a", T0, out), equalTo(ClosureSweeper.Result.CLOSED));
     }
 
     @Test
@@ -160,23 +170,27 @@ class ClosureSweeperTest {
         store.jobCount = 0;
         index.candidates = 50;
         store.closure = new ClosureState(0, T0.minus(Duration.ofHours(1)), T0.plus(Duration.ofHours(1)), null);
-        assertThat(sweeper("snapshots: 3").afterSnapshot("lever", "a", T0), equalTo(ClosureSweeper.Result.CLOSED));
+        assertThat(sweeper("snapshots: 3").afterSnapshot("lever", "a", T0, out), equalTo(ClosureSweeper.Result.CLOSED));
     }
 
     @Test
     void aBoardRetiresAfterMConfirmedGoneCrawls() throws Exception {
         final ClosureSweeper s = sweeper("retire_after: 3");
         store.closure = new ClosureState(2, null, null, null);
-        assertThat(s.afterGone("lever", "a", T0), equalTo(ClosureSweeper.Result.NOT_YET_RETIRED));
+        assertThat(s.afterGone("lever", "a", T0, out), equalTo(ClosureSweeper.Result.NOT_YET_RETIRED));
         store.closure = new ClosureState(3, null, null, null);
         index.candidates = 7;
-        assertThat(s.afterGone("lever", "a", T0), equalTo(ClosureSweeper.Result.RETIRED));
-        assertThat(index.updates.get(0).get("cutoff"), nullValue());
+        assertThat(s.afterGone("lever", "a", T0, out), equalTo(ClosureSweeper.Result.RETIRED));
+        assertThat(commands, hasSize(7));
+        assertThat(commands.get(0).get("cutoff"), nullValue());
         assertThat(store.writes, equalTo(List.of("retired", "closed 7")));
     }
 
     @Test
-    void theScriptShipsInTheJar() {
-        assertThat(ClosureSweeper.SCRIPT, containsString("ctx.op = 'noop'"));
+    void theSinkScriptHandlesTheCommands() throws Exception {
+        final String script = java.nio.file.Files.readString(java.nio.file.Path.of("../config/upsert.painless"));
+        assertThat(script, containsString("if (d._op != null)"));
+        assertThat(script, containsString("d._op == 'close'"));
+        assertThat(script, containsString("d._op == 'verify'"));
     }
 }

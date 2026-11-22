@@ -16,11 +16,7 @@ import io.github.sb2k16.jobboard.state.ClosureState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -45,7 +41,8 @@ import java.util.Map;
  */
 public class ClosureSweeper {
     private static final Logger LOG = LoggerFactory.getLogger(ClosureSweeper.class);
-    static final String SCRIPT = loadScript();
+    /** At most this many jobs close per sweep (one search); the rest close at the next snapshot. */
+    static final int MAX_PER_SWEEP = 10_000;
 
     private final ClosureConfig config;
     private final IndexClient index;
@@ -60,7 +57,7 @@ public class ClosureSweeper {
     public enum Result { NOT_ENOUGH_SNAPSHOTS, NOTHING_TO_CLOSE, CLOSED, PAUSED, RETIRED, NOT_YET_RETIRED }
 
     /** After a confirmed complete snapshot of the board. */
-    public Result afterSnapshot(final String platform, final String board, final Instant now) {
+    public Result afterSnapshot(final String platform, final String board, final Instant now, final Commands out) {
         final BoardState state = store.get(platform, board).orElse(null);
         final List<Instant> history = state == null ? List.of() : state.getSnapshotHistory();
         if (history.size() < config.getSnapshots()) {
@@ -85,32 +82,34 @@ public class ClosureSweeper {
             LOG.warn("{}/{}: mass-closure guard: {}", platform, board, reason);
             return Result.PAUSED;
         }
-        final long closed = index.updateByQuery(query, SCRIPT, params(platform, board, cutoff, now));
-        store.recordClosure(platform, board, now, (int) closed);
-        LOG.info("{}/{}: {} job(s) no longer listed in the last {} complete snapshots; links closed", platform, board,
-                closed, config.getSnapshots());
+        final List<String> keys = index.jobKeys(query, (int) Math.min(candidates, MAX_PER_SWEEP));
+        out.write(Commands.close(keys, platform, board, cutoff, now));
+        store.recordClosure(platform, board, now, keys.size());
+        LOG.info("{}/{}: {} job(s) no longer listed in the last {} complete snapshots; closing their links", platform, board,
+                keys.size(), config.getSnapshots());
         return Result.CLOSED;
     }
 
     /** After a crawl that confirmed the board is gone (404/410). */
-    public Result afterGone(final String platform, final String board, final Instant now) {
+    public Result afterGone(final String platform, final String board, final Instant now, final Commands out) {
         final ClosureState closure = store.closureState(platform, board);
         if (closure.getGoneStreak() < config.getRetireAfter()) {
             return Result.NOT_YET_RETIRED;
         }
         final Map<String, Object> query = candidates(platform, board, null);
-        final long closed = index.updateByQuery(query, SCRIPT, params(platform, board, null, now));
+        final List<String> keys = index.jobKeys(query, MAX_PER_SWEEP);
+        out.write(Commands.close(keys, platform, board, null, now));
         store.retire(platform, board, now);
-        store.recordClosure(platform, board, now, (int) closed);
-        LOG.warn("{}/{}: gone for {} consecutive crawls; board retired, {} job(s) closed", platform, board,
-                closure.getGoneStreak(), closed);
+        store.recordClosure(platform, board, now, keys.size());
+        LOG.warn("{}/{}: gone for {} consecutive crawls; board retired, closing {} job(s)", platform, board,
+                closure.getGoneStreak(), keys.size());
         return Result.RETIRED;
     }
 
     /**
      * Documents with a live link of this board last seen before the cutoff. Links are plain objects,
      * not nested, so a document can match on fields of two different links; the script re-checks
-     * each link, so such a match is a no-op, and the guard's count errs high, never low.
+     * each link (config/upsert.painless), so such a match is a no-op, and the guard's count errs high, never low.
      */
     static Map<String, Object> candidates(final String platform, final String board, final Instant cutoff) {
         final List<Object> filters = new java.util.ArrayList<>(List.of(
@@ -123,23 +122,4 @@ public class ClosureSweeper {
         return Map.of("bool", Map.of("filter", filters));
     }
 
-    private static Map<String, Object> params(final String platform, final String board, final Instant cutoff, final Instant now) {
-        final Map<String, Object> p = new HashMap<>();
-        p.put("platform", platform);
-        p.put("board", board);
-        p.put("cutoff", cutoff == null ? null : cutoff.toString());
-        p.put("now", now.toString());
-        return p;
-    }
-
-    private static String loadScript() {
-        try (InputStream in = ClosureSweeper.class.getResourceAsStream("closure.painless")) {
-            if (in == null) {
-                throw new IllegalStateException("closure.painless missing from the jar");
-            }
-            return new String(in.readAllBytes(), StandardCharsets.UTF_8);
-        } catch (final IOException e) {
-            throw new IllegalStateException(e);
-        }
-    }
 }

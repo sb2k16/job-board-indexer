@@ -58,7 +58,7 @@ def wait_snapshots(n, timeout=600):
             got += 1
             seen = h
             print(f"  snapshot {got}/{n} ({h})", flush=True)
-    time.sleep(5)  # the sweep runs right after the snapshot commit; let it land
+    time.sleep(5)  # the sweep runs right after the snapshot commit; its commands then go through the sink
 
 
 def jobs():
@@ -74,6 +74,17 @@ def jobs():
         out[int(link["posting_id"])] = {"status": h["_source"]["status"], "state": link["state"], "key": h["_id"]}
     out["duplicates"] = len(seen) - len(set(seen))
     return out
+
+
+def jobs_when(ok, timeout=90):
+    """Closures reach the index as command events through the buffer and the sink, which flushes a
+    small batch after its flush_timeout (60 s by default): poll until they land, then return."""
+    deadline = time.time() + timeout
+    while True:
+        j = jobs()
+        if ok(j) or time.time() > deadline:
+            return j
+        time.sleep(3)
 
 
 def main():
@@ -92,12 +103,14 @@ def main():
     j = jobs()
     check("after 1 snapshot without them: still open (N=2)", j[1]["status"] == "open" and j[2]["status"] == "open")
     wait_snapshots(1)
-    j = jobs()
+    # Read now: the next snapshot's sweep finds nothing left to close and records 0.
+    closed_count = psql("SELECT last_closed_count FROM board_state WHERE platform='fixture'")
+    j = jobs_when(lambda j: j[1]["status"] == "closed" and j[2]["status"] == "closed")
     check("after 2 snapshots without them: closed", j[1]["status"] == "closed" and j[2]["status"] == "closed",
           f"1={j[1]} 2={j[2]}")
     check("their links are gone", j[1]["state"] == "gone" and j[2]["state"] == "gone")
     check("the other 12 stay open", all(j[i]["status"] == "open" for i in list(range(3, 13)) + [20, 21]))
-    check("board_state records the run", psql("SELECT last_closed_count FROM board_state WHERE platform='fixture'") == "2")
+    check("board_state records the run", closed_count == "2", closed_count)
 
     print("phase 2: 10 of the 12 remaining disappear at once (mass closure)")
     write_board([20, 21])

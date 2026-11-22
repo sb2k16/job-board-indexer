@@ -9,7 +9,7 @@
     python3 tests/t25_merge_and_closure_test.py [http://localhost:9200]
 
 Sends exactly what the Data Prepper sink sends (scripted_upsert with the document as the upsert
-body and params.doc) using config/upsert.painless, and runs the crawler's closure.painless through
+body and params.doc) using config/upsert.painless, and sends the crawler's closure and verification commands through the same script as
 _update_by_query as ClosureSweeper does. Uses a throwaway index built from config/jobs-template.json
 (not matching jobs-*, so the site never sees it) and deletes it afterwards."""
 import json, pathlib, sys, urllib.request, uuid
@@ -17,18 +17,19 @@ import json, pathlib, sys, urllib.request, uuid
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 OS = (sys.argv[1] if len(sys.argv) > 1 else "http://localhost:9200").rstrip("/")
 UPSERT = (ROOT / "config/upsert.painless").read_text()
-CLOSURE = (ROOT / "crawler/src/main/resources/io/github/sb2k16/jobboard/closure/closure.painless").read_text()
 INDEX = "t25-" + uuid.uuid4().hex[:8]
 FAILS = []
 
 
-def call(method, path, body=None):
+def call(method, path, body=None, ok404=False):
     req = urllib.request.Request(OS + path, method=method, data=None if body is None else json.dumps(body).encode(),
                                  headers={"content-type": "application/json"})
     try:
         with urllib.request.urlopen(req) as r:
             return json.load(r)
     except urllib.error.HTTPError as e:
+        if ok404 and e.code == 404:
+            return json.load(e)
         raise SystemExit(f"{method} {path}: HTTP {e.code} {e.read().decode()[:600]}")
 
 
@@ -62,14 +63,21 @@ def upsert(d):
         "scripted_upsert": True, "upsert": d, "script": {"lang": "painless", "source": UPSERT, "params": {"doc": d}}})
 
 
-def close(platform, cutoff, now):
-    q = {"bool": {"filter": [{"term": {"source_links.platform": platform}}, {"term": {"source_links.board_id": "cvs"}},
-                             {"term": {"source_links.state": "live"}}]
-                  + ([{"range": {"source_links.last_seen": {"lt": cutoff}}}] if cutoff else [])}}
-    r = call("POST", f"/{INDEX}/_update_by_query?conflicts=proceed&refresh=true", {
-        "query": q, "script": {"lang": "painless", "source": CLOSURE,
-                               "params": {"platform": platform, "board": "cvs", "cutoff": cutoff, "now": now}}})
-    return r["updated"]
+def command(c):
+    """A crawler command (closure/ClosureSweeper, closure/JobVerifier), sent the way the sink sends
+    every event: a scripted upsert of the event through config/upsert.painless. 1 if it changed k1."""
+    r = call("POST", f"/{INDEX}/_update/{c['job_key']}?refresh=true", {
+        "scripted_upsert": True, "upsert": c, "script": {"lang": "painless", "source": UPSERT, "params": {"doc": c}}})
+    return 1 if r["result"] == "updated" else 0
+
+
+def close(platform, cutoff, now, key="k1"):
+    return command({"job_key": key, "_op": "close", "platform": platform, "board_id": "cvs", "cutoff": cutoff, "now": now})
+
+
+def verify(platform, url, verdict, now):
+    return command({"job_key": "k1", "_op": "verify", "platform": platform, "board_id": "cvs", "urls": [url],
+                    "verdict": verdict, "now": now})
 
 
 def get():
@@ -165,6 +173,24 @@ def run():
     # 10. Retirement: no cutoff, every live link of the board goes.
     check("retire: closes regardless of last_seen", close("phenom", None, "2026-11-13T15:00:00Z") == 1)
     check("retire: job closed", get()["status"] == "closed")
+
+    # 11. Job page verification (closure/JobVerifier): reopen, then check the link on its own page.
+    upsert(doc("phenom", "2026-11-13T16:00:00Z", description="Short again.", posted="2026-11-10T00:00:00Z", remote=False, hash_="h3"))
+    url = link(get(), "phenom")["url"]
+    check("verify alive: the page still lists it", verify("phenom", url, "alive", "2026-11-20T00:00:00Z") == 1)
+    s = get()
+    check("verify alive: link seen now, job checked now, still open",
+          link(s, "phenom")["last_seen"] == "2026-11-20T00:00:00Z" and s["last_checked"] == "2026-11-20T00:00:00Z"
+          and s["status"] == "open")
+    check("verify: another URL changes nothing", verify("phenom", "https://elsewhere.test/x", "gone", "z") == 0)
+    check("verify gone: the page says it is gone", verify("phenom", url, "gone", "2026-11-21T00:00:00Z") == 1)
+    s = get()
+    check("verify gone: link gone and the job closed",
+          link(s, "phenom")["state"] == "gone" and s["status"] == "closed" and s["closed_at"] == "2026-11-21T00:00:00Z")
+
+    # 12. A command for a job that is not in the index creates nothing.
+    check("command for a missing job: no-op", close("phenom", None, "2026-11-22T00:00:00Z", key="nope") == 0)
+    check("command for a missing job: no document", call("GET", f"/{INDEX}/_doc/nope", ok404=True).get("found") is False)
 
 
 if __name__ == "__main__":

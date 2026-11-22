@@ -69,15 +69,20 @@ public class HttpIndexClient implements IndexClient {
     }
 
     @Override
-    public long updateByQuery(final Map<String, Object> query, final String script, final Map<String, Object> params) {
+    @SuppressWarnings("unchecked")
+    public java.util.List<Map<String, Object>> search(final Map<String, Object> query, final int size,
+                                                      final java.util.List<String> fields,
+                                                      final java.util.List<Map<String, Object>> sort) {
         final Map<String, Object> body = new LinkedHashMap<>();
         body.put("query", query);
-        body.put("script", Map.of("lang", "painless", "source", script, "params", params));
-        final JsonNode r = call("POST", "/" + index + "/_update_by_query?conflicts=proceed&refresh=true", body);
-        if (r.path("failures").size() > 0) {
-            throw new IllegalStateException("closure update failed: " + r.path("failures").get(0));
+        body.put("size", size);
+        body.put("_source", fields);
+        body.put("sort", sort);
+        final java.util.List<Map<String, Object>> out = new java.util.ArrayList<>();
+        for (final JsonNode hit : call("POST", "/" + index + "/_search", body).path("hits").path("hits")) {
+            out.add(JSON.convertValue(hit.path("_source"), Map.class));
         }
-        return r.path("updated").asLong();
+        return out;
     }
 
     private JsonNode call(final String method, final String path, final Object body) {
