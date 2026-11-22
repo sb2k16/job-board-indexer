@@ -185,6 +185,8 @@ a.co:hover b { text-decoration: underline; text-underline-offset: 3px; }
 .apply, .box { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 24px; }
 .still { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--signal-ink); font-weight: 500; }
 .still i { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); display: inline-block; box-shadow: 0 0 0 4px var(--signal-soft); flex: none; }
+.still.unconfirmed { color: var(--amber); }
+.still.unconfirmed i { background: var(--amber-bar); box-shadow: 0 0 0 4px var(--amber-soft); }
 .still.closed { color: var(--ink-2); }
 .still.closed i { background: var(--ink-3); box-shadow: 0 0 0 4px var(--sunk); }
 .apply p { font-size: 13px; color: var(--ink-3); margin-top: 6px; }

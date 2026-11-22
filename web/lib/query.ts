@@ -114,6 +114,27 @@ export interface BuildOptions {
 }
 
 /**
+ * Relevance order only: a job's score is multiplied by 0.5 to 1 depending on how recently a crawl saw
+ * it listed (full weight within a day, three quarters after a week, approaching half after that). Jobs nobody has re-confirmed
+ * sink but are never hidden: an old last_checked usually means our crawl of the board failed, not that
+ * the job closed (closing is the sweeper's job, after three complete crawls miss it).
+ */
+export function rankByConfirmation(query: Clause, f: Filters): Clause {
+  if (!(f.sort === "relevance" && f.q)) return query;
+  return {
+    function_score: {
+      query,
+      functions: [
+        { weight: 0.5 },
+        { gauss: { last_checked: { origin: "now", offset: "1d", scale: "6d", decay: 0.5 } }, weight: 0.5 },
+      ],
+      score_mode: "sum",
+      boost_mode: "multiply",
+    },
+  };
+}
+
+/**
  * The search body. Facet filters (company, platform, board, type, remote) go into post_filter, and
  * each facet's aggregation applies every facet filter except its own, so a facet keeps showing the
  * counts of its other values after one is picked (multi-select facets).
@@ -188,7 +209,7 @@ export function buildSearch(f: Filters, opts: BuildOptions): Clause {
     size: PAGE_SIZE,
     from: (f.page - 1) * PAGE_SIZE,
     track_total_hits: true,
-    query: { bool: { must: must.length ? must : [{ match_all: {} }], filter } },
+    query: rankByConfirmation({ bool: { must: must.length ? must : [{ match_all: {} }], filter } }, f),
     post_filter: others(""),
     sort,
     _source: { excludes: ["description", "content_hash"] },

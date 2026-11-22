@@ -5,9 +5,9 @@ import { Mark } from "../../../components/JobRow";
 import { Share } from "../../../components/Share";
 import { getJob, moreFromCompany, SearchUnavailable, type Job } from "@/lib/opensearch";
 import { employmentBucket } from "@/lib/employment";
-import { blocks, num, shortDate } from "@/lib/format";
+import { ago, blocks, num, shortDate } from "@/lib/format";
 import { countryName } from "@/lib/countries";
-import { applyLabel, applyUrl, primaryLink, whereListed } from "@/lib/source";
+import { applyLabel, applyUrl, isUnconfirmed, lastSeen, primaryLink, whereListed } from "@/lib/source";
 
 export const dynamic = "force-dynamic";
 
@@ -80,6 +80,8 @@ export default async function JobPage({ params }: { params: Promise<{ key: strin
   const dates = [job.posted_at ? `Posted ${shortDate(job.posted_at)}` : `Found ${shortDate(job.first_seen)}`, updated && `updated ${updated}`]
     .filter(Boolean)
     .join(" · ");
+  const seen = lastSeen(link, job.last_checked);
+  const unconfirmed = isUnconfirmed(seen);
   const companyHref = job.company ? `/jobs?company=${encodeURIComponent(job.company)}` : "/jobs";
 
   return (
@@ -132,11 +134,19 @@ export default async function JobPage({ params }: { params: Promise<{ key: strin
               </>
             ) : (
               <>
-                <div className="still">
+                <div className={unconfirmed ? "still unconfirmed" : "still"}>
                   <i aria-hidden />
-                  Still listed on {whereListed(link, job.company)}
+                  {unconfirmed
+                    ? `Last seen on ${whereListed(link, job.company)} ${ago(seen)}`
+                    : `Still listed on ${whereListed(link, job.company)}`}
                 </div>
-                <p>{dates}</p>
+                <p>
+                  {dates}
+                  {seen && !unconfirmed && ` · checked ${ago(seen)}`}
+                </p>
+                {unconfirmed && (
+                  <p>We haven’t been able to recheck this listing since then, so it may have closed. The link goes to the original posting.</p>
+                )}
                 {apply ? (
                   <a className="btn" href={apply} target="_blank" rel="noopener noreferrer nofollow">
                     {applyLabel(link, job.company)} <span aria-hidden>↗</span>

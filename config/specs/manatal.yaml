@@ -7,8 +7,13 @@ list:
   url: "https://{board}.careers-page.com/"
   items: 'href="((?:https://[^"/]+)?/jobs/[0-9a-f-]{36})'
   marker: ['careers-page']
+# 10 jobs a page at ?page=N; past the last page the list is empty (yoailabs: 64 pages, Nov 22). It was
+# read as one page until Nov 22, so boards over 10 jobs were saved as their newest 10.
 pagination:
-  style: none
+  style: page
+  param: page
+  start: 1
+  page_size: 10
 fields:
   url: url
 detail:

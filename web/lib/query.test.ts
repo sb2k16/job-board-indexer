@@ -46,8 +46,9 @@ test("facet filters go to post_filter and each facet ignores its own filter", ()
 
 test("free text uses simple_query_string; posted falls back to first_seen", () => {
   const body = buildSearch(parseFilters({ q: 'title:"x" OR (', posted: "7d", status: "all" }), opts) as any;
-  assert.ok(body.query.bool.must[0].simple_query_string);
-  const range = body.query.bool.filter[0].bool.should;
+  const inner = body.query.function_score.query;
+  assert.ok(inner.bool.must[0].simple_query_string);
+  const range = inner.bool.filter[0].bool.should;
   assert.equal(range[0].range.posted_at.gte, "2026-11-06T00:00:00.000Z");
   assert.equal(range[1].bool.filter.range.first_seen.gte, "2026-11-06T00:00:00.000Z");
 });
@@ -83,4 +84,18 @@ test("a location that is just a country becomes a country filter", () => {
   const body = buildSearch(parseFilters({ location: "US" }), opts) as any;
   assert.deepEqual(body.post_filter.bool.filter, [{ terms: { countries: ["US"] } }]);
   assert.ok(body.aggs.country);
+});
+
+test("relevance order sinks jobs nobody has re-confirmed, never below half weight; other orders are untouched", () => {
+  const rel = buildSearch(parseFilters({ q: "nurse" }), opts) as any;
+  const fs = rel.query.function_score;
+  assert.equal(fs.boost_mode, "multiply");
+  assert.equal(fs.score_mode, "sum");
+  assert.deepEqual(fs.functions[0], { weight: 0.5 });
+  assert.equal(fs.functions[1].weight, 0.5);
+  assert.ok(fs.functions[1].gauss.last_checked);
+  const recent = buildSearch(parseFilters({ q: "nurse", sort: "posted" }), opts) as any;
+  assert.ok(recent.query.bool);
+  const browse = buildSearch(parseFilters({}), opts) as any;
+  assert.ok(browse.query.bool);
 });

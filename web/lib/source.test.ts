@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { applyLabel, applyUrl, primaryLink, whereListed } from "./source.ts";
+import { applyLabel, applyUrl, isUnconfirmed, lastSeen, primaryLink, whereListed } from "./source.ts";
 
 test("an employer's ATS reads as its careers site; a job board by its address", () => {
   const ats = { platform: "greenhouse", board_id: "stripe", url: "https://boards.greenhouse.io/stripe/jobs/1" };
@@ -21,4 +21,13 @@ test("the live, most recently seen link wins; only http(s) URLs are used", () =>
   assert.equal(primaryLink(links)?.url, "https://c.example/1");
   assert.equal(applyUrl(links), "https://c.example/1");
   assert.equal(applyUrl([{ url: "ftp://x" }]), null);
+});
+
+test("a job counts as unconfirmed only after two days unseen", () => {
+  const now = Date.parse("2026-11-22T12:00:00Z");
+  assert.equal(isUnconfirmed("2026-11-21T00:00:00Z", now), false);
+  assert.equal(isUnconfirmed("2026-11-20T11:00:00Z", now), true);
+  assert.equal(isUnconfirmed(undefined, now), false);
+  assert.equal(lastSeen({ last_seen: "2026-11-22T00:00:00Z" }, "2026-11-01T00:00:00Z"), "2026-11-22T00:00:00Z");
+  assert.equal(lastSeen(undefined, "2026-11-01T00:00:00Z"), "2026-11-01T00:00:00Z");
 });

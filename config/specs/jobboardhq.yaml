@@ -9,6 +9,10 @@ list:
   marker: ['jobboardhq']
 pagination:
   style: none
+  # /search shows 20 jobs. Its other pages are ASP.NET postbacks that send back the page's
+  # __VIEWSTATE and __EVENTVALIDATION (embedded page state, which the crawl rules do not replay), and
+  # /sitemap.xml and /jobs.rss answer with the home page (Nov 22). A board showing 20 is PARTIAL.
+  max_results: 20
 fields:
   url: url
 detail:

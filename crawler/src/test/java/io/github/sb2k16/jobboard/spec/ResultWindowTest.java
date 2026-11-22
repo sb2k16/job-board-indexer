@@ -91,4 +91,23 @@ class ResultWindowTest {
         assertThat(s.isComplete(), equalTo(false));
         assertThat(f.requests, hasSize(2));
     }
+
+    private static final String SINGLE = SPEC.replace("pagination:\n  style: offset\n  param: from\n  page_size: 2\n  max_results: 4\n",
+            "pagination:\n  style: none\n  max_results: 3\n").replace("  total: totalHits\n", "");
+
+    @Test
+    void aSingleListAtItsCapIsPartial() throws Exception {
+        final BoardSnapshot s = run(SINGLE, new FakeFetcher().on("https://x.example.com/s", page(0, 1, 2, 3)));
+        assertThat(s.getJobs(), hasSize(3));
+        assertThat(s.isComplete(), equalTo(false));
+        assertThat(s.getResultLimit(), equalTo(3));
+    }
+
+    @Test
+    void aSingleListUnderItsCapIsComplete() throws Exception {
+        final BoardSnapshot s = run(SINGLE, new FakeFetcher().on("https://x.example.com/s", page(0, 1, 2)));
+        assertThat(s.getJobs(), hasSize(2));
+        assertThat(s.isComplete(), equalTo(true));
+        assertThat(s.getResultLimit(), nullValue());
+    }
 }

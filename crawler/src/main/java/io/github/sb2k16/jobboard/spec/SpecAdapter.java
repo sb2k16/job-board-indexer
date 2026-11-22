@@ -190,6 +190,12 @@ public class SpecAdapter implements PlatformAdapter {
             url = next;
         }
 
+        // A single list that holds exactly its cap is the platform's newest N, not the whole board (a
+        // JobBoard.io RSS feed stops at 50): calling it complete made every older job look removed,
+        // and the mass-closure guard held the board on every crawl (Nov 17 to 22).
+        if (style.equals("none") && maxResults != null && read >= maxResults) {
+            windowEnd = true;
+        }
         // Complete means the list was read to its end and matches the platform's count. A job whose
         // detail page has gone since (expired mid-crawl) is dropped but does not make it partial.
         final boolean complete = naturalEnd && (total == null || total == jobs.size());

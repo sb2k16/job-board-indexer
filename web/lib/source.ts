@@ -52,3 +52,21 @@ export function applyUrl(links: LinkLike[] | undefined): string | null {
   const l = primaryLink(links);
   return safeUrl(l?.application_url) ?? safeUrl(l?.url);
 }
+
+/**
+ * A job counts as unconfirmed once nothing has seen it listed for this long: about four missed
+ * refreshes (groups refresh every 6 to 12 hours) plus their retries. Unconfirmed is not closed: it
+ * usually means our crawl of the board failed, so the job stays visible and says so.
+ */
+export const UNCONFIRMED_AFTER_MS = 2 * 86_400_000;
+
+/** When a crawl last saw the job listed: its shown link's last_seen, else the job's last_checked. */
+export function lastSeen(link: LinkLike | undefined, lastChecked: string | undefined): string | undefined {
+  return link?.last_seen ?? lastChecked;
+}
+
+export function isUnconfirmed(seen: string | undefined, now = Date.now()): boolean {
+  if (!seen) return false;
+  const t = Date.parse(seen);
+  return !Number.isNaN(t) && now - t > UNCONFIRMED_AFTER_MS;
+}

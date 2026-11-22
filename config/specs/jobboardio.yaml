@@ -9,6 +9,10 @@ list:
   marker: [/rss/channel]
 pagination:
   style: none
+  # The feed holds only the newest 50 and has no pages (?page=2 serves the same 50). A board with 50
+  # is PARTIAL, so its older jobs are never closed for being missing. The board's sitemap lists every
+  # job URL (Hire Heroes: about 37,000 on Nov 22) and is the route to a complete read.
+  max_results: 50
 fields:
   platform_job_id: { path: link, regex: "/jobs/(\\d+)" }
   # The employer is what follows the last " at ", less the final "(Location)"; it may hold its own
