@@ -99,6 +99,13 @@ public class JobBoardCrawler implements Crawler<PaginationCrawlerWorkerProgressS
     /** Below the framework's own 2 h acknowledgement timeout, so ours always resolves first. */
     static final Duration SNAPSHOT_ACK_TIMEOUT = Duration.ofHours(1);
     private static final int BUFFER_WRITE_TIMEOUT_MILLIS = (int) Duration.ofSeconds(30).toMillis();
+    /**
+     * How long one batch may wait for buffer space before the crawl fails. A full buffer is the
+     * sink's back-pressure, not an error: failing on the first 30 s wait threw away whole crawled
+     * boards and re-crawled them, which kept the buffer full (Nov 20 and 21). Well inside
+     * SNAPSHOT_ACK_TIMEOUT.
+     */
+    static final Duration BUFFER_WRITE_PATIENCE = Duration.ofMinutes(10);
     private static final Logger LOG = LoggerFactory.getLogger(JobBoardCrawler.class);
 
     private final JobBoardSourceConfig config;
@@ -497,13 +504,33 @@ public class JobBoardCrawler implements Crawler<PaginationCrawlerWorkerProgressS
                 if (ack != null) {
                     batch.forEach(r -> ack.add(r.getData()));
                 }
-                buffer.writeAll(batch, BUFFER_WRITE_TIMEOUT_MILLIS);
+                writePatiently(batch, buffer, platform, board);
             }
         } catch (final Exception e) {
             if (ack != null) {
                 ack.cancel();
             }
             throw new SaaSCrawlerException("Buffer write failed for " + platform + "/" + board, e, true);
+        }
+    }
+
+    private static void writePatiently(final List<Record<Event>> batch, final Buffer<Record<Event>> buffer, final String platform,
+                                       final String board) throws Exception {
+        final long deadline = System.nanoTime() + BUFFER_WRITE_PATIENCE.toNanos();
+        int waits = 0;
+        while (true) {
+            try {
+                buffer.writeAll(batch, BUFFER_WRITE_TIMEOUT_MILLIS);
+                return;
+            } catch (final java.util.concurrent.TimeoutException e) {
+                if (System.nanoTime() >= deadline) {
+                    throw e;
+                }
+                if (++waits == 1 || waits % 10 == 0) {
+                    LOG.info("{}/{}: buffer full, waiting for the sink ({} s so far)", platform, board,
+                            waits * BUFFER_WRITE_TIMEOUT_MILLIS / 1000);
+                }
+            }
         }
     }
 

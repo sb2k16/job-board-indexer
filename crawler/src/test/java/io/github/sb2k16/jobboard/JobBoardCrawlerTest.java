@@ -46,6 +46,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.Map;
 import java.util.Optional;
 
@@ -222,6 +223,29 @@ class JobBoardCrawlerTest {
         final PaginationCrawlerWorkerProgressState work = new PaginationCrawlerWorkerProgressState();
         work.setKeyAttributes(Map.of("platform", "fake", "board", "a", "company", "A", "crawl_started", "2026-11-13T00:00:00Z"));
         return work;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void executePartition_fullBuffer_waitsForTheSink_insteadOfFailingTheBoard() throws Exception {
+        final List<JobRecord> jobs = List.of(new JobRecord().setTitle("T").setCompany("A").setLocation("Austin, TX").setUrl("u")
+                .setPlatform("fake").setBoardId("a"));
+        when(adapter.fetchBoard(any(), any(Tenant.class), any())).thenReturn(new BoardSnapshot(jobs, 1, true));
+        final Buffer<Record<Event>> buffer = mock(Buffer.class);
+        final AtomicInteger calls = new AtomicInteger();
+        doAnswer(inv -> {
+            if (calls.incrementAndGet() <= 2) {
+                throw new java.util.concurrent.TimeoutException("Buffer does not have enough capacity left");
+            }
+            return null;
+        }).when(buffer).writeAll(any(), anyInt());
+        final AcknowledgementSet ack = mock(AcknowledgementSet.class);
+
+        crawler().executePartition(work(), buffer, ack);
+
+        verify(buffer, times(3)).writeAll(any(), anyInt());
+        verify(ack, never()).cancel();
+        verify(ack).complete();
     }
 
     @SuppressWarnings("unchecked")

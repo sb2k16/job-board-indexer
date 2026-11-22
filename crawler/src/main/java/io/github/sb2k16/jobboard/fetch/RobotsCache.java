@@ -43,26 +43,30 @@ public class RobotsCache {
         synchronized (entry) {
             final long now = ticker.nanos();
             if (entry.fetchedAt == 0 || now - entry.fetchedAt > (entry.rules == null ? UNAVAILABLE_TTL : ttl).toNanos()) {
-                entry.rules = fetch(origin);
+                entry.rules = fetch(origin, entry);
                 entry.fetchedAt = now == 0 ? 1 : now;
             }
             if (entry.rules == null) {
-                throw new BoardFetchException(origin + "/robots.txt is unavailable; RFC 9309 treats that as disallow-all",
-                        null, true, BoardFetchException.Kind.ROBOTS, 0);
+                throw new BoardFetchException(origin + "/robots.txt is unavailable (" + entry.failure
+                        + "); RFC 9309 treats that as disallow-all", null, true, BoardFetchException.Kind.ROBOTS, 0);
             }
             return entry.rules;
         }
     }
 
-    /** Null means unavailable (5xx or network failure). */
-    private RobotsRules fetch(final String origin) throws InterruptedException {
+    /** Null means unavailable (5xx or network failure); {@code entry.failure} then says which. */
+    private RobotsRules fetch(final String origin, final Entry entry) throws InterruptedException {
         final HttpTransport.Response response;
         try {
             response = transport.get(origin + "/robots.txt", timeout);
         } catch (final IOException e) {
+            // The cause is part of the board's failure reason: on Nov 20 and 21 a generic message
+            // hid a dead HTTP client for a day and a half.
+            entry.failure = e.getClass().getSimpleName() + (e.getMessage() == null ? "" : ": " + e.getMessage());
             return null;
         }
         final int status = response.getStatus();
+        entry.failure = "HTTP " + status;
         if (status >= 200 && status < 300) {
             return RobotsRules.parse(response.getBody() == null ? "" : response.getBody(), JdkHttpTransport.PRODUCT_TOKEN);
         }
@@ -75,5 +79,6 @@ public class RobotsCache {
     private static final class Entry {
         long fetchedAt;
         RobotsRules rules;
+        String failure;
     }
 }

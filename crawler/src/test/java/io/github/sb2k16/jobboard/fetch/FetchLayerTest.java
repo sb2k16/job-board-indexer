@@ -151,6 +151,15 @@ class FetchLayerTest {
         assertThat(e.getKind(), equalTo(BoardFetchException.Kind.ROBOTS));
         assertThat(e.isRetryable(), equalTo(true));
         assertThat(transport.requests.contains("https://b.test/jobs"), equalTo(false));
+        assertThat(e.getMessage(), containsString("(HTTP 503)"));
+    }
+
+    @Test
+    void robots_networkFailure_namesTheCauseInTheReason() {
+        transport.on("https://c.test/robots.txt", new IOException("selector manager closed"));
+        final BoardFetchException e = assertThrows(BoardFetchException.class, () -> fetcher(policy(10, 1, 1)).get("https://c.test/jobs"));
+        assertThat(e.getKind(), equalTo(BoardFetchException.Kind.ROBOTS));
+        assertThat(e.getMessage(), containsString("(IOException: selector manager closed)"));
     }
 
     // ---- rate limit ---------------------------------------------------------------------------

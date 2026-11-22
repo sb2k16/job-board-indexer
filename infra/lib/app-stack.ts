@@ -86,7 +86,10 @@ export class AppStack extends Stack {
           JBI_OPENSEARCH_URL: searchUrl,
           AWS_REGION: this.region,
           // Heap follows the task size; the rest is left for off-heap and the JVM's own use.
-          JAVA_OPTS: "-XX:MaxRAMPercentage=70.0",
+          // Exit on OutOfMemoryError so ECS replaces the task and its leases move to the others: without
+          // it an OOM on the HTTP client's selector thread left a running task failing every board
+          // (Nov 20 and 21). The local stacks have always set it.
+          JAVA_OPTS: "-XX:MaxRAMPercentage=70.0 -XX:+ExitOnOutOfMemoryError",
         },
         secrets: dbSecrets,
         // Spot gives two minutes' notice; a stop lets in-flight bulk writes finish.

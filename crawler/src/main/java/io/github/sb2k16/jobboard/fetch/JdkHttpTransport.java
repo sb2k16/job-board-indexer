@@ -23,21 +23,61 @@ public class JdkHttpTransport implements HttpTransport {
     /** robots.txt product token: the User-Agent's first word. */
     public static final String PRODUCT_TOKEN = "JobBoardIndexer";
 
-    private final HttpClient client;
+    /** What the JDK client says on every request once its selector thread has died. */
+    static final String DEAD_CLIENT = "selector manager closed";
+    private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(JdkHttpTransport.class);
+
+    private final java.util.function.Supplier<HttpClient> clients;
+    private volatile HttpClient client;
 
     public JdkHttpTransport() {
         // HTTP/1.1: a polite crawler gains nothing from HTTP/2 multiplexing, and JDK 11's HTTP/2
         // client stalls on long-lived connections (Netflix on Eightfold timed out on Nov 14 and 16
         // while curl answered in half a second).
-        this(HttpClient.newBuilder()
+        this(() -> HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_1_1)
                 .connectTimeout(Duration.ofSeconds(10))
                 .followRedirects(HttpClient.Redirect.NORMAL)
                 .build());
     }
 
-    JdkHttpTransport(final HttpClient client) {
-        this.client = client;
+    JdkHttpTransport(final java.util.function.Supplier<HttpClient> clients) {
+        this.clients = clients;
+        this.client = clients.get();
+    }
+
+    /**
+     * The JDK client runs all its I/O on one selector thread. If that thread dies (an
+     * OutOfMemoryError there is caught and logged only at debug level), the client fails every later
+     * request with "selector manager closed" and never recovers: on Nov 20 and 21 two crawler tasks
+     * failed every board for a day and a half that way. A dead client is replaced once, by whichever
+     * request sees it first, and that request is retried on the new one.
+     */
+    private HttpResponse<String> send(final HttpRequest request, final Duration timeout) throws IOException, InterruptedException {
+        final HttpClient used = client;
+        try {
+            return sendWithin(used, request, timeout);
+        } catch (final IOException e) {
+            if (!isDeadClient(e)) {
+                throw e;
+            }
+            synchronized (this) {
+                if (client == used) {
+                    LOG.error("HTTP client is dead ({}); replacing it", e.getMessage());
+                    client = clients.get();
+                }
+            }
+            return sendWithin(client, request, timeout);
+        }
+    }
+
+    static boolean isDeadClient(final Throwable e) {
+        for (Throwable t = e; t != null; t = t.getCause()) {
+            if (t.getMessage() != null && t.getMessage().contains(DEAD_CLIENT)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
@@ -48,7 +88,7 @@ public class JdkHttpTransport implements HttpTransport {
                 .header("Accept", "application/json, application/xml;q=0.9, text/xml;q=0.9, */*;q=0.8")
                 .GET()
                 .build();
-        final HttpResponse<String> response = sendWithin(request, timeout);
+        final HttpResponse<String> response = send(request, timeout);
         return new Response(response.statusCode(), response.body(),
                 response.headers().firstValue("Retry-After").map(JdkHttpTransport::retryAfter).orElse(null));
     }
@@ -62,7 +102,7 @@ public class JdkHttpTransport implements HttpTransport {
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
                 .build();
-        final HttpResponse<String> response = sendWithin(request, timeout);
+        final HttpResponse<String> response = send(request, timeout);
         return new Response(response.statusCode(), response.body(),
                 response.headers().firstValue("Retry-After").map(JdkHttpTransport::retryAfter).orElse(null));
     }
@@ -83,7 +123,7 @@ public class JdkHttpTransport implements HttpTransport {
      * generous because large pages stream slowly (a 2.4 MB Zoho page takes 80 s). Past it the
      * exchange is cancelled and the failure is a retryable network error.
      */
-    private HttpResponse<String> sendWithin(final HttpRequest request, final Duration timeout)
+    private static HttpResponse<String> sendWithin(final HttpClient client, final HttpRequest request, final Duration timeout)
             throws IOException, InterruptedException {
         final java.util.concurrent.CompletableFuture<HttpResponse<String>> future =
                 client.sendAsync(request, HttpResponse.BodyHandlers.ofString());

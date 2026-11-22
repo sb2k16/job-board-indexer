@@ -120,7 +120,10 @@ def pipeline(deployment, groups, env, replicas):
     lines += [
         "  buffer:",
         "    bounded_blocking:",
-        f"      buffer_size: {4096 * len(groups)}                # 4096 per group, as when each group had its own pipeline",
+        # Sized to the one sink that drains it, not per group: 4096 per group (20,480 for five) kept
+        # the heap full behind a single sink worker until an OutOfMemoryError killed the HTTP
+        # client (Nov 20 and 21). A full buffer makes crawl workers wait (BUFFER_WRITE_PATIENCE).
+        "      buffer_size: 4096",
         "      batch_size: 256",
         "  sink:",
         "    - opensearch:",
