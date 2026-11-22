@@ -2,9 +2,13 @@
 const nextConfig = {
   output: "standalone",
   poweredByHeader: false,
-  // Crawl health moved off the public site to /admin (docs/ui-redesign-2026-11-18-review.md).
+  // Crawl health lives at /health, open without a password for now (docs/ui-build-2026-11-19.md).
   async redirects() {
-    return [{ source: "/boards", destination: "/admin", permanent: false }];
+    return [
+      { source: "/boards", destination: "/health", permanent: false },
+      { source: "/admin", destination: "/health", permanent: false },
+      { source: "/admin/:path*", destination: "/health", permanent: false },
+    ];
   },
   async headers() {
     return [

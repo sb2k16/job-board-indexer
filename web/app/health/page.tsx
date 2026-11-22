@@ -1,7 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { AdminBar } from "../components/AdminBar";
-import { requireAdmin } from "@/lib/admin";
 import { boardStates, groupRefreshes } from "@/lib/boardState";
 import { overview } from "@/lib/opensearch";
 import { platformInfo } from "@/lib/platforms";
@@ -9,7 +8,7 @@ import { nextRetry, outcome, select, summarize, why, type Tab } from "@/lib/heal
 import { ago, dateLabel, num } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: { absolute: "Crawl health · Admin" } };
+export const metadata: Metadata = { title: { absolute: "Crawl health" } };
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "attention", label: "Needs attention" },
@@ -18,7 +17,6 @@ const TABS: { id: Tab; label: string }[] = [
 ];
 
 export default async function CrawlHealth({ searchParams }: { searchParams: Promise<{ tab?: string; q?: string }> }) {
-  await requireAdmin();
   const sp = await searchParams;
   const tab: Tab = TABS.some((t) => t.id === sp.tab) ? (sp.tab as Tab) : "attention";
   const query = (sp.q ?? "").slice(0, 100);
@@ -27,7 +25,7 @@ export default async function CrawlHealth({ searchParams }: { searchParams: Prom
   if (states === null) {
     return (
       <>
-        <AdminBar signedIn />
+        <AdminBar />
         <main className="wrap">
           <div className="notice">The crawler database is not reachable from this site, so crawl health can’t be shown.</div>
         </main>
@@ -38,11 +36,11 @@ export default async function CrawlHealth({ searchParams }: { searchParams: Prom
   const jobs = new Map((ov?.boards ?? []).map((b) => [`${b.platform}/${b.board}`, b]));
   const rows = select(states, tab, query);
   const counts: Record<Tab, number> = { attention: sum.attention, all: sum.boards, retired: sum.retired };
-  const tabHref = (t: Tab) => `/admin?tab=${t}${query ? `&q=${encodeURIComponent(query)}` : ""}`;
+  const tabHref = (t: Tab) => `/health?tab=${t}${query ? `&q=${encodeURIComponent(query)}` : ""}`;
 
   return (
     <>
-      <AdminBar signedIn />
+      <AdminBar />
       <main>
         <div className="ph">
           <div className="wrap">
@@ -121,7 +119,7 @@ export default async function CrawlHealth({ searchParams }: { searchParams: Prom
                 </Link>
               ))}
             </nav>
-            <form action="/admin" role="search">
+            <form action="/health" role="search">
               <input type="hidden" name="tab" value={tab} />
               <input name="q" defaultValue={query} placeholder="Filter boards or platforms" aria-label="Filter boards or platforms" />
             </form>
