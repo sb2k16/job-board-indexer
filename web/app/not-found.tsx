@@ -1,13 +1,23 @@
 import Link from "next/link";
+import { Wordmark } from "./components/Wordmark";
 
 export default function NotFound() {
   return (
-    <div className="wrap">
-      <div className="empty" style={{ margin: "48px 0" }}>
-        <h1 style={{ fontSize: 22, marginBottom: 8 }}>Not found</h1>
-        <p style={{ margin: "0 0 16px" }}>This job is not in the index. It may have been removed by the employer.</p>
-        <Link className="btn" href="/jobs">Search jobs</Link>
-      </div>
-    </div>
+    <>
+      <header className="bar">
+        <div className="wrap">
+          <Wordmark />
+        </div>
+      </header>
+      <main className="wrap">
+        <div className="empty">
+          <h2>This page isn’t here</h2>
+          <p>If it was a job, the employer has probably taken it down.</p>
+          <Link className="btn" href="/jobs">
+            Search open jobs
+          </Link>
+        </div>
+      </main>
+    </>
   );
 }

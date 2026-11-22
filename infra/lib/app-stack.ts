@@ -4,6 +4,7 @@ import * as ecs from "aws-cdk-lib/aws-ecs";
 import * as ecsPatterns from "aws-cdk-lib/aws-ecs-patterns";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as logs from "aws-cdk-lib/aws-logs";
+import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
 import { Construct } from "constructs";
 import { DataStack } from "./data-stack";
 
@@ -139,6 +140,14 @@ export class AppStack extends Stack {
     });
 
     // ---- web: regular Fargate behind a public load balancer ----
+    // The internal /admin page (crawl health) signs in with this one generated password. Read it with
+    //   aws secretsmanager get-secret-value --secret-id jbi/admin-password --query SecretString
+    // The load balancer is plain HTTP for now, so the password crosses the internet unencrypted.
+    const adminPassword = new secretsmanager.Secret(this, "AdminPassword", {
+      secretName: "jbi/admin-password",
+      description: "Password of the website's internal /admin page",
+      generateSecretString: { passwordLength: 32, excludePunctuation: true },
+    });
     const webRole = new iam.Role(this, "WebTaskRole", {
       assumedBy: new iam.ServicePrincipal("ecs-tasks.amazonaws.com"),
       description: "Web: search only, on the jobs alias",
@@ -206,12 +215,14 @@ export class AppStack extends Stack {
         secrets: {
           PGUSER: ecs.Secret.fromSecretsManager(dbSecret, "username"),
           PGPASSWORD: ecs.Secret.fromSecretsManager(dbSecret, "password"),
+          ADMIN_PASSWORD: ecs.Secret.fromSecretsManager(adminPassword),
         },
       },
     });
     web.targetGroup.configureHealthCheck({ path: "/api/health", healthyHttpCodes: "200" });
 
     new CfnOutput(this, "WebUrl", { value: `http://${web.loadBalancer.loadBalancerDnsName}` });
+    new CfnOutput(this, "AdminPasswordSecret", { value: adminPassword.secretName });
     new CfnOutput(this, "ClusterName", { value: cluster.clusterName });
     new CfnOutput(this, "ToolsTaskDefinition", { value: tools.taskDefinitionArn });
     new CfnOutput(this, "TaskSubnets", { value: data.vpc.publicSubnets.map((s) => s.subnetId).join(",") });

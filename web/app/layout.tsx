@@ -1,43 +1,24 @@
-import type { Metadata } from "next";
-import Link from "next/link";
+import type { Metadata, Viewport } from "next";
+import { IBM_Plex_Mono, IBM_Plex_Sans, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
-import { Nav } from "./components/Nav";
+import { SITE_NAME } from "@/lib/site";
+
+// Self-hosted by next/font at build time: no request to Google from a visitor's browser.
+const serif = Source_Serif_4({ subsets: ["latin"], weight: ["400", "500", "600"], style: ["normal", "italic"], variable: "--font-serif" });
+const sans = IBM_Plex_Sans({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-sans" });
+const mono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-mono" });
 
 export const metadata: Metadata = {
-  title: { default: "Job Board Index", template: "%s · Job Board Index" },
-  description: "A continuously updated, searchable index of public job postings across ATS and job-board platforms.",
+  title: { default: `${SITE_NAME}: real, open jobs`, template: `%s · ${SITE_NAME}` },
+  description: "Open jobs read from employers’ careers sites and the job boards they post on. When a job comes down, it comes down here too.",
 };
+
+export const viewport: Viewport = { themeColor: "#F7F6F2" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body>
-        <header className="header">
-          <div className="wrap">
-            <Link href="/" className="brand">
-              <span className="brand-mark" aria-hidden>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round">
-                  <circle cx="11" cy="11" r="6.5" />
-                  <path d="m20 20-4.2-4.2" />
-                </svg>
-              </span>
-              Job Board Index
-            </Link>
-            <Nav />
-            <div className="spacer" />
-            <form action="/jobs" className="header-search" role="search">
-              <input className="input" name="q" placeholder="Search jobs…" aria-label="Search jobs" />
-            </form>
-          </div>
-        </header>
-        <main>{children}</main>
-        <footer className="footer">
-          <div className="wrap">
-            <span>Indexed from public job boards. The crawler only fetches what robots.txt allows.</span>
-            <a href="https://github.com/sb2k16/job-board-indexer">Source on GitHub</a>
-          </div>
-        </footer>
-      </body>
+    <html lang="en" className={`${serif.variable} ${sans.variable} ${mono.variable}`}>
+      <body>{children}</body>
     </html>
   );
 }

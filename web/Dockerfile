@@ -1,5 +1,5 @@
-# Job Board Index website: Next.js standalone server. Reads OpenSearch (OPENSEARCH_URL) and,
-# optionally, the crawler's Postgres (DATABASE_URL) for crawl health.
+# Website: Next.js standalone server. Reads OpenSearch (OPENSEARCH_URL) and, for the internal
+# /admin page, the crawler's Postgres (PG* or DATABASE_URL); ADMIN_PASSWORD turns /admin on.
 FROM node:24-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./

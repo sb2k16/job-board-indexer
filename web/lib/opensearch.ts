@@ -154,9 +154,10 @@ export async function getJob(key: string): Promise<Job | null> {
   return r.hits.hits[0]?._source ?? null;
 }
 
-export async function moreFromCompany(company: string, except: string): Promise<Job[]> {
-  const r = await os<{ hits: { hits: { _source: Job }[] } }>(`${INDEX}/_search`, {
-    size: 6,
+export async function moreFromCompany(company: string, except: string): Promise<{ jobs: Job[]; total: number }> {
+  const r = await os<{ hits: { total: { value: number }; hits: { _source: Job }[] } }>(`${INDEX}/_search`, {
+    size: 4,
+    track_total_hits: true,
     query: {
       bool: {
         filter: [{ term: { "company.keyword": company } }, { term: { status: "open" } }],
@@ -166,7 +167,7 @@ export async function moreFromCompany(company: string, except: string): Promise<
     sort: [{ posted_at: { order: "desc", missing: "_last" } }, { first_seen: "desc" }],
     _source: { excludes: ["description", "content_hash"] },
   });
-  return r.hits.hits.map((h) => h._source);
+  return { jobs: r.hits.hits.map((h) => h._source), total: r.hits.total.value };
 }
 
 export interface Overview {
@@ -174,6 +175,7 @@ export interface Overview {
   closed: number;
   companies: number;
   newToday: number;
+  closedToday: number;
   lastChecked: string | null;
   platforms: Bucket[];
   boards: { platform: string; board: string; count: number; companies: Bucket[] }[];
@@ -187,6 +189,7 @@ export async function overview(): Promise<Overview> {
       status: AggBuckets;
       companies: { value: number };
       newToday: { doc_count: number };
+      closedToday: { doc_count: number };
       lastChecked: { value_as_string?: string };
       open: {
         platforms: AggBuckets;
@@ -200,6 +203,7 @@ export async function overview(): Promise<Overview> {
       status: { terms: { field: "status" } },
       companies: { cardinality: { field: "company.keyword" } },
       newToday: { filter: { range: { first_seen: { gte: since } } } },
+      closedToday: { filter: { range: { closed_at: { gte: since } } } },
       lastChecked: { max: { field: "last_checked" } },
       open: {
         filter: { term: { status: "open" } },
@@ -225,6 +229,7 @@ export async function overview(): Promise<Overview> {
     closed: status.get("closed") ?? 0,
     companies: a.companies.value,
     newToday: a.newToday.doc_count,
+    closedToday: a.closedToday.doc_count,
     lastChecked: a.lastChecked.value_as_string ?? null,
     platforms: toB(a.open.platforms),
     topCompanies: toB(a.open.topCompanies),

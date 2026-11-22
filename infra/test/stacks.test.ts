@@ -101,10 +101,22 @@ test("crawler containers get the database password from Secrets Manager, never a
   }
 });
 
+test("the web container gets the admin password from Secrets Manager, never as plain text", () => {
+  const tasks = Object.values(svc.findResources("AWS::ECS::TaskDefinition")).map((t) => t.Properties);
+  const web = tasks.find((t) => !String(t.Family ?? "").startsWith("jbi-"))!.ContainerDefinitions[0];
+  assert.equal(web.Environment.some((e: { Name: string }) => e.Name === "ADMIN_PASSWORD"), false);
+  assert.ok(web.Secrets.some((s: { Name: string }) => s.Name === "ADMIN_PASSWORD"));
+  svc.hasResourceProperties("AWS::SecretsManager::Secret", {
+    Name: "jbi/admin-password",
+    GenerateSecretString: Match.objectLike({ PasswordLength: 32 }),
+  });
+});
+
 test("every taggable resource carries project=jbi", () => {
   for (const tpl of [data, svc]) {
     for (const type of ["AWS::EC2::VPC", "AWS::RDS::DBInstance", "AWS::OpenSearchService::Domain", "AWS::ECS::Service",
-      "AWS::ECS::Cluster", "AWS::ECR::Repository", "AWS::ElasticLoadBalancingV2::LoadBalancer", "AWS::Logs::LogGroup"]) {
+      "AWS::ECS::Cluster", "AWS::ECR::Repository", "AWS::ElasticLoadBalancingV2::LoadBalancer", "AWS::Logs::LogGroup",
+      "AWS::SecretsManager::Secret"]) {
       for (const r of Object.values(tpl.findResources(type))) {
         const tags = r.Properties.Tags ?? r.Properties.TagList ?? [];
         assert.ok(tags.some((t: { Key: string; Value: string }) => t.Key === "project" && t.Value === "jbi"), `${type} tagged`);

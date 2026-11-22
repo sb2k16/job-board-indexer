@@ -2,6 +2,10 @@
 const nextConfig = {
   output: "standalone",
   poweredByHeader: false,
+  // Crawl health moved off the public site to /admin (docs/ui-redesign-2026-11-18-review.md).
+  async redirects() {
+    return [{ source: "/boards", destination: "/admin", permanent: false }];
+  },
   async headers() {
     return [
       {

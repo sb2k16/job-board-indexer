@@ -61,3 +61,45 @@ export function paragraphs(text: string): { text: string; heading: boolean }[] {
     .filter(Boolean)
     .map((p) => ({ text: p, heading: p.length <= 60 && !/[.,;:!?]$/.test(p) && !/^[-•*]/.test(p) }));
 }
+
+/** A posting's age as job sites put it: "3 hours ago", "Yesterday", "4 days ago", "Nov 2". */
+export function postedAgo(iso: string | null | undefined, now = Date.now()): string {
+  if (!iso) return "";
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return "";
+  const h = Math.max(0, (now - t) / 3_600_000);
+  if (h < 1) return "Just now";
+  if (h < 24) return `${Math.floor(h)} ${Math.floor(h) === 1 ? "hour" : "hours"} ago`;
+  if (h < 48) return "Yesterday";
+  const d = Math.floor(h / 24);
+  if (d < 31) return `${d} days ago`;
+  return shortDate(iso, new Date(now).getUTCFullYear());
+}
+
+/** "Nov 14", or "Nov 14, 2025" in another year. */
+export function shortDate(iso: string | null | undefined, thisYear = new Date().getUTCFullYear()): string {
+  if (!iso) return "";
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return "";
+  const d = new Date(t);
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC", ...(d.getUTCFullYear() === thisYear ? {} : { year: "numeric" }) });
+}
+
+/** Posted (or, without a post date, first found) in the last 24 hours. */
+export const isNew = (iso: string | null | undefined, now = Date.now()) => !!iso && now - Date.parse(iso) < 86_400_000;
+
+export type Block = { kind: "h"; text: string } | { kind: "p"; text: string } | { kind: "ul"; items: string[] };
+
+/** Plain-text description → headings, paragraphs and bullet lists ("-", "•", "*" lines). */
+export function blocks(text: string): Block[] {
+  const out: Block[] = [];
+  for (const p of paragraphs(text)) {
+    const bullet = /^[-•*·]\s*(.+)$/.exec(p.text);
+    if (bullet) {
+      const last = out.at(-1);
+      if (last?.kind === "ul") last.items.push(bullet[1]);
+      else out.push({ kind: "ul", items: [bullet[1]] });
+    } else out.push(p.heading ? { kind: "h", text: p.text } : { kind: "p", text: p.text });
+  }
+  return out;
+}
