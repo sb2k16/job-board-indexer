@@ -16,7 +16,7 @@ const LABELS: Record<string, string> = {
   hirehive: "HireHive", hireology: "Hireology", hiringthing: "HiringThing", icims: "iCIMS", isolvedhire: "isolved Hire",
   jazzhr: "JazzHR", jboard: "JBoard", jobboardhq: "JobBoardHQ", jobboardio: "Jobboard.io", jobboardly: "Jobboardly",
   jobiqo: "Jobiqo", jobkit: "JobKit", jobvite: "Jobvite", join: "JOIN", kula: "Kula", lever: "Lever",
-  madgex: "Madgex", manatal: "Manatal", niceboard: "Niceboard", oracle: "Oracle Recruiting", pageup: "PageUp", paylocity: "Paylocity",
+  bamboohr: "BambooHR", madgex: "Madgex", manatal: "Manatal", niceboard: "Niceboard", oracle: "Oracle Recruiting", pageup: "PageUp", paylocity: "Paylocity",
   personio: "Personio", phenom: "Phenom", pinpoint: "Pinpoint", recooty: "Recooty", recruitee: "Recruitee",
   rippling: "Rippling", smartjobboard: "SmartJobBoard", smartrecruiters: "SmartRecruiters",
   successfactors: "SuccessFactors", taleo: "Taleo", teamtailor: "Teamtailor", trakstar: "Trakstar Hire",

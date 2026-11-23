@@ -9,7 +9,7 @@ every 1.5 s.
 
 | Platform | Then | Now |
 |---|---|---|
-| **Niceboard** | robots.txt disallowed `/api/`; the sitemap had no job URLs | Each board publishes `sitemap-jobs.xml` (avajobboard: 211 job URLs). Every job page carries `JobPosting` JSON-LD, and robots.txt allows both |
+| **Niceboard** | robots.txt disallowed `/api/`; the sitemap had no job URLs | robots.txt now allows the board's own `/api/jobs` list. The sitemap route was tried first and dropped: 206 of 209 sitemap URLs answered 404. **Built** (`fbf8eb3`) on `/api/jobs`: avajobboard 209/209 in 7 requests |
 | **Paycom** | robots.txt disallowed the jobs list | robots.txt now explicitly allows `/v4/ats/sitemap.php`, `/api/ats/job-postings/`, `/api/ats/portal-settings` and `/career-portal/sprawl.json`. The Phase 0 portal key's sitemap answers 404 (the key may be stale), so a live portal key is still needed to confirm |
 | **BambooHR** | no tenants found | Real tenants answer `{t}.bamboohr.com/careers/list` with JSON (trimgroup: 46 jobs) and `/careers/{id}/detail` with the description, datePosted, compensation and locationType. robots.txt: `Disallow:` with nothing after it (allows all). These are the requests the public careers page itself makes. Still blocked on **finding tenants** (search engines do not surface tenant subdomains; the Common Crawl index answered 504 on Nov 22) |
 
@@ -19,15 +19,13 @@ every 1.5 s.
 
 | Platform | Route | Notes |
 |---|---|---|
-| Niceboard | `sitemap-jobs.xml`, then `JobPosting` on each job page | The same pattern as the ApplicantPro and Hireology specs. Needs tenant boards (`*.niceboard.co` plus custom domains) |
-| BambooHR | `/careers/list`, then `/careers/{id}/detail` | List plus JSON detail, as Workable did before Nov 22. Needs tenant discovery (section D) |
-| Paycom | `/v4/ats/sitemap.php?clientkey=…` and/or `/api/ats/job-postings/…` | Allowed since Phase 0. Confirm the request shape with a live portal key, then a spec |
+| Niceboard | `/api/jobs` (the board page's own list call, allowed by robots.txt) | **Built** (`fbf8eb3`). More tenant boards (`*.niceboard.co` plus custom domains) is discovery work |
+| BambooHR | `/careers/list`, then `/careers/{id}/detail` | **Built** (Nov 23): trimgroup 46/46, nycballet 3/3 complete. Only 3 tenants so far; tenant discovery is open (section E) |
 
 ### B. Possible with more work, still within the rules
 
 | Platform | Route | Work |
 |---|---|---|
-| **BrassRing** (IBM Kenexa) | IBM documents a public Talent Gateway search API (`sjobs.brassring.com/SearchAPI/api/search/SearchResults`, by ClientId and SiteId) and an RSS output of the job search (`/tgwebhost/searchresults.aspx`). No robots.txt (404, so all allowed) | Two attempts with a guessed body timed out. The exact request is in IBM's API reference PDF. High value: large enterprises (BAE Systems, Hobby Lobby, GardaWorld) |
 | **JobBoard.com** | Sitemaps list every job, and detail pages carry `JobPosting` | Too large for a full refresh (about 340,000 URLs on one board), but `lastmod` makes it incremental: fetch only new or changed URLs. About 4 days for the first pass at 1 request a second, then a fraction of that per day. Needs a "sitemap delta" mode in the spec engine |
 | **Paradox** (McDonald's) | `jobs.mchire.com/sitemap.xml` (about 1,000 sub-sitemaps, ~90 jobs each) lists job URLs; robots.txt allows all | Job pages answer HTTP 202 with a 2 KB holding page, a bot check. Not something to get around. Ask Paradox or the employer for a feed, or leave it out |
 
@@ -57,6 +55,8 @@ running the page's own JavaScript.
 
 | Platform | Why |
 |---|---|
+| Paycom | Rechecked Nov 23. The allowed `/api/ats/job-postings/` calls only work with the `sessionJWT` the portal page embeds; replaying it breaks the token rule. The allowed `/v4/ats/sitemap.php` answers 404 for live portal keys too. Its Indeed feed is private |
+| BrassRing (IBM Kenexa) | Rechecked Nov 23. IBM's Talent Gateway SearchAPI needs an API user each customer creates in BrassRing admin; it is not a public endpoint. The RSS output of the job search loads through the same session-bound page |
 | UltiPro (UKG) | robots.txt still disallows `*/JobBoardView`. Both the list and the detail data load from it, and the board page embeds no jobs (`initialFeaturedOpportunities: []`). UKG's Indeed feed is pushed privately |
 | Dover | robots.txt disallows `/api/`, the only source of job data. The sitemap (10,124 job URLs) points at JavaScript shells |
 | Paycor | robots.txt disallows `/career/CareerHome.action`. Paycor documents an ATOM feed for customers' own careers pages, but its URL could not be confirmed (the setup PDF's text is unreadable) |
@@ -75,22 +75,22 @@ jobboardsoftware.com, Nodex, eJobBoard, ejobsitesoftware.com.
   of them. Recommend recording them as "no live customers found" and stopping, unless one turns
   up through "powered by" footer searches.
 
-## Summary
+## Summary (corrected Nov 23)
 
 | Outcome | Count | Platforms |
 |---|---|---|
-| Buildable now | 3 | Niceboard, BambooHR (after discovery), Paycom (after confirming with a live key) |
-| More work, within the rules | 3 | BrassRing (documented API), JobBoard.com (sitemap deltas), Paradox (only via a feed from the vendor) |
+| Built since this research | 2 | Niceboard (`fbf8eb3`), BambooHR |
+| More work, within the rules | 2 | JobBoard.com (sitemap deltas), Paradox (only via a feed from the vendor) |
 | Needs a headless browser plus a rules decision | 3 | Dayforce, HiBob, CSOD |
-| Out under the current rules | 5 | UltiPro, Dover, Paycor, talentReef, Polymer |
+| Out under the current rules | 7 | UltiPro, Dover, Paycor, talentReef, Polymer, Paycom, BrassRing |
 | No live customers found | 9 | Rival, Talenetic, JobMount, CareerSiteCloud, Artha, jobboardsoftware.com, Nodex, eJobBoard, ejobsitesoftware.com |
 
-BambooHR is counted under "buildable now" (its access is proven), not with the 9.
+Correction: the first version of this doc counted Paycom as buildable and BrassRing as "more work". Both
+turned out to need either a page-embedded session token (Paycom) or a customer-created API user (BrassRing).
 
-**Realistic ceiling within the current rules:** 54 + 3 + up to 2 (BrassRing, JobBoard.com) =
-**59 of 78**. With a headless browser and your approval: up to **62**. "All 78" is not reachable
-without changing the rules (UltiPro, Dover, Paycor, talentReef, Polymer) or finding customers for
-the 9 defunct vendors.
+**Realistic ceiling within the current rules:** 54 + 2 built + 1 (JobBoard.com) = **57 of 78**. With a
+headless browser and your approval: up to **60**. "All 78" is not reachable without changing the rules or
+finding customers for the 9 defunct vendors.
 
 ## Sources
 

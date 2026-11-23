@@ -1,0 +1,34 @@
+# BambooHR careers pages ({board}.bamboohr.com/careers): the page itself loads /careers/list (every
+# open job, JSON) and, per job, /careers/{id}/detail (description, posted date, full address,
+# compensation, location type). robots.txt on tenant hosts: "Disallow:" with nothing after it,
+# allowing everything (2026-11-22). An unknown tenant redirects to www.bamboohr.com, which has no
+# "result" field, so the marker reports the board missing. Tenants are hard to find: search engines
+# and Common Crawl rarely surface the subdomains (docs/unsupported-platforms-research-2026-11-22.md).
+name: bamboohr
+access_class: A
+format: json
+list:
+  url: "https://{board}.bamboohr.com/careers/list"
+  items: result
+  marker: [result]
+pagination:
+  style: none
+fields:
+  platform_job_id: id
+  title: jobOpeningName
+  location: { concat: [location.city, location.state], join: ", " }
+  city: location.city
+  region: location.state
+  employment_type: employmentStatusLabel
+  remote: { path: isRemote, type: boolean }
+  url: { template: "https://{board}.bamboohr.com/careers/{id}" }
+detail:
+  url: "https://{board}.bamboohr.com/careers/{id}/detail"
+  format: json
+  fields:
+    description: { path: result.jobOpening.description, transform: [html_to_text] }
+    posted_at: { path: result.jobOpening.datePosted, type: datetime }
+    country: result.jobOpening.location.addressCountry
+rate_limit:
+  requests_per_second: 1
+  max_concurrency: 1

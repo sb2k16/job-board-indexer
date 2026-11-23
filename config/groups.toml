@@ -72,7 +72,7 @@ description = "ATS listed by HTML page or feed, one detail fetch per job (JSON-L
 deployment = "crawler"
 refresh = "PT12H"
 workers = 4
-platforms = ["careerplug", "hiringthing", "jazzhr", "jobvite", "freshteam", "gohire", "join", "kula", "manatal",
+platforms = ["careerplug", "hiringthing", "jazzhr", "jobvite", "freshteam", "gohire", "join", "kula", "manatal", "bamboohr",
              "recooty", "trakstar", "deel", "firststage", "smartrecruiters", "trinet", "avature", "pageup"]
 
 [[group]]
